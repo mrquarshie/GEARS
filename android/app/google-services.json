@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "103907073176",
+    "project_id": "gears-c88f8",
+    "storage_bucket": "gears-c88f8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:103907073176:android:9542ff67c307d5d33584ed",
+        "android_client_info": {
+          "package_name": "com.example.fixfinder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "103907073176-mdgjfceppgetp05mkn5nbgnho8bc7r05.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJHz0MKDzrfyP0M4SGwX3vDJF4rL_PAb4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "103907073176-mdgjfceppgetp05mkn5nbgnho8bc7r05.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

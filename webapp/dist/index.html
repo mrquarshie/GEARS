@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#155e42" />
+    <meta name="description" content="Gears — Find trusted mechanics near you across Ghana. Search garages by area, read ratings, and call a mechanic directly." />
+    <meta property="og:title" content="Gears — Mechanics near you in Ghana" />
+    <meta property="og:description" content="Find trusted garages and mechanics across Ghana. Free to search, no sign-up required." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23155e42'/><text y='.9em' font-size='72' x='12'>⚙</text></svg>" />
+    <title>Gears — Mechanics near you in Ghana</title>
+    <script type="module" crossorigin src="/assets/index-B5l72Uk6.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BdyPIzkU.css">
+  </head>
+  <body>
+    <div id="initial-loader" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg, #1f6645 0%, #2cb67d 100%);opacity:1;pointer-events:none;transition:opacity 0.7s ease;font-family:'Inter', ui-sans-serif, system-ui, sans-serif;">
+      
+      <!-- Glowing background orb -->
+      <div style="position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);filter:blur(30px);animation:glowPulse 2s ease-in-out infinite"></div>
+      
+      <!-- Logo box -->
+      <div style="animation:logoPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;opacity:0;position:relative;background:rgba(200,200,200,0.8);width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 8px 16px rgba(0,0,0,0.15);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      
+      <!-- App Name -->
+      <h1 style="margin:24px 0 8px 0;color:#ffffff;font-size:46px;font-weight:800;letter-spacing:0.01em;text-shadow:0 2px 16px rgba(0,0,0,0.1);animation:fadeUp 0.5s ease 0.3s forwards;opacity:0;line-height:1.2;">Gears</h1>
+      
+      <!-- Subtitle -->
+      <p style="margin:0;color:rgba(255,255,255,0.9);font-size:16px;font-weight:500;animation:fadeUp 0.5s ease 0.4s forwards;opacity:0">Find trusted <span style="font-weight:700">mechanics</span>, anywhere in Ghana.</p>
+      
+      <!-- Bouncing dots -->
+      <div style="display:flex;gap:8px;margin-top:36px;animation:fadeUp 0.5s ease 0.5s forwards;opacity:0">
+        <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.85);display:block;animation:bounce 1.2s ease-in-out 0s infinite"></span>
+        <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.85);display:block;animation:bounce 1.2s ease-in-out 0.2s infinite"></span>
+        <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.85);display:block;animation:bounce 1.2s ease-in-out 0.4s infinite"></span>
+      </div>
+      
+      <style>
+        @keyframes logoPop { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes glowPulse { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.15); opacity: 1; } }
+        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.5; } 40% { transform: translateY(-10px); opacity: 1; } }
+      </style>
+    </div>
+    
+    <div id="root"></div>
+  </body>
+</html>
