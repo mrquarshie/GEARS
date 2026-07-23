@@ -822,14 +822,16 @@ function App() {
         />
       )}
       
-      {/* Floating Add Button for convenience if desired, maybe omit since mockup doesn't explicitly show it, wait we need a way to add! */}
-      <button 
-        className="floating-add-btn" 
-        onClick={() => setModal(user ? 'add' : 'auth')}
-      >
-        <Plus size={24} weight="bold" className="add-icon" />
-        <span className="add-text">Add Mechanic</span>
-      </button>
+      {/* Floating Add Button for authorized admins only */}
+      {user && (user.email === 'aciestech21@gmail.com' || user.email === 'skyemmanuel42@gmail.com') && (
+        <button 
+          className="floating-add-btn" 
+          onClick={() => setModal('add')}
+        >
+          <Plus size={24} weight="bold" className="add-icon" />
+          <span className="btn-text">Add Mechanic</span>
+        </button>
+      )}
     </div>
   );
 }
