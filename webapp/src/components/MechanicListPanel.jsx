@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { MagnifyingGlass, Faders, BookmarkSimple, Star, ShareNetwork, MapPin, Phone, Target } from '@phosphor-icons/react';
+import { MagnifyingGlass, Faders, BookmarkSimple, Star, ShareNetwork, MapPin, Phone, Target, GasPump } from '@phosphor-icons/react';
 
 export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
@@ -113,6 +113,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         <h1>
           {viewMode === 'detailers' ? (
             <>A Car Detailer,<br />When You Need One.</>
+          ) : viewMode === 'fuel' ? (
+            <>Find Fuel Stations<br />Near You</>
           ) : (
             <>A Mechanic,<br />When You Need One.</>
           )}
@@ -123,7 +125,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             <input 
               ref={searchRef}
               type="text" 
-              placeholder="Search Mechanics, Area..." 
+              placeholder={viewMode === 'fuel' ? "Search Location" : "Search Mechanics, Area..."}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -220,7 +222,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
           </div>
         </form>
         <div className="list-meta">
-          <span className="count">{mechanics.length} {viewMode === 'detailers' ? 'DETAILERS' : 'MECHANICS'} · {viewMode === 'saved' ? 'SAVED' : 'NEAR YOU'}</span>
+          <span className="count">{mechanics.length} {viewMode === 'detailers' ? 'DETAILERS' : viewMode === 'fuel' ? 'FUEL STATIONS' : 'MECHANICS'} · {viewMode === 'saved' ? 'SAVED' : 'NEAR YOU'}</span>
           <div className="sort-container" ref={sortRef}>
             <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
               {currentSort}
@@ -247,18 +249,23 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
         <div className="location-banner">
           <div className="location-icon-wrapper">
-            <MapPin size={20} weight="fill" color="var(--forest)" />
+            {viewMode === 'fuel' ? (
+              <GasPump size={20} weight="fill" color="var(--forest)" />
+            ) : (
+              <MapPin size={20} weight="fill" color="var(--forest)" />
+            )}
           </div>
           <div className="location-banner-text">
-            <h4>Use my location to find the mechanics</h4>
+            <h4>{viewMode === 'fuel' ? 'Fuel Delivery' : 'Use my location to find the mechanics'}</h4>
             <p>
               {(() => {
                 const validTimes = mechanics.map(m => m.timeInMinutes).filter(t => t != null);
                 if (validTimes.length > 0) {
                   const minT = Math.max(1, Math.floor(Math.min(...validTimes)));
                   const maxT = Math.ceil(Math.max(...validTimes));
-                  if (minT === maxT) return `All Mechanics ~${minT} minutes driver from you`;
-                  return `All Mechanics ${minT} - ${maxT} minutes driver from you`;
+                  const prefix = viewMode === 'fuel' ? 'All fuel stations' : 'All Mechanics';
+                  if (minT === maxT) return `${prefix} ~${minT} minutes drive from you`;
+                  return `${prefix} ${minT} - ${maxT} minutes drive from you`;
                 }
                 return 'Allow location access to see driving times';
               })()}
@@ -271,19 +278,33 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         {mechanics.map((m) => (
           <div key={m.id} className="mechanic-card" onClick={() => onSelect(m)}>
             <div className="card-top">
-              <div className="avatar-placeholder">
-                <span className="avatar-letter">{m.name.charAt(0).toUpperCase()}</span>
+              <div className="avatar-placeholder" style={viewMode === 'fuel' && (m.name.toLowerCase().includes('shell') || m.name.toLowerCase().includes('goil')) ? { background: 'transparent' } : {}}>
+                {viewMode === 'fuel' && m.name.toLowerCase().includes('shell') ? (
+                  <img src="https://upload.wikimedia.org/wikipedia/en/thumb/e/e8/Shell_logo.svg/100px-Shell_logo.svg.png" alt="Shell" style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+                ) : viewMode === 'fuel' && m.name.toLowerCase().includes('goil') ? (
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Goil_Logo.svg/100px-Goil_Logo.svg.png" alt="Goil" style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+                ) : (
+                  <span className="avatar-letter">{m.name.charAt(0).toUpperCase()}</span>
+                )}
               </div>
               <div className="card-top-right">
                 <span className="distance"><MapPin size={12} weight="fill" /> {m.distance ? m.distance : '--'}</span>
-                <span className="rating-badge">{m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <Star size={10} weight="fill" /></span>
-                <span className="status-badge">Open</span>
+                {viewMode !== 'fuel' && <span className="rating-badge">{m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <Star size={10} weight="fill" /></span>}
+                {viewMode !== 'fuel' && <span className="status-badge">Open</span>}
               </div>
             </div>
             
             <h3 className="mechanic-name">{m.name}</h3>
             <p className="mechanic-area">{m.area}</p>
-            <p className="mechanic-specialty">⚙ {m.specialty || 'General Repairs'}</p>
+            
+            {viewMode === 'fuel' ? (
+              <div className="fuel-prices" style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'var(--muted)', marginTop: '8px', marginBottom: '8px' }}>
+                <span>Petrol - <span style={{ color: 'var(--text)', fontWeight: 600 }}>¢14.65</span></span>
+                <span>Diesel - <span style={{ color: 'var(--text)', fontWeight: 600 }}>¢15.08</span></span>
+              </div>
+            ) : (
+              <p className="mechanic-specialty">⚙ {m.specialty || 'General Repairs'}</p>
+            )}
             
             {viewMode === 'detailers' && (
               <div className="detailer-thumbnails">
@@ -301,8 +322,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 >
                   <BookmarkSimple size={16} weight={savedMechanics.includes(m.id) ? "fill" : "regular"} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
                 </button>
-                <button className="icon-btn"><Star size={16} /></button>
-                <button className="icon-btn"><ShareNetwork size={16} /></button>
+                {viewMode !== 'fuel' && <button className="icon-btn"><Star size={16} /></button>}
+                {viewMode !== 'fuel' && <button className="icon-btn"><ShareNetwork size={16} /></button>}
               </div>
               <div className="action-group">
                 <a 
@@ -315,12 +336,18 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 >
                   <MapPin size={14} /> Direction
                 </a>
-                <button 
-                  className="action-btn outline" 
-                  onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
-                >
-                  <Phone size={14} /> Call
-                </button>
+                {viewMode === 'fuel' ? (
+                  <button className="action-btn outline" style={{ cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                    <GasPump size={14} /> Delivery <span style={{ background: '#fff0e6', color: '#ff8a4c', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', marginLeft: '4px', fontWeight: 600 }}>Soon</span>
+                  </button>
+                ) : (
+                  <button 
+                    className="action-btn outline" 
+                    onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
+                  >
+                    <Phone size={14} /> Call
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -410,6 +410,7 @@ function MechanicModal({ close, submit, initialData }) {
             <option value="Upgrade">Upgrade</option>
             <option value="Diagnostics">Diagnostics</option>
             <option value="Car Detailing">Car Detailing</option>
+            <option value="Fuel Station">Fuel Station</option>
           </select>
         </label>
         <label>Phone number
@@ -585,6 +586,8 @@ function App() {
       list = list.filter(m => savedMechanics.includes(m.id));
     } else if (viewMode === 'detailers') {
       list = list.filter(m => m.specialty === 'Car Detailing');
+    } else if (viewMode === 'fuel') {
+      list = list.filter(m => m.specialty === 'Fuel Station');
     }
     
     // Sort by distance if location available

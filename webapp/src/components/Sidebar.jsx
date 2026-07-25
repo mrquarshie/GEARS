@@ -9,6 +9,7 @@ import {
   UserPlus,
   SignIn,
   SignOut,
+  GasPump,
 } from '@phosphor-icons/react';
 
 // Custom Car Detailing / Body Repair Icon matching the user's uploaded image
@@ -87,6 +88,14 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             >
               <CarDetailingIcon size={20} />
               <span className="nav-text">Detailers</span>
+            </button>
+            <button
+              className={`nav-btn ${viewMode === 'fuel' ? 'active' : ''}`}
+              title="Fuel Stations"
+              onClick={() => handleNavClick('fuel')}
+            >
+              <GasPump size={20} weight={viewMode === 'fuel' ? 'fill' : 'regular'} />
+              <span className="nav-text">Fuel Stations</span>
             </button>
             <button
               className={`nav-btn ${viewMode === 'saved' ? 'active' : ''}`}
