@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import osmMechanicsData from './osm_mechanics.json';
+import mockExtrasData from './mockExtras.json';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { List, MapTrifold, NavigationArrow, Gear, X, Plus } from '@phosphor-icons/react';
 import {
@@ -27,9 +28,6 @@ import {
   getRedirectResult,
   onAuthStateChanged,
   signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile
 } from 'firebase/auth';
 import { auth, db, firebaseReady } from './firebase';
 import './styles.css';
@@ -39,6 +37,11 @@ import MapLayout from './components/MapLayout';
 import MechanicListPanel from './components/MechanicListPanel';
 import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
+
+import authImgCar from './components/AuthImages/Car.png';
+import authImgSteer from './components/AuthImages/Steer.png';
+import authImgEngine from './components/AuthImages/Engine.png';
+import authImgBattery from './components/AuthImages/Car battery.png';
 
 // ---------------------------------------------------------------------------
 // Utility: interactive + readonly star rating
@@ -225,40 +228,28 @@ function RateModal({ mechanic, user, close, onRated, show, openAuth }) {
 // ---------------------------------------------------------------------------
 // Auth Modal
 // ---------------------------------------------------------------------------
+function GoogleGLogo({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/>
+      <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+    </svg>
+  );
+}
+
 function AuthModal({ close, onSuccess }) {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const loginWithGoogle = async () => {
     if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
     setLoading(true);
     setErrorMsg('');
     try {
-      if (isSignUp) {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: name });
-        onSuccess(cred.user);
-      } else {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        onSuccess(cred.user);
-      }
-    } catch (err) {
-      setErrorMsg(err.message.replace('Firebase: ', ''));
-      setLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
-    if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
-    try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      setLoading(true);
       if (result.user) onSuccess(result.user);
     } catch (err) {
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-cancelled-by-user') {
@@ -279,72 +270,34 @@ function AuthModal({ close, onSuccess }) {
     <div className="overlay" role="dialog" aria-modal="true">
       <div className="auth-modal-content">
         <button type="button" className="auth-close" onClick={close} aria-label="Close">
-          <X size={20} />
+          <X size={18} />
         </button>
-        
-        <div className="auth-gear-wrapper">
-          <Gear size={48} className="auth-logo-spin" weight="bold" />
+
+        <div className="auth-header-graphics">
+          <img className="auth-deco auth-deco-big" src={authImgCar} alt="" />
+          <img className="auth-deco auth-deco-top-center" src={authImgSteer} alt="" />
+          <img className="auth-deco auth-deco-top-right" src={authImgEngine} alt="" />
+          <img className="auth-deco auth-deco-bottom-left" src={authImgBattery} alt="" />
+          <div className="auth-logo-box">
+            <Gear size={26} color="var(--lime)" weight="fill" className="logo-gear-spin" />
+          </div>
         </div>
-        
-        <h2 className="auth-title">
-          {isSignUp ? 'Create an account' : 'Sign in to continue'}
-        </h2>
-        <p className="auth-subtitle">
-          {isSignUp ? 'Sign up to add or rate mechanics.' : 'Sign in to add or rate mechanics.'}
-        </p>
 
-        {errorMsg && <div style={{color: 'var(--red)', fontSize: '0.9rem', marginBottom: '16px'}}>{errorMsg}</div>}
+        <div className="auth-body">
+          <h2>Find trusted mechanics, anywhere in Ghana.</h2>
 
-        <form onSubmit={submit} style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
-          {isSignUp && (
-            <div className="auth-input-group">
-              <label className="auth-input-label">Full name</label>
-              <input 
-                type="text" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required={isSignUp}
-                className="auth-input-field"
-              />
-            </div>
-          )}
-          
-          <div className="auth-input-group">
-            <label className="auth-input-label">Email address</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required
-              className="auth-input-field"
-            />
-          </div>
-          
-          <div className="auth-input-group">
-            <label className="auth-input-label">Password</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-              minLength={6}
-              className="auth-input-field"
-            />
-          </div>
-          
-          <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? 'Please wait…' : (isSignUp ? 'Sign up' : 'Sign in')}
+          {errorMsg && <div style={{ color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>{errorMsg}</div>}
+
+          <button type="button" className="google-auth-btn" onClick={loginWithGoogle} disabled={loading}>
+            <span className="google-icon-wrapper">
+              <GoogleGLogo size={18} />
+            </span>
+            <span className="google-auth-divider"></span>
+            <p style={{width:'100%'}}>{loading ? 'Please wait…' : 'Continue with Google'}</p>
+     
           </button>
-        </form>
-        
-        <div style={{textAlign: 'center'}}>
-          <button 
-            type="button" 
-            onClick={() => setIsSignUp(!isSignUp)} 
-            style={{background: 'none', border: 'none', color: 'var(--forest)', fontWeight: 700, fontSize: '14px', cursor: 'pointer', padding: 0}}
-          >
-            {isSignUp ? 'Already have an account? Sign in' : 'New here? Create an account'}
-          </button>
+
+          <p className="auth-terms">By using Gears, you agree to our Terms of Service<br />and Privacy Policy.</p>
         </div>
       </div>
     </div>
@@ -470,7 +423,28 @@ function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const [routeTarget, setRouteTarget] = useState(null);
   const searchRef = useRef(null);
+
+  const handleShowDirection = (mechanic) => {
+    if (!mechanic || mechanic.lat == null || mechanic.lng == null) return;
+    setRouteTarget({ lat: mechanic.lat, lng: mechanic.lng });
+  };
+
+  const handleSelectMechanic = (mechanic) => {
+    setSelectedMechanic(mechanic);
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth > 768;
+    if (isDesktop && mechanic) {
+      handleShowDirection(mechanic);
+    } else {
+      setRouteTarget(null);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedMechanic(null);
+    setRouteTarget(null);
+  };
 
   useEffect(() => {
     if (isDarkMode) document.body.classList.add('dark-mode');
@@ -504,6 +478,25 @@ function App() {
     }
   }, []);
 
+  // Keep fixed mobile sheets/modals sized to the *real* visible viewport, so the
+  // on-screen keyboard doesn't squish or reflow them like a browser tab — it should
+  // just overlay, the way a native app's keyboard does.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const setVh = () => {
+      const height = viewport ? viewport.height : window.innerHeight;
+      document.documentElement.style.setProperty('--vh', `${height * 0.01}px`);
+    };
+    setVh();
+    const target = viewport || window;
+    target.addEventListener('resize', setVh);
+    target.addEventListener('scroll', setVh);
+    return () => {
+      target.removeEventListener('resize', setVh);
+      target.removeEventListener('scroll', setVh);
+    };
+  }, []);
+
   useEffect(() => {
     if (!user || !db) {
       setSavedMechanics(JSON.parse(localStorage.getItem('savedMechanics') || '[]'));
@@ -529,7 +522,16 @@ function App() {
   }, [user]);
 
   useEffect(() => {
-    if (!firebaseReady) { setLoading(false); setAuthReady(true); return; }
+    if (!firebaseReady) {
+      // No Firebase configured (e.g. local dev without .env) — use local mock
+      // data instead so the app is still usable/testable. Remove this once
+      // VITE_FIREBASE_* is set up locally.
+      const mockData = [...osmMechanicsData, ...mockExtrasData].map((m, i) => ({ id: `mock-${i}`, ...m }));
+      setAllMechanics(mockData);
+      setLoading(false);
+      setAuthReady(true);
+      return;
+    }
 
     let unsubscribe = () => {};
 
@@ -588,6 +590,8 @@ function App() {
       list = list.filter(m => m.specialty === 'Car Detailing');
     } else if (viewMode === 'fuel') {
       list = list.filter(m => m.specialty === 'Fuel Station');
+    } else if (viewMode === 'shop') {
+      list = list.filter(m => ['Shop', 'Parts Shop', 'Auto Parts'].includes(m.specialty));
     }
     
     // Sort by distance if location available
@@ -706,20 +710,23 @@ function App() {
       
       {notice && <div className="notice" style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, background: '#155e42', color: 'white', padding: '10px 20px', borderRadius: '8px' }}>{notice}</div>}
       
-      <Sidebar 
-        user={user} 
-        authReady={authReady} 
-        viewMode={viewMode} 
-        setViewMode={setViewMode} 
-        openAuth={() => setModal('auth')} 
-        onSignOut={() => { signOut(auth); setUser(null); }} 
+      <Sidebar
+        user={user}
+        authReady={authReady}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        openAuth={() => setModal('auth')}
+        onSignOut={() => { signOut(auth); setUser(null); }}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
+        isSearchPanelOpen={isSearchPanelOpen}
         onSearchClick={() => {
           setMobileSidebarOpen(false);
           setIsSearchPanelOpen(prev => !prev);
           if (searchRef.current) searchRef.current.focus();
         }}
+        onCloseSearch={() => setIsSearchPanelOpen(false)}
+        onCloseDetail={handleCloseDetail}
       />
       
       <div className="main-content">
@@ -738,25 +745,28 @@ function App() {
           </div>
         </div>
 
-        <MapLayout 
-          mechanics={mechanics} 
-          selectedMechanic={selectedMechanic} 
-          onSelectMechanic={setSelectedMechanic}
+        <MapLayout
+          mechanics={mechanics}
+          selectedMechanic={selectedMechanic}
+          onSelectMechanic={handleSelectMechanic}
           userLocation={userLocation}
           mapPanTrigger={mapPanTrigger}
+          routeTarget={routeTarget}
         />
-        
+
         {!isSearchPanelOpen && (
-          <MechanicListPanel 
-            mechanics={mechanics} 
-            searchedArea={searchedArea} 
-            onSearch={setSearchedArea} 
-            onSelect={setSelectedMechanic} 
-            user={user} 
+          <MechanicListPanel
+            mechanics={mechanics}
+            searchedArea={searchedArea}
+            onSearch={setSearchedArea}
+            onSelect={handleSelectMechanic}
+            user={user}
             savedMechanics={savedMechanics}
             onToggleSave={toggleSave}
             viewMode={viewMode}
             searchRef={searchRef}
+            onDirection={handleShowDirection}
+            hideOnDesktop={!!selectedMechanic}
           />
         )}
 
@@ -765,7 +775,7 @@ function App() {
             mechanics={mechanics}
             searchedArea={searchedArea}
             onSearch={setSearchedArea}
-            onSelect={setSelectedMechanic}
+            onSelect={handleSelectMechanic}
             user={user}
             savedMechanics={savedMechanics}
             onToggleSave={toggleSave}
@@ -773,16 +783,17 @@ function App() {
             onClose={() => setIsSearchPanelOpen(false)}
           />
         )}
-        
-        <MechanicDetailPanel 
-           mechanic={selectedMechanic} 
-           onClose={() => setSelectedMechanic(null)} 
-           user={user} 
+
+        <MechanicDetailPanel
+           mechanic={selectedMechanic}
+           onClose={handleCloseDetail}
+           user={user}
            onEdit={(m) => setModal({ type: 'edit', mechanic: m })}
            onDelete={deleteMechanic}
            onRate={(m) => setModal({ type: 'rate', mechanic: m })}
            savedMechanics={savedMechanics}
            onToggleSave={toggleSave}
+           onDirection={handleShowDirection}
         />
       </div>
 

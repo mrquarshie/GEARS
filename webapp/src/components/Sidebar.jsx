@@ -1,32 +1,21 @@
 import React from 'react';
 import {
-  House,
-  MagnifyingGlass,
-  BookmarkSimple,
-  ClockCounterClockwise,
-  Bell,
   Gear,
   UserPlus,
   SignIn,
   SignOut,
-  GasPump,
 } from '@phosphor-icons/react';
+import {
+  HomeIcon,
+  ShopIcon,
+  CarDetailingIcon,
+  FillingStationIcon,
+  BookmarkIcon,
+  HistoryIcon,
+  NotificationIcon,
+} from './icons';
 
-// Custom Car Detailing / Body Repair Icon matching the user's uploaded image
-const CarDetailingIcon = ({ size = 20, color = "currentColor" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    {/* Left Car Front */}
-    <path d="M2 16h2a2 2 0 0 0 4 0h2v-4c0-1.5-1-3-2-4H5L2 12v4z" />
-    <circle cx="6" cy="16" r="1.5" fill="currentColor" />
-    {/* Right Car Front */}
-    <path d="M22 16h-2a2 2 0 0 1-4 0h-2v-4c0-1.5 1-3 2-4h3l3 4v4z" />
-    <circle cx="18" cy="16" r="1.5" fill="currentColor" />
-    {/* Spark / Explosion */}
-    <path d="M12 3 l-1.5 2.5 l-2.5 -1.5 l 1.5 3 l-3 1 l 3 1.5 l-1 3 l 2.5 -2 l 2 2.5 l1.5-3 l3-1.5 l-3-1 l1-2.5 l-2.5 1.5 z" fill="currentColor" stroke="none" />
-  </svg>
-);
-
-export default function Sidebar({ user, authReady, viewMode, setViewMode, openAuth, onSignOut, isOpen, setIsOpen, onSearchClick }) {
+export default function Sidebar({ user, authReady, viewMode, setViewMode, openAuth, onSignOut, isOpen, setIsOpen, isSearchPanelOpen, onCloseSearch, onCloseDetail }) {
   // Get initials from display name or email
   const getInitial = () => {
     if (!user) return null;
@@ -44,12 +33,10 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
   const handleNavClick = (mode) => {
     setViewMode(mode);
     setIsOpen(false);
+    if (isSearchPanelOpen && onCloseSearch) onCloseSearch();
+    if (onCloseDetail) onCloseDetail();
   };
 
-  const handleSearchClick = () => {
-    setIsOpen(false);
-    if (onSearchClick) onSearchClick();
-  };
 
   return (
     <>
@@ -60,7 +47,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
           <div className="sidebar-logo">
             <a className="brand-logo" href="/">
               <div className="sidebar-logo-box">
-                <Gear size={22} color="var(--lime)" weight="fill" />
+                <Gear size={22} color="var(--lime)" weight="fill" className="logo-gear-spin" />
               </div>
             </a>
           </div>
@@ -70,47 +57,51 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
           {/* Nav icons */}
           <nav className="sidebar-nav">
             <button
-              className={`nav-btn ${viewMode === 'all' ? 'active' : ''}`}
+              className={`nav-btn ${viewMode === 'all' && !isSearchPanelOpen ? 'active' : ''}`}
               onClick={() => handleNavClick('all')}
               title="Home"
             >
-              <House size={20} weight={viewMode === 'all' ? 'fill' : 'regular'} />
+              <HomeIcon size={20} state={viewMode === 'all' && !isSearchPanelOpen ? 'filled' : 'default'} />
               <span className="nav-text">Home</span>
             </button>
-            <button className="nav-btn" title="Search" onClick={handleSearchClick}>
-              <MagnifyingGlass size={20} />
-              <span className="nav-text">Search</span>
+            <button
+              className={`nav-btn ${viewMode === 'shop' && !isSearchPanelOpen ? 'active' : ''}`}
+              title="Car Part Shops"
+              onClick={() => handleNavClick('shop')}
+            >
+              <ShopIcon size={20} state={viewMode === 'shop' && !isSearchPanelOpen ? 'filled' : 'default'} />
+              <span className="nav-text">Car Part Shops</span>
             </button>
-            <button 
-              className={`nav-btn ${viewMode === 'detailers' ? 'active' : ''}`} 
-              title="Detailers" 
+            <button
+              className={`nav-btn ${viewMode === 'detailers' && !isSearchPanelOpen ? 'active' : ''}`}
+              title="Detailers"
               onClick={() => handleNavClick('detailers')}
             >
-              <CarDetailingIcon size={20} />
+              <CarDetailingIcon size={20} state={viewMode === 'detailers' && !isSearchPanelOpen ? 'filled' : 'default'} />
               <span className="nav-text">Detailers</span>
             </button>
             <button
-              className={`nav-btn ${viewMode === 'fuel' ? 'active' : ''}`}
+              className={`nav-btn ${viewMode === 'fuel' && !isSearchPanelOpen ? 'active' : ''}`}
               title="Fuel Stations"
               onClick={() => handleNavClick('fuel')}
             >
-              <GasPump size={20} weight={viewMode === 'fuel' ? 'fill' : 'regular'} />
+              <FillingStationIcon size={20} state={viewMode === 'fuel' && !isSearchPanelOpen ? 'filled' : 'default'} />
               <span className="nav-text">Fuel Stations</span>
             </button>
             <button
-              className={`nav-btn ${viewMode === 'saved' ? 'active' : ''}`}
+              className={`nav-btn ${viewMode === 'saved' && !isSearchPanelOpen ? 'active' : ''}`}
               onClick={() => handleNavClick('saved')}
               title="Saved"
             >
-              <BookmarkSimple size={20} weight={viewMode === 'saved' ? 'fill' : 'regular'} />
+              <BookmarkIcon size={20} state={viewMode === 'saved' && !isSearchPanelOpen ? 'filled' : 'default'} />
               <span className="nav-text">Saved</span>
             </button>
             <button className="nav-btn" title="History" onClick={() => setIsOpen(false)}>
-              <ClockCounterClockwise size={20} />
+              <HistoryIcon size={20} />
               <span className="nav-text">History</span>
             </button>
             <button className="nav-btn" title="Notifications" onClick={() => setIsOpen(false)}>
-              <Bell size={20} />
+              <NotificationIcon size={20} />
               <span className="nav-text">Notifications</span>
             </button>
           </nav>

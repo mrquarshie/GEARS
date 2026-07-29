@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { MagnifyingGlass, Faders, BookmarkSimple, Star, ShareNetwork, MapPin, Phone, Target, GasPump } from '@phosphor-icons/react';
+import { createPortal } from 'react-dom';
+import { Target } from '@phosphor-icons/react';
+import {
+  BookmarkIcon,
+  CallIcon,
+  FillingStationIcon,
+  FilterIcon,
+  LocationIcon,
+  RateIcon,
+  SearchIcon,
+  ShareIcon,
+  StarRatingIcon,
+} from './icons';
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onDirection, hideOnDesktop }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -91,7 +103,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   // Calculate dynamic transform based on state and drag offset
   let transformBase = 'calc(100% - 150px)'; // minimized
   if (sheetState === 'half') transformBase = '50vh';
-  if (sheetState === 'expanded') transformBase = '0px';
+  if (sheetState === 'expanded') transformBase = '200px';
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const dynamicStyle = isMobile ? {
@@ -99,8 +111,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   } : {};
 
   return (
-    <div 
-      className={`mechanic-list-panel ${isDragging ? 'dragging' : ''}`}
+    <div
+      className={`mechanic-list-panel ${isDragging ? 'dragging' : ''} ${hideOnDesktop ? 'mechanic-list-panel--hidden-desktop' : ''}`}
       style={dynamicStyle}
     >
       <div 
@@ -112,16 +124,18 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         <div className="mobile-drag-handle"></div>
         <h1>
           {viewMode === 'detailers' ? (
-            <>A Car Detailer,<br />When You Need One.</>
+            <>Discover Car Detailers</>
           ) : viewMode === 'fuel' ? (
-            <>Find Fuel Stations<br />Near You</>
+            <>Find Fuel Stations</>
+          ) : viewMode === 'shop' ? (
+            <>Car Parts Shops</>
           ) : (
             <>A Mechanic,<br />When You Need One.</>
           )}
         </h1>
         <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
           <div className="search-input-box">
-            <MagnifyingGlass size={18} className="search-icon" weight="bold" />
+            <SearchIcon size={18} className="search-icon" />
             <input 
               ref={searchRef}
               type="text" 
@@ -149,7 +163,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                     onSearch(s.value);
                   }}
                 >
-                  <MagnifyingGlass size={14} className="suggestion-icon" />
+                  <SearchIcon size={14} className="suggestion-icon" />
                   <span className="suggestion-text">{s.value}</span>
                   <span className="suggestion-type">{s.type}</span>
                 </div>
@@ -159,70 +173,87 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
           <div className="filter-container" ref={filterRef}>
             <button type="button" className="filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-              <Faders size={18} />
+              <FilterIcon size={18} />
             </button>
-            {isFilterOpen && (
-              <div className="filter-popup">
-                <div className="filter-header">
-                  <h2>Filters</h2>
-                  <button type="button" className="clear-all-btn">Clear all</button>
-                </div>
-                <div className="filter-tabs">
-                  <div className={`filter-tab ${activeFilterTab === 'Services' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Services')}>Services <span className="tab-badge">2</span></div>
-                  <div className={`filter-tab ${activeFilterTab === 'Availability' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Availability')}>Availability</div>
-                  <div className={`filter-tab ${activeFilterTab === 'Distance' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Distance')}>Distance</div>
-                  <div className={`filter-tab ${activeFilterTab === 'Rating' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Rating')}>Rating</div>
-                </div>
-                
-                {activeFilterTab === 'Services' && (
-                  <div className="filter-body">
-                    <button type="button" className="filter-pill active">General Repair</button>
-                    <button type="button" className="filter-pill">Breaks</button>
-                    <button type="button" className="filter-pill">Electric Fault</button>
-                    <button type="button" className="filter-pill">Lights</button>
-                    <button type="button" className="filter-pill active">Engine</button>
-                    <button type="button" className="filter-pill">Spraying</button>
-                    <button type="button" className="filter-pill">Upgrade</button>
-                    <button type="button" className="filter-pill">Diagnostics</button>
+            {isFilterOpen && (() => {
+              const filterPopup = (
+                <div className="filter-popup">
+                  <div className="mobile-drag-handle"></div>
+                  <div className="filter-header">
+                    <h2>Filters</h2>
+                    <button type="button" className="clear-all-btn">Clear all</button>
                   </div>
-                )}
+                  <div className="filter-tabs">
+                    <div className={`filter-tab ${activeFilterTab === 'Services' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Services')}>Services <span className="tab-badge">2</span></div>
+                    <div className={`filter-tab ${activeFilterTab === 'Availability' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Availability')}>Availability</div>
+                    <div className={`filter-tab ${activeFilterTab === 'Distance' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Distance')}>Distance</div>
+                    <div className={`filter-tab ${activeFilterTab === 'Rating' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Rating')}>Rating</div>
+                  </div>
 
-                {activeFilterTab === 'Availability' && (
-                  <div className="filter-body">
-                    <button type="button" className="filter-pill active">Weekdays</button>
-                    <button type="button" className="filter-pill">24/7</button>
-                    <button type="button" className="filter-pill">Week Days Only</button>
-                    <button type="button" className="filter-pill">Weekends Only</button>
-                    <button type="button" className="filter-pill active">Engine</button>
-                    <button type="button" className="filter-pill">Spraying</button>
-                  </div>
-                )}
+                  {activeFilterTab === 'Services' && (
+                    <div className="filter-body">
+                      <button type="button" className="filter-pill active">General Repair</button>
+                      <button type="button" className="filter-pill">Breaks</button>
+                      <button type="button" className="filter-pill">Electric Fault</button>
+                      <button type="button" className="filter-pill">Lights</button>
+                      <button type="button" className="filter-pill active">Engine</button>
+                      <button type="button" className="filter-pill">Spraying</button>
+                      <button type="button" className="filter-pill">Upgrade</button>
+                      <button type="button" className="filter-pill">Diagnostics</button>
+                    </div>
+                  )}
 
-                {activeFilterTab === 'Distance' && (
-                  <div className="filter-body">
-                    <button type="button" className="filter-pill alt">1 km</button>
-                    <button type="button" className="filter-pill alt active">3 km</button>
-                    <button type="button" className="filter-pill alt">5 km</button>
-                    <button type="button" className="filter-pill alt">10 km+</button>
-                  </div>
-                )}
+                  {activeFilterTab === 'Availability' && (
+                    <div className="filter-body">
+                      <button type="button" className="filter-pill active">Weekdays</button>
+                      <button type="button" className="filter-pill">24/7</button>
+                      <button type="button" className="filter-pill">Week Days Only</button>
+                      <button type="button" className="filter-pill">Weekends Only</button>
+                      <button type="button" className="filter-pill active">Engine</button>
+                      <button type="button" className="filter-pill">Spraying</button>
+                    </div>
+                  )}
 
-                {activeFilterTab === 'Rating' && (
-                  <div className="filter-body">
-                    <button type="button" className="filter-pill alt">Any</button>
-                    <button type="button" className="filter-pill alt">4.0+</button>
-                    <button type="button" className="filter-pill alt active">4.5+</button>
+                  {activeFilterTab === 'Distance' && (
+                    <div className="filter-body">
+                      <button type="button" className="filter-pill alt">1 km</button>
+                      <button type="button" className="filter-pill alt active">3 km</button>
+                      <button type="button" className="filter-pill alt">5 km</button>
+                      <button type="button" className="filter-pill alt">10 km+</button>
+                    </div>
+                  )}
+
+                  {activeFilterTab === 'Rating' && (
+                    <div className="filter-body">
+                      <button type="button" className="filter-pill alt">Any</button>
+                      <button type="button" className="filter-pill alt">4.0+</button>
+                      <button type="button" className="filter-pill alt active">4.5+</button>
+                    </div>
+                  )}
+                  <div className="filter-footer">
+                    <button type="button" className="filter-apply-btn" onClick={() => setIsFilterOpen(false)}>Apply</button>
                   </div>
-                )}
-                <div className="filter-footer">
-                  <button type="button" className="filter-apply-btn" onClick={() => setIsFilterOpen(false)}>Apply</button>
                 </div>
-              </div>
-            )}
+              );
+
+              // On mobile the sheet is portaled to <body> — an ancestor's transform
+              // (used for the drag/minimize system) would otherwise hijack this
+              // "fixed" sheet's containing block and push it off-screen.
+              if (isMobile) {
+                return createPortal(
+                  <>
+                    <div className="filter-backdrop" onClick={() => setIsFilterOpen(false)}></div>
+                    {filterPopup}
+                  </>,
+                  document.body
+                );
+              }
+              return filterPopup;
+            })()}
           </div>
         </form>
         <div className="list-meta">
-          <span className="count">{mechanics.length} {viewMode === 'detailers' ? 'DETAILERS' : viewMode === 'fuel' ? 'FUEL STATIONS' : 'MECHANICS'} · {viewMode === 'saved' ? 'SAVED' : 'NEAR YOU'}</span>
+          <span className="count">{mechanics.length} {viewMode === 'detailers' ? 'DETAILERS' : viewMode === 'fuel' ? 'FUEL STATIONS' : viewMode === 'shop' ? 'SHOPS' : 'MECHANICS'} · {viewMode === 'saved' ? 'SAVED' : 'NEAR YOU'}</span>
           <div className="sort-container" ref={sortRef}>
             <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
               {currentSort}
@@ -250,9 +281,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         <div className="location-banner">
           <div className="location-icon-wrapper">
             {viewMode === 'fuel' ? (
-              <GasPump size={20} weight="fill" color="var(--forest)" />
+              <FillingStationIcon size={20} state="filled" color="var(--forest)" />
             ) : (
-              <MapPin size={20} weight="fill" color="var(--forest)" />
+              <LocationIcon size={20} state="filled" color="var(--forest)" />
             )}
           </div>
           <div className="location-banner-text">
@@ -288,8 +319,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 )}
               </div>
               <div className="card-top-right">
-                <span className="distance"><MapPin size={12} weight="fill" /> {m.distance ? m.distance : '--'}</span>
-                {viewMode !== 'fuel' && <span className="rating-badge">{m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <Star size={10} weight="fill" /></span>}
+                <span className="distance"><LocationIcon size={12} state="filled" color="var(--forest)" /> {m.distance ? m.distance : '--'}</span>
+                {viewMode !== 'fuel' && <span className="rating-badge">{m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <StarRatingIcon size={10} state="filled" /></span>}
                 {viewMode !== 'fuel' && <span className="status-badge">Open</span>}
               </div>
             </div>
@@ -315,37 +346,38 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             )}
             
             <div className="card-actions">
-              <div className="icon-group">
-                <button 
-                  className={`icon-btn ${savedMechanics.includes(m.id) ? 'active' : ''}`}
-                  onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
-                >
-                  <BookmarkSimple size={16} weight={savedMechanics.includes(m.id) ? "fill" : "regular"} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
-                </button>
-                {viewMode !== 'fuel' && <button className="icon-btn"><Star size={16} /></button>}
-                {viewMode !== 'fuel' && <button className="icon-btn"><ShareNetwork size={16} /></button>}
+              <div className="card-actions-left">
+                <div className="icon-group">
+                  <button
+                    className={`icon-btn ${savedMechanics.includes(m.id) ? 'active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
+                  >
+                    <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
+                  </button>
+                  {viewMode !== 'fuel' && <button className="icon-btn"><RateIcon size={16} /></button>}
+                  {viewMode !== 'fuel' && <button className="icon-btn"><ShareIcon size={16} /></button>}
+                </div>
+                <div className="card-actions-divider"></div>
               </div>
               <div className="action-group">
-                <a 
-                  className="action-btn"
-                  style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${m.lat && m.lng ? `${m.lat},${m.lng}` : encodeURIComponent(`${m.name} ${m.area}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  type="button"
+                  className="icon-btn"
+                  onClick={(e) => { e.stopPropagation(); onDirection(m); }}
+                  aria-label="Direction"
                 >
-                  <MapPin size={14} /> Direction
-                </a>
+                  <LocationIcon size={16} />
+                </button>
                 {viewMode === 'fuel' ? (
                   <button className="action-btn outline" style={{ cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
-                    <GasPump size={14} /> Delivery <span style={{ background: '#fff0e6', color: '#ff8a4c', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', marginLeft: '4px', fontWeight: 600 }}>Soon</span>
+                    <FillingStationIcon size={14} /> Delivery <span style={{ background: '#fff0e6', color: '#ff8a4c', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', marginLeft: '4px', fontWeight: 600 }}>Soon</span>
                   </button>
                 ) : (
                   <button 
                     className="action-btn outline" 
                     onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
                   >
-                    <Phone size={14} /> Call
+                    <CallIcon size={14} /> Call
                   </button>
                 )}
               </div>

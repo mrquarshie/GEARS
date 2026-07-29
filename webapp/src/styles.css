@@ -10,6 +10,10 @@
   --cream: #fffcf5;
   --muted: #6b7280;
   --border: #e5e7eb;
+  --marker-mechanic: #d95f12;
+  --marker-detailer: #168f55;
+  --marker-fuel: #2477e8;
+  --marker-parts: #7c3aed;
 }
 
 * {
@@ -39,7 +43,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 0 32px 0;
+  padding: 8px 0 24px 0;
   z-index: 20;
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 8px rgba(0,0,0,0.02);
@@ -62,20 +66,31 @@ body {
   color: var(--lime);
 }
 
+/* The gear/settings mark is the app's logo — keep it spinning wherever it appears. */
+.logo-gear-spin {
+  animation: logoGearSpin 6s linear infinite;
+}
+
+@keyframes logoGearSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .sidebar-divider {
   width: 44px;
   height: 1px;
   background: var(--border);
-  margin: 24px 0;
+  margin: 12px 0;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .nav-btn {
+  position: relative;
   background: #f9fafb;
   border: 1px solid transparent;
   color: #6b7280;
@@ -106,6 +121,7 @@ body {
 }
 
 .auth-btn {
+  position: relative;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -161,6 +177,15 @@ body {
 /* Leaflet Overrides */
 .leaflet-container {
   font-family: inherit;
+  background: #f2efe8;
+  --map-marker-scale: 1;
+}
+
+
+.leaflet-control-attribution {
+  border-radius: 10px 0 0 0;
+  color: rgba(31, 41, 55, 0.7);
+  font-size: 11px;
 }
 
 /* Mechanic List Panel */
@@ -176,6 +201,15 @@ body {
   z-index: 10;
   display: flex;
   flex-direction: column;
+}
+
+/* When a mechanic is selected on desktop, the detail panel takes over instead
+   of showing side-by-side with the list. Mobile is unaffected (media-scoped)
+   since the detail panel is already a full-screen overlay there. */
+@media (min-width: 769px) {
+  .mechanic-list-panel--hidden-desktop {
+    display: none;
+  }
 }
 
 .list-header {
@@ -202,9 +236,12 @@ body {
   display: flex;
   align-items: center;
   background: white;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 24px;
   padding: 0 16px;
+  box-shadow:
+    0 1px 4px 0 rgba(12, 12, 13, 0.05),
+    0 1px 4px 0 rgba(12, 12, 13, 0.1);
 }
 
 .search-input-box input:focus {
@@ -278,8 +315,8 @@ body {
 }
 
 .filter-btn {
-  background: white;
-  border: 1px solid var(--border);
+  background: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
   width: 42px;
   height: 42px;
@@ -307,6 +344,12 @@ body {
   flex-direction: column;
   padding: 16px;
   font-family: inherit;
+  transform-origin: top left;
+  animation: sortDropdownOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.filter-backdrop {
+  display: none;
 }
 
 .filter-header {
@@ -455,6 +498,13 @@ body {
   z-index: 50;
   display: flex;
   flex-direction: column;
+  transform-origin: top right;
+  animation: sortDropdownOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sortDropdownOpen {
+  from { opacity: 0; transform: scale(0.8) translateY(-6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .sort-option {
@@ -486,9 +536,9 @@ body {
   gap: 12px;
   margin: 16px 0;
   padding: 12px;
-  border: 1px solid var(--forest);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 12px;
-  background-color: transparent;
+  background-color: #fafafa;
 }
 
 .location-icon-wrapper {
@@ -524,24 +574,26 @@ body {
 }
 
 .mechanic-card {
-  border: 1px solid #d1fae5;
+  border: none;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
   border-radius: 16px;
   padding: 16px;
   background: #ffffff;
   cursor: pointer;
+  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .mechanic-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-  border-color: var(--forest);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
 .card-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
 
@@ -555,35 +607,41 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  border: 1px solid white;
 }
 
 .card-top-right {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   font-size: 12px;
   font-weight: 600;
 }
 
-.distance {
-  color: var(--forest);
+.distance,
+.rating-badge {
   display: flex;
   align-items: center;
   gap: 4px;
+  background: #fafafa;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  padding: 2px 6px;
+}
+
+.distance {
+  color: var(--ink);
 }
 
 .rating-badge {
   color: #f59e0b;
-  display: flex;
-  align-items: center;
-  gap: 2px;
 }
 
 .status-badge {
   background: #d1fae5;
   color: var(--forest);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 11px;
 }
 
@@ -600,16 +658,33 @@ body {
 }
 
 .mechanic-specialty {
-  margin: 0 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 12px;
   font-size: 13px;
   color: var(--forest);
   font-weight: 600;
+  background: #fafafa;
+  border-radius: 999px;
+  padding: 2px 10px 2px 8px;
 }
 
 .card-actions {
   display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-actions-left {
+  flex: 1;
+  display: flex;
   justify-content: space-between;
   align-items: center;
+  min-width: 0;
 }
 
 .icon-group {
@@ -617,26 +692,45 @@ body {
   gap: 8px;
 }
 
-.icon-btn {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.2s;
+.card-actions-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0 4px;
+  background: rgba(0, 0, 0, 0.05);
 }
 
-.icon-btn:hover {
-  background: #f9fafb;
+/* Scoped to override the shared .icon-btn/.action-btn rules further down
+   this file (used by the detail panel) without affecting that context. */
+.mechanic-card .icon-btn,
+.mechanic-card .action-btn {
+  background: #fafafa;
+  border: none;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
+  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
+  color: var(--ink);
 }
 
-.icon-btn.active {
-  border-color: var(--forest);
+.mechanic-card .icon-btn:hover,
+.mechanic-card .action-btn:hover {
+  background: #f3f4f6;
+}
+
+.mechanic-card .icon-btn.active {
+  background: #f0fdf4;
+  outline: 2px solid var(--forest);
+  outline-offset: -2px;
+}
+
+.mechanic-card .action-btn {
+  width: auto;
+  gap: 6px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .action-group {
@@ -644,33 +738,11 @@ body {
   gap: 8px;
 }
 
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 1px solid var(--border);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--ink);
-}
-
-.action-btn:hover {
-  background: #f9fafb;
-}
-
-.action-btn.outline {
-  border-color: var(--border);
-}
-
 /* Mechanic Detail Panel */
 .mechanic-detail-panel {
   position: absolute;
   top: 24px;
-  left: 440px;
+  left: 24px;
   width: 480px;
   bottom: 24px;
   background: #ffffff;
@@ -717,30 +789,33 @@ body {
   position: absolute;
   bottom: 16px;
   right: 16px;
-  background: var(--ink);
-  color: white;
-  padding: 6px 8px;
   border-radius: 8px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   min-width: 50px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .rating-score {
   font-weight: 800;
-  font-size: 14px;
-  color: var(--lime);
+  font-size: 13px;
+  background: var(--forest);
+  color: white;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  padding: 5px 8px;
 }
 
 .rating-count {
   font-size: 10px;
   text-align: center;
-  color: #9ca3af;
-  margin-top: 4px;
+  background: var(--ink);
+  color: #d1d5db;
+  padding: 4px 8px;
 }
 
 .detail-header {
@@ -875,7 +950,6 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
-  justify-content: space-between;
 }
 
 .detail-bottom-left {
@@ -917,6 +991,12 @@ body {
   background: #f9fafb;
 }
 
+.icon-btn.active {
+  background: #f0fdf4;
+  border-color: var(--forest);
+  box-shadow: 0 0 0 1px var(--forest);
+}
+
 /* Modals */
 .overlay {
   position: fixed;
@@ -927,127 +1007,6 @@ body {
   display: grid;
   place-items: center;
   z-index: 100005;
-}
-
-/* --- New Auth Modal Styles --- */
-.auth-modal-content {
-  background: white;
-  width: 90%;
-  max-width: 440px;
-  border-radius: 20px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
-}
-
-.auth-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #9ca3af;
-  cursor: pointer;
-  z-index: 10;
-  transition: color 0.2s;
-}
-
-.auth-close:hover {
-  color: var(--ink);
-}
-
-.auth-gear-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24px;
-  align-self: center;
-}
-
-.auth-logo-spin {
-  animation: spinGear 3s linear infinite;
-  color: var(--forest);
-}
-
-@keyframes spinGear {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.auth-title {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--ink);
-  margin: 0 0 8px;
-  line-height: 1.2;
-}
-
-.auth-subtitle {
-  font-size: 15px;
-  color: var(--muted);
-  margin: 0 0 32px;
-}
-
-.auth-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.auth-input-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.auth-input-field {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 15px;
-  outline: none;
-  background: white;
-  transition: all 0.2s;
-}
-
-.auth-input-field:focus {
-  border-color: var(--forest);
-  box-shadow: 0 0 0 1px var(--forest);
-}
-
-.auth-submit-btn {
-  width: 100%;
-  background: var(--forest);
-  color: white;
-  border: none;
-  padding: 14px;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 16px;
-  margin-bottom: 24px;
-  transition: all 0.2s;
-}
-
-.auth-submit-btn:hover:not(:disabled) {
-  background: #114a34;
-}
-
-.auth-submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 
 .modal {
@@ -1190,25 +1149,51 @@ body {
     height: 100vh;
   }
 
-  /* Mechanic list bottom sheet */
-  .mechanic-list-panel {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    top: auto;
-    width: 100%;
-    height: 52vh; /* Cover bottom half */
-    border-radius: 32px 32px 0 0;
-    background: var(--cream);
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
-  }
-
   /* Make map wrapper fill entire screen behind the panel */
   .map-container-wrapper {
     height: 100vh !important;
   }
-  
+
+  /* iOS Safari auto-zooms the whole page on focus for any input/textarea
+     rendered under 16px — bump them all to 16px so focusing a field never
+     triggers that zoom-in/zoom-out jump. */
+  .search-input-box input,
+  .modal input,
+  .rate-textarea {
+    font-size: 16px;
+  }
+
+  /* Filters becomes a bottom sheet on mobile instead of a floating dropdown */
+  .filter-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1001;
+  }
+
+  .filter-popup {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 24px 24px 0 0;
+    padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
+    z-index: 1002;
+    transform-origin: center bottom;
+    animation: filterSheetUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  @keyframes filterSheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+
   /* Mobile floating controls */
   .mobile-map-controls {
     display: block;
@@ -1223,7 +1208,7 @@ body {
   .mobile-hamburger {
     position: absolute;
     top: 0;
-    left: 20px;
+    left: 8px;
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -1241,7 +1226,7 @@ body {
   .mobile-map-actions {
     position: absolute;
     top: 0;
-    right: 20px;
+    right: 8px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -1417,7 +1402,7 @@ body {
   background: #000000;
   color: white;
   border: none;
-  border-radius: 16px;
+  border-radius: 999px;
   padding: 16px;
   font-size: 16px;
   font-weight: 600;
@@ -1504,15 +1489,258 @@ body {
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
-}/* --- GOOGLE AUTH MODAL --- */
+}
+
+/* Detail panel: Overview sections */
+.overview-section {
+  margin-bottom: 20px;
+}
+
+.overview-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.overview-section h3 svg {
+  color: var(--forest);
+}
+
+.overview-section p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.specialty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.specialty-tag {
+  background: #f0fdf4;
+  color: var(--forest);
+  border: 1px solid #d1fae5;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Detail panel: Products / Services / Packages list */
+.item-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-row-main strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.item-row-description {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.item-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.item-row-duration {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.item-row-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--forest);
+}
+
+/* Detail panel: Fuel Prices */
+.fuel-price-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.fuel-price-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.fuel-price-row:last-child {
+  border-bottom: none;
+}
+
+.fuel-price-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fuel-price-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.fuel-price-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--forest);
+}
+
+.fuel-price-unit {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Detail panel: Reviews summary */
+.reviews-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reviews-summary-score {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.reviews-summary-stars {
+  display: flex;
+  gap: 3px;
+  color: #fb923c;
+}
+
+.reviews-summary-count {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Detail panel: Media */
+.media-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.media-filter-pill {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.media-filter-pill.active {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: white;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.media-tile {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.15;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  background: #eee;
+}
+
+.media-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-tile-label {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.6);
+}
+/* --- GOOGLE AUTH MODAL --- */
 .auth-modal-content {
-  background: white;
-  width: 90%;
-  max-width: 400px;
-  border-radius: 24px;
+  width: 555px;
+  max-width: 92vw;
+  height: 481px;
+  max-height: 90vh;
+  border-radius: 50px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  background: linear-gradient(135deg, #fef9c3 0%, #fefce8 30%, #fafafa 60%, #fef9c3 100%);
+  background-size: 250% 250%;
+  animation: authGradientMotion 14s ease-in-out infinite;
+  outline: 1px solid rgba(255, 255, 255, 0.8);
+  outline-offset: -1px;
+  box-shadow:
+    0 17px 86px rgba(0, 0, 0, 0.1),
+    inset -2px -4px 20px rgba(255, 255, 255, 0.5),
+    inset 2px 4px 20px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes authGradientMotion {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
 }
 
 .auth-close {
@@ -1521,7 +1749,7 @@ body {
   right: 16px;
   background: white !important;
   color: var(--ink) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -1534,17 +1762,47 @@ body {
 }
 
 .auth-header-graphics {
-  height: 140px;
-  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  position: relative;
-  padding-bottom: 0;
-  margin-bottom: 24px;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.auth-deco {
+  position: absolute;
+  object-fit: contain;
+}
+
+.auth-deco-big {
+  width: 38%;
+  top: -12%;
+  left: -4%;
+}
+
+.auth-deco-top-center {
+  width: 32%;
+  top: 2%;
+  left: 40%;
+  transform: rotate(17.75deg);
+}
+
+.auth-deco-top-right {
+  width: 23%;
+  top: 11%;
+  left: 84%;
+}
+
+.auth-deco-bottom-left {
+  width: 20%;
+  top: 21%;
+  left: -7%;
+  transform: rotate(6deg);
 }
 
 .auth-logo-box {
+  position: absolute;
+  top: 30%;
+  left: 46%;
   width: 56px;
   height: 56px;
   border-radius: 16px;
@@ -1554,20 +1812,25 @@ body {
   justify-content: center;
   box-shadow: 0 8px 16px rgba(21, 94, 66, 0.2);
   z-index: 2;
-  transform: translateY(28px);
 }
 
 .auth-body {
-  padding: 0 32px 32px 32px;
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 43% 40px 32px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .auth-body h2 {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 600;
   line-height: 1.3;
   color: var(--ink);
-  margin: 32px 0 24px 0;
+  margin: 0 0 28px;
 }
 
 .google-auth-btn {
@@ -1576,20 +1839,27 @@ body {
   justify-content: center;
   gap: 12px;
   width: 100%;
+  max-width: 320px;
+  height: 48px;
   background: var(--forest);
   color: white;
   border: none;
-  border-radius: 16px;
-  padding: 12px 16px;
-  font-size: 15px;
+  border-radius: 24px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: 24px;
+  box-shadow: 0 8px 20px -4px rgba(69, 76, 224, 0.38);
+  margin-bottom: 20px;
 }
 
-.google-auth-btn:hover {
+.google-auth-btn:hover:not(:disabled) {
   background: #0d402b;
+}
+
+.google-auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .google-icon-wrapper {
@@ -1600,13 +1870,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.google-auth-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
 }
 
 .auth-terms {
   font-size: 11px;
-  color: #9ca3af;
+  color: rgba(0, 0, 0, 0.4);
   line-height: 1.5;
-  margin: 0;
+  margin: auto 0 0;
 }
 
 /* --- Sidebar user avatar --- */
@@ -1649,22 +1927,31 @@ body {
     width: 100%;
     height: 100%;
     max-width: none;
+    max-height: none;
     border-radius: 0;
-    display: flex;
-    flex-direction: column;
+    outline: none;
     box-shadow: none;
+    animation-duration: 20s;
   }
-  
+
   .auth-header-graphics {
-    height: 35vh;
-    margin-bottom: 32px;
+    inset: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--vh, 1vh) * 32);
   }
-  
+
+  .auth-logo-box {
+    top: calc(var(--vh, 1vh) * 32 - 28px);
+  }
+
   .auth-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    padding: calc(var(--vh, 1vh) * 32 + 32px) 24px 32px;
+  }
+
+  .auth-terms {
+    margin: 24px 0 0;
   }
 
   .auth-close {
@@ -1673,9 +1960,30 @@ body {
   }
 }
 
-/* Desktop: hide nav-text by default */
+/* Desktop: nav-text becomes a hover tooltip anchored to the cursor's button */
 .nav-text {
-  display: none;
+  display: block;
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  background: var(--ink);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+
+.nav-btn:hover .nav-text,
+.auth-btn:hover .nav-text {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
 }
 
 /* Mobile Controls & Sidebar Overlay */
@@ -1797,8 +2105,15 @@ body {
 
   .nav-text {
     display: block;
+    position: static;
+    transform: none;
+    background: none;
+    color: inherit;
     font-size: 14px;
     font-weight: 500;
+    padding: 0;
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .sidebar-bottom {
@@ -1822,18 +2137,22 @@ body {
   }
   /* Remove old mobile sidebar styles */
 
-  /* Bottom Sheet MechanicListPanel */
+  /* Bottom Sheet MechanicListPanel - floats above the map on all sides */
   .mechanic-list-panel {
     position: fixed;
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 90vh; /* Max height when fully expanded */
-    border-radius: 24px 24px 0 0;
+    top: -24%;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    height: calc(var(--vh, 1vh) * 90); /* Max height when fully expanded */
+    border-radius: 28px;
     z-index: 1000;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+    outline: 1px solid rgba(0, 0, 0, 0.1);
+    outline-offset: -1px;
+    box-shadow:
+      0 4px 4px -4px rgba(12, 12, 13, 0.05),
+      0 16px 32px -4px rgba(12, 12, 13, 0.1);
     /* By default, transition the transform for snapping */
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     transform: translateY(calc(100% - 150px)); /* Minimized state default */
@@ -1849,7 +2168,7 @@ body {
     height: 5px;
     background: #d1d5db;
     border-radius: 4px;
-    margin: 12px auto 8px;
+    margin: 0px auto 16px;
     display: block;
   }
 
@@ -1864,7 +2183,7 @@ body {
 
   .mechanic-detail-panel {
     position: fixed;
-    top: 15vh;
+    top: calc(var(--vh, 1vh) * 7);
     bottom: 0;
     left: 16px;
     right: 16px;
@@ -1880,9 +2199,10 @@ body {
   }
 
   .close-panel-btn {
-    position: fixed;
-    top: 40px;
-    left: 20px;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    left: auto;
     z-index: 10002;
     background: white;
     color: var(--ink);
@@ -2143,7 +2463,7 @@ body {
     bottom: 0;
     top: auto;
     width: 100%;
-    height: 90vh;
+    height: calc(var(--vh, 1vh) * 90);
     border-radius: 24px 24px 0 0;
     animation: slideUp 0.3s ease-out;
   }
@@ -2180,6 +2500,147 @@ body {
 @keyframes mapPulse {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(2); opacity: 0; }
+}
+
+/* Category Markers */
+.category-marker-icon {
+  overflow: visible !important;
+  background: transparent;
+  border: 0;
+}
+
+.category-marker-card {
+  --category-color: var(--marker-mechanic);
+  position: relative;
+  display: flex;
+  width: 190px;
+  min-height: 82px;
+  flex-direction: column;
+  align-items: center;
+  color: var(--category-color);
+  pointer-events: auto;
+  transform: scale(var(--map-marker-scale));
+  transform-origin: 50% 58%;
+  transition: transform 0.18s ease;
+}
+
+.category-marker-card--mechanic { --category-color: var(--marker-mechanic); }
+.category-marker-card--detailer { --category-color: var(--marker-detailer); }
+.category-marker-card--fuel { --category-color: var(--marker-fuel); }
+.category-marker-card--parts { --category-color: var(--marker-parts); }
+
+.category-marker-head {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.22);
+  transition: width 0.18s ease, height 0.18s ease, box-shadow 0.18s ease;
+}
+
+.category-marker-head::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: 4px 4px 10px rgba(17, 24, 39, 0.12);
+  z-index: -1;
+}
+
+.category-marker-avatar {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--category-color);
+  overflow: hidden;
+  transition: width 0.18s ease, height 0.18s ease;
+}
+
+.category-marker-avatar svg {
+  width: 15px;
+  height: 15px;
+}
+
+.category-marker-dot {
+  width: 11px;
+  height: 11px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--category-color);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(17, 24, 39, 0.22);
+  transition: width 0.18s ease, height 0.18s ease, margin-top 0.18s ease;
+}
+
+.category-marker-label {
+  max-width: 180px;
+  margin-top: 3px;
+  color: var(--category-color);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 0 #fff,
+    1px 0 0 #fff,
+    -1px 0 0 #fff,
+    0 -1px 0 #fff,
+    0 2px 8px rgba(255, 255, 255, 0.95);
+  transition: font-size 0.18s ease, max-width 0.18s ease;
+}
+
+.category-marker-card:hover,
+.category-marker-card--selected {
+  z-index: 2;
+}
+
+.category-marker-card:hover .category-marker-head,
+.category-marker-card--selected .category-marker-head {
+  width: 86px;
+  height: 86px;
+  box-shadow: 0 14px 34px rgba(17, 24, 39, 0.24);
+}
+
+.category-marker-card:hover .category-marker-head::after,
+.category-marker-card--selected .category-marker-head::after {
+  bottom: -10px;
+  width: 20px;
+  height: 20px;
+}
+
+.category-marker-card:hover .category-marker-avatar,
+.category-marker-card--selected .category-marker-avatar {
+  width: 68px;
+  height: 68px;
+}
+
+.category-marker-card:hover .category-marker-avatar svg,
+.category-marker-card--selected .category-marker-avatar svg {
+  width: 42px;
+  height: 42px;
+}
+
+.category-marker-card:hover .category-marker-dot,
+.category-marker-card--selected .category-marker-dot {
+  width: 15px;
+  height: 15px;
+  margin-top: 8px;
+}
+
+.category-marker-card:hover .category-marker-label,
+.category-marker-card--selected .category-marker-label {
+  max-width: 240px;
+  font-size: 18px;
 }
 
 /* Detailers thumbnails */
@@ -2221,4 +2682,3 @@ body {
   border-color: var(--forest);
   box-shadow: 0 0 0 4px rgba(21,94,66,0.1);
 }
-

@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { MagnifyingGlass, Faders, BookmarkSimple, Star, ShareNetwork, MapPin, Phone, Heart } from '@phosphor-icons/react';
+import { Heart } from '@phosphor-icons/react';
 import { collectionGroup, getDocs, query, limit } from 'firebase/firestore';
 import { db } from '../firebase';
+import {
+  BookmarkIcon,
+  CallIcon,
+  FilterIcon,
+  LocationIcon,
+  RateIcon,
+  SearchIcon,
+  ShareIcon,
+  StarRatingIcon,
+} from './icons';
 
 const MOCK_DETAILERS = [
   { id: 1, name: 'Aura Detailers', area: 'Asafo, Kumasi', rating: 4.6, open: true },
@@ -87,7 +97,7 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
         
         <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
           <div className="search-input-box">
-            <MagnifyingGlass size={18} className="search-icon" weight="bold" />
+            <SearchIcon size={18} className="search-icon" />
             <input 
               ref={searchRef}
               type="text" 
@@ -116,7 +126,7 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
                     onClose();
                   }}
                 >
-                  <MagnifyingGlass size={14} className="suggestion-icon" />
+                  <SearchIcon size={14} className="suggestion-icon" />
                   <span className="suggestion-text">{s.value}</span>
                   <span className="suggestion-type">{s.type}</span>
                 </div>
@@ -126,7 +136,7 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
 
           <div className="filter-container" ref={filterRef}>
             <button type="button" className="filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-              <Faders size={18} />
+              <FilterIcon size={18} />
             </button>
             {isFilterOpen && (
               <div className="filter-popup">
@@ -186,7 +196,7 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
                     <span className="avatar-letter">{m.name.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="sm-rating-badge">
-                    {m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <Star size={10} weight="fill" />
+                    {m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <StarRatingIcon size={10} state="filled" />
                   </div>
                   <div className="sm-status-badge">Open</div>
                 </div>
@@ -198,12 +208,12 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
                     className={`icon-btn ${savedMechanics.includes(m.id) ? 'active' : ''}`}
                     onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
                   >
-                    <BookmarkSimple size={14} weight={savedMechanics.includes(m.id) ? "fill" : "regular"} />
+                    <BookmarkIcon size={14} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} />
                   </button>
-                  <button className="icon-btn"><Star size={14} /></button>
-                  <button className="icon-btn"><ShareNetwork size={14} /></button>
-                  <button className="icon-btn"><MapPin size={14} /></button>
-                  <button className="icon-btn"><Phone size={14} /></button>
+                  <button className="icon-btn"><RateIcon size={14} /></button>
+                  <button className="icon-btn"><ShareIcon size={14} /></button>
+                  <button className="icon-btn"><LocationIcon size={14} /></button>
+                  <button className="icon-btn"><CallIcon size={14} /></button>
                 </div>
               </div>
             ))}
@@ -250,17 +260,17 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
                   <div className="sm-avatar" style={{backgroundColor: '#e5e7eb', color: '#000'}}>
                     <span className="avatar-letter">{d.name.charAt(0).toUpperCase()}</span>
                   </div>
-                  <div className="sm-rating-badge">{d.rating.toFixed(1)} <Star size={10} weight="fill" /></div>
+                  <div className="sm-rating-badge">{d.rating.toFixed(1)} <StarRatingIcon size={10} state="filled" /></div>
                   <div className="sm-status-badge">Open</div>
                 </div>
                 <h4>{d.name}</h4>
                 <p>{d.area}</p>
                 <div className="sm-actions" style={{marginTop: '16px'}}>
-                  <button className="icon-btn"><BookmarkSimple size={14} /></button>
-                  <button className="icon-btn"><Star size={14} /></button>
-                  <button className="icon-btn"><ShareNetwork size={14} /></button>
-                  <button className="icon-btn"><MapPin size={14} /></button>
-                  <button className="icon-btn"><Phone size={14} /></button>
+                  <button className="icon-btn"><BookmarkIcon size={14} /></button>
+                  <button className="icon-btn"><RateIcon size={14} /></button>
+                  <button className="icon-btn"><ShareIcon size={14} /></button>
+                  <button className="icon-btn"><LocationIcon size={14} /></button>
+                  <button className="icon-btn"><CallIcon size={14} /></button>
                 </div>
               </div>
             ))}
