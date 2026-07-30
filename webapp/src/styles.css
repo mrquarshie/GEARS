@@ -1,7 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
 :root {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', ui-sans-serif, system-ui, sans-serif;
   color: #17211c;
   background: #fffcf5;
   --forest: #155e42;
@@ -203,31 +201,53 @@ body {
   flex-direction: column;
 }
 
-/* When a mechanic is selected on desktop, the detail panel takes over instead
-   of showing side-by-side with the list. Mobile is unaffected (media-scoped)
-   since the detail panel is already a full-screen overlay there. */
-@media (min-width: 769px) {
-  .mechanic-list-panel--hidden-desktop {
-    display: none;
-  }
+/* When a mechanic is selected, the detail panel (or its collapsed mobile peek bar)
+   takes over instead of showing side-by-side with the list. On mobile this matters
+   once the detail panel is collapsed to a peek bar — the list would otherwise show
+   through the gap above it. */
+.mechanic-list-panel--hidden-desktop {
+  display: none;
 }
 
-.list-header {
-  padding: 24px 24px 16px;
+.list-drag-strip {
+  flex-shrink: 0;
 }
 
-.list-header h1 {
+.mechanic-list-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-title {
   margin: 0 0 16px;
+  padding: 24px 24px 0;
   font-size: 28px;
   font-weight: 800;
   line-height: 1.1;
   color: var(--forest);
 }
 
+/* Sticky "silver" search bar: sits in normal flow under the title at rest, then
+   pins to the top of .mechanic-list-scroll once the title scrolls past it. */
+.search-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  /* background: var(--cream); */
+  padding: 0 24px 16px;
+}
+
+@media (min-width: 769px) {
+  .search-sticky-bar {
+    padding-top: 8px;
+  }
+}
+
 .search-bar-wrapper {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
   position: relative;
 }
 
@@ -474,6 +494,7 @@ body {
 .list-meta {
   display: flex;
   justify-content: space-between;
+  padding: 0 24px;
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
@@ -534,11 +555,17 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 16px 0;
+  margin: 16px 24px;
   padding: 12px;
   border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   background-color: #fafafa;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.location-banner:hover {
+  background-color: #f3f4f6;
 }
 
 .location-icon-wrapper {
@@ -564,9 +591,24 @@ body {
   color: var(--muted);
 }
 
+.location-banner--scanning {
+  cursor: default;
+}
+
+.scanning-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(21, 94, 66, 0.15);
+  border-top-color: var(--forest);
+  border-radius: 50%;
+  animation: gears-spin 0.8s linear infinite;
+}
+
+@keyframes gears-spin {
+  to { transform: rotate(360deg); }
+}
+
 .mechanic-cards {
-  flex: 1;
-  overflow-y: auto;
   padding: 0 24px 24px;
   display: flex;
   flex-direction: column;
@@ -578,11 +620,13 @@ body {
   outline: 1px solid rgba(0, 0, 0, 0.05);
   outline-offset: -1px;
   border-radius: 16px;
-  padding: 16px;
   background: #ffffff;
   cursor: pointer;
   box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .mechanic-card:hover {
@@ -590,152 +634,362 @@ body {
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
-.card-top {
+.card-body {
+  padding: 16px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.card-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.card-area {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 400;
+}
+
+.card-specialty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--forest);
+  font-weight: 500;
+  background: #f0fdf4;
+  border-radius: 999px;
+  padding: 2px 10px 2px 8px;
+  display: inline-flex;
+  align-self: flex-start;
+}
+
+/* Featured products row in shop cards */
+.card-featured-products {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.featured-product {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 128px;
+  flex-shrink: 0;
+}
+
+.featured-product-image {
+  width: 128px;
+  height: 112px;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.featured-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.featured-product-name {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.featured-product-price {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Bottom action bar in cards */
+.card-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: auto;
+}
+
+.card-bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.card-bottom-icon,
+.card-bottom-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #fafafa;
+  border: none;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
+  color: var(--ink);
+  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
+  transition: all 0.2s;
+}
+
+.card-bottom-icon {
+  width: 36px;
+  padding: 0;
+}
+
+.card-bottom-action {
+  padding: 0 10px;
+  gap: 6px;
+}
+
+.card-bottom-icon:hover,
+.card-bottom-action:hover {
+  background: #f3f4f6;
+}
+
+.card-bottom-icon.active {
+  outline: 2px solid var(--forest);
+  outline-offset: -2px;
+  background: #f0fdf4;
+}
+
+/* Fuel card styles */
+.fuel-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
 }
 
-.avatar-placeholder {
+.fuel-card-logo {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--forest);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  border: 1px solid white;
+  object-fit: contain;
 }
 
-.card-top-right {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.distance,
-.rating-badge {
+.fuel-distance-badge {
   display: flex;
   align-items: center;
   gap: 4px;
   background: #fafafa;
   border: 0.5px solid rgba(0, 0, 0, 0.1);
-  border-radius: 999px;
-  padding: 2px 6px;
-}
-
-.distance {
+  border-radius: 24px;
+  padding: 2px 8px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--ink);
 }
 
-.rating-badge {
-  color: #f59e0b;
+.fuel-price-chips {
+  display: flex;
+  gap: 8px;
 }
 
-.status-badge {
-  background: #d1fae5;
-  color: var(--forest);
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-}
-
-.mechanic-name {
-  margin: 0 0 4px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.mechanic-area {
-  margin: 0 0 8px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.mechanic-specialty {
-  display: inline-flex;
+.fuel-price-chip {
+  display: flex;
   align-items: center;
   gap: 4px;
-  margin: 0 0 12px;
-  font-size: 13px;
-  color: var(--forest);
-  font-weight: 600;
-  background: #fafafa;
-  border-radius: 999px;
-  padding: 2px 10px 2px 8px;
-}
-
-.card-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-top: 12px;
-  margin-top: 4px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.card-actions-left {
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-width: 0;
-}
-
-.icon-group {
-  display: flex;
-  gap: 8px;
-}
-
-.card-actions-divider {
-  width: 1px;
-  align-self: stretch;
-  margin: 0 4px;
-  background: rgba(0, 0, 0, 0.05);
-}
-
-/* Scoped to override the shared .icon-btn/.action-btn rules further down
-   this file (used by the detail panel) without affecting that context. */
-.mechanic-card .icon-btn,
-.mechanic-card .action-btn {
-  background: #fafafa;
-  border: none;
-  outline: 1px solid rgba(0, 0, 0, 0.05);
-  outline-offset: -1px;
+  background: rgba(244, 244, 245, 0.8);
   border-radius: 12px;
-  width: 36px;
-  height: 36px;
-  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
-  color: var(--ink);
+  outline: 0.5px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -0.5px;
+  padding: 4px 8px;
 }
 
-.mechanic-card .icon-btn:hover,
-.mechanic-card .action-btn:hover {
-  background: #f3f4f6;
+.fuel-price-label {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.7);
 }
 
-.mechanic-card .icon-btn.active {
-  background: #f0fdf4;
-  outline: 2px solid var(--forest);
-  outline-offset: -2px;
+.fuel-price-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--forest);
 }
 
-.mechanic-card .action-btn {
-  width: auto;
-  gap: 6px;
-  padding: 0 14px;
-  font-size: 13px;
+.fuel-price-diesel {
+  color: #3b5bfd;
+}
+
+.fuel-delivery-btn {
+  position: relative;
+}
+
+.delivery-soon-pill {
+  font-size: 10px;
   font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-left: 2px;
+  outline: 1px solid rgba(245, 158, 11, 0.3);
+  outline-offset: -1px;
 }
 
-.action-group {
+.card-bottom-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.card-action-label {
+  display: inline;
+}
+
+/* Hide scroll indicators on mobile */
+@media (max-width: 768px) {
+  .card-action-label {
+    display: none;
+  }
+
+  .mechanic-list-scroll,
+  .detail-scroll,
+  .mechanic-detail-panel,
+  .search-content-scroll,
+  .card-featured-products,
+  .popular-products-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mechanic-list-scroll::-webkit-scrollbar,
+  .detail-scroll::-webkit-scrollbar,
+  .mechanic-detail-panel::-webkit-scrollbar,
+  .search-content-scroll::-webkit-scrollbar,
+  .card-featured-products::-webkit-scrollbar,
+  .popular-products-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Popular Products carousel (auto dealers page) */
+.popular-products-section {
+  padding: 0 16px 12px;
+}
+
+.popular-products-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 0 8px;
+}
+
+.popular-products-scroll {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.popular-products-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.popular-product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.popular-product-image {
+  width: 160px;
+  height: 144px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.popular-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popular-product-bookmark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.popular-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popular-product-shop {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.7);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popular-product-from {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.popular-product-name {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.popular-product-price {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
 }
 
 /* Mechanic Detail Panel */
@@ -746,8 +1000,10 @@ body {
   width: 480px;
   bottom: 24px;
   background: #ffffff;
-  border-radius: 24px;
+  border-radius: 32px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -762,81 +1018,52 @@ body {
 
 .close-panel-btn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(255,255,255,0.8);
+  top: 12px;
+  right: 12px;
+  background: #ffffff;
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 2;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 20;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
 }
 
-.detail-cover {
-  height: 180px;
-  background: #f6efe1; /* cream/yellowish cover */
+.close-panel-btn:hover {
+  background: #f3f4f6;
+}
+
+.detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Hero section — neutral-50 background with avatar, name, area, and tabs */
+.detail-hero {
+  background: #fafafa;
+  padding: 0;
   position: relative;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
 }
 
-.rating-badge-large {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  border-radius: 8px;
+.detail-hero-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ffffff;
+  margin: 12px 0 0 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-width: 50px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.rating-score {
-  font-weight: 800;
-  font-size: 13px;
-  background: var(--forest);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 5px 8px;
 }
 
-.rating-count {
-  font-size: 10px;
-  text-align: center;
-  background: var(--ink);
-  color: #d1d5db;
-  padding: 4px 8px;
-}
-
-.detail-header {
-  padding: 0 24px 24px;
-  position: relative;
-}
-
-.detail-avatar-container {
-  margin-top: -30px;
-  margin-bottom: 16px;
-}
-
-.detail-avatar {
-  width: 64px;
-  height: 64px;
-  background: white;
-  border-radius: 50%;
-  padding: 4px;
-}
-
-.detail-avatar .avatar-letter {
+.detail-hero-avatar-letter {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -844,27 +1071,42 @@ body {
   height: 100%;
   background: var(--ink);
   color: white;
-  border-radius: 50%;
   font-size: 24px;
   font-weight: 800;
+  border-radius: 50%;
 }
 
-.detail-name {
-  margin: 0 0 4px;
-  font-size: 22px;
+.avatar-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  color: white;
+  font-size: 20px;
   font-weight: 800;
+  border-radius: 50%;
 }
 
-.detail-area {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
+.detail-hero-name {
+  margin: 8px 14px 3px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.detail-hero-area {
+  margin: 0 14px;
+  color: rgba(0,0,0,0.4);
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .creator-actions {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
+  margin: 12px 14px 0;
 }
 
 .edit-btn, .delete-btn {
@@ -888,20 +1130,21 @@ body {
 
 .detail-tabs {
   display: flex;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--border);
-  gap: 24px;
+  padding: 12px 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  gap: 4px;
 }
 
 .tab-btn {
   background: transparent;
   border: none;
-  padding: 12px 0;
+  padding: 10px 12px 10px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--muted);
+  color: rgba(0,0,0,0.6);
   cursor: pointer;
   position: relative;
+  white-space: nowrap;
 }
 
 .tab-btn.active {
@@ -911,90 +1154,187 @@ body {
 .tab-btn.active::after {
   content: '';
   position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
   height: 2px;
   background: var(--forest);
+  border-radius: 2px 2px 0 0;
 }
 
 .detail-content {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
+  padding: 0;
 }
 
-.coming-soon {
+.tab-content {
+  padding: 0 16px 16px;
+}
+
+.overview-tab {
+  padding: 0;
+}
+
+.empty-tab-text {
   color: var(--muted);
-  font-style: italic;
   text-align: center;
-  margin-top: 40px;
+  padding: 24px 16px;
+  font-size: 14px;
 }
 
-.rate-this-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--forest);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
+/* Info rows — used in Overview tab */
+.info-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
-.detail-bottom-bar {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
+.info-row--last {
+  border-bottom: none;
+}
+
+.info-row-header {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: rgba(0,0,0,0.5);
+}
+
+.info-row-label {
+  font-size: 14px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  text-transform: uppercase;
+}
+
+.info-row-text {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Specialty tags */
+.specialty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.specialty-tag {
+  background: #fafafa;
+  color: var(--forest);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Bottom action bar */
+.detail-bottom-bar {
+  padding: 12px;
+  background: #fafafa;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .detail-bottom-left {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .detail-bottom-right {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
-.icon-btn, .action-btn {
+.detail-bottom-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(0,0,0,0.05);
+  flex-shrink: 0;
+}
+
+.bottom-icon-btn,
+.bottom-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 40px;
   border-radius: 12px;
   font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #ffffff;
+  border: none;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+  color: var(--ink);
+  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
+  transition: all 0.2s;
+}
+
+.bottom-icon-btn {
+  width: 40px;
+  padding: 0;
+}
+
+.bottom-action-btn {
+  padding: 0 12px;
+  gap: 6px;
+}
+
+.bottom-icon-btn:hover,
+.bottom-action-btn:hover {
+  background: #f3f4f6;
+}
+
+.bottom-icon-btn.active {
+  outline: 2px solid var(--forest);
+  outline-offset: -2px;
+}
+
+/* Shared icon/action buttons for cards (used in MechanicListPanel & SearchPanel) */
+.icon-btn, .action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  border: none;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
   color: var(--ink);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
   transition: all 0.2s;
 }
 
 .icon-btn {
-  width: 40px;
+  width: 36px;
 }
 
 .action-btn {
-  padding: 0 16px;
-  gap: 8px;
+  width: auto;
+  padding: 0 14px;
+  gap: 6px;
 }
 
 .icon-btn:hover, .action-btn:hover {
-  background: #f9fafb;
+  background: #f3f4f6;
 }
 
 .icon-btn.active {
   background: #f0fdf4;
-  border-color: var(--forest);
-  box-shadow: 0 0 0 1px var(--forest);
+  outline: 2px solid var(--forest);
+  outline-offset: -2px;
 }
 
 /* Modals */
@@ -1010,7 +1350,7 @@ body {
 }
 
 .modal {
-  background: white;
+  background: #fafaf9;
   padding: 32px;
   border-radius: 24px;
   width: 90%;
@@ -1278,7 +1618,7 @@ body {
 }
 
 .rate-modal-content {
-  background: #ffffff;
+  background: #fafaf9;
   border-radius: 24px;
   width: 90%;
   max-width: 440px;
@@ -1421,121 +1761,151 @@ body {
 
 /* Reviews list styles */
 .review-card {
-  border-bottom: 1px solid #f3f4f6;
-  padding: 16px 0;
+  background: #fafafa;
+  border-radius: 16px;
+  padding: 14px;
+  overflow: hidden;
 }
 
-.review-card:last-child {
-  border-bottom: none;
-}
-
-.review-header {
+.review-card-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .review-avatar {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #f3f4f6;
+  background: #ffedd5;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  color: var(--forest);
-}
-
-.review-meta {
-  flex: 1;
-}
-
-.review-author {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.review-date {
   font-size: 12px;
-  color: #9ca3af;
+  font-weight: 700;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+.review-card-author {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .review-stars {
   display: flex;
-  gap: 2px;
-  color: #fb923c;
+  gap: 3px;
+  color: #FF8D28;
+  flex-shrink: 0;
 }
 
 .review-comment {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #374151;
-  line-height: 1.5;
-}
-
-.review-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.review-tag-pill {
-  background: #f3f4f6;
-  color: #6b7280;
-  padding: 4px 10px;
-  border-radius: 12px;
+  margin: 0;
   font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.5;
+  font-weight: 400;
 }
 
-/* Detail panel: Overview sections */
-.overview-section {
-  margin-bottom: 20px;
+/* Detail panel: Items list */
+
+/* Product grid (2-column) */
+
+/* Service cards */
+.service-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.overview-section h3 {
+.service-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: 64px;
+  background: #fafafa;
+  border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
 }
 
-.overview-section h3 svg {
-  color: var(--forest);
+.service-card-body {
+  flex: 1;
+  min-width: 0;
 }
 
-.overview-section p {
+.service-card-name {
   margin: 0;
   font-size: 14px;
+  font-weight: 500;
   color: var(--ink);
-  line-height: 1.5;
 }
 
-.specialty-tags {
+.service-card-desc {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 400;
+}
+
+.service-card-price {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--forest);
+}
+
+/* Product grid (2-column) */
+.product-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.product-card {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
-.specialty-tag {
-  background: #f0fdf4;
-  color: var(--forest);
-  border: 1px solid #d1fae5;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 600;
+.product-card-image {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 24px;
+  overflow: hidden;
 }
 
-/* Detail panel: Products / Services / Packages list */
+.product-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.product-card-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.product-card-price {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+}
 .item-list {
   display: flex;
   flex-direction: column;
@@ -1635,17 +2005,18 @@ body {
 
 /* Detail panel: Reviews summary */
 .reviews-summary {
+  background: #fafafa;
+  border-radius: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .reviews-summary-score {
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 800;
   color: var(--ink);
   line-height: 1;
@@ -1654,12 +2025,23 @@ body {
 .reviews-summary-stars {
   display: flex;
   gap: 3px;
-  color: #fb923c;
+  color: #FF8D28;
 }
 
 .reviews-summary-count {
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.reviews-summary-muted {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* Detail panel: Media */
@@ -1726,21 +2108,13 @@ body {
   border-radius: 50px;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, #fef9c3 0%, #fefce8 30%, #fafafa 60%, #fef9c3 100%);
-  background-size: 250% 250%;
-  animation: authGradientMotion 14s ease-in-out infinite;
-  outline: 1px solid rgba(255, 255, 255, 0.8);
+  background: #fafaf9;
+  outline: 1px solid rgba(0, 0, 0, 0.06);
   outline-offset: -1px;
   box-shadow:
     0 17px 86px rgba(0, 0, 0, 0.1),
     inset -2px -4px 20px rgba(255, 255, 255, 0.5),
     inset 2px 4px 20px rgba(255, 255, 255, 0.6);
-}
-
-@keyframes authGradientMotion {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0% 0%; }
 }
 
 .auth-close {
@@ -1931,7 +2305,6 @@ body {
     border-radius: 0;
     outline: none;
     box-shadow: none;
-    animation-duration: 20s;
   }
 
   .auth-header-graphics {
@@ -2172,6 +2545,14 @@ body {
     display: block;
   }
 
+  .list-drag-strip {
+    padding: 12px 24px 0;
+  }
+
+  .list-title {
+    padding-top: 0;
+  }
+
   /* Mechanic Detail Panel Mobile Override */
   .mechanic-detail-overlay {
     position: fixed;
@@ -2198,6 +2579,63 @@ body {
     to { transform: translateY(0); }
   }
 
+  /* Peek bar shown after tapping Direction on mobile: collapses the full detail page
+     down to a small bar so the route drawn on the map is actually visible underneath. */
+  .mechanic-detail-collapsed {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 24px;
+    z-index: 10001;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    animation: slideUpMobile 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .detail-collapsed-info {
+    min-width: 0;
+    flex: 1;
+    cursor: pointer;
+  }
+
+  .detail-collapsed-name {
+    margin: 0 0 2px;
+    font-size: 16px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .detail-collapsed-area {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .detail-collapsed-close {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
   .close-panel-btn {
     position: absolute;
     top: 16px;
@@ -2220,12 +2658,6 @@ body {
 
   .detail-bottom-left, .detail-bottom-right {
     display: contents; /* Flattens children into the parent flex container */
-  }
-
-  .rating-badge-large {
-    bottom: 0;
-    right: 16px;
-    transform: translateY(50%); /* Matches screenshot layout */
   }
 
   /* Rate Modal Mobile Override */
@@ -2512,11 +2944,8 @@ body {
 .category-marker-card {
   --category-color: var(--marker-mechanic);
   position: relative;
-  display: flex;
   width: 190px;
-  min-height: 82px;
-  flex-direction: column;
-  align-items: center;
+  height: 82px;
   color: var(--category-color);
   pointer-events: auto;
   transform: scale(var(--map-marker-scale));
@@ -2529,8 +2958,27 @@ body {
 .category-marker-card--fuel { --category-color: var(--marker-fuel); }
 .category-marker-card--parts { --category-color: var(--marker-parts); }
 
+/* The dot is the marker's true anchor point (matches the Leaflet iconAnchor) and never
+   moves. The head is pinned to a fixed distance ABOVE it via `bottom`, so growing it on
+   hover/selection expands upward only — like Apple Maps — instead of pushing the dot. */
+.category-marker-dot {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  width: 11px;
+  height: 11px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--category-color);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(17, 24, 39, 0.22);
+  transition: width 0.18s ease, height 0.18s ease, top 0.18s ease;
+}
+
 .category-marker-head {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
   width: 34px;
   height: 34px;
   display: grid;
@@ -2538,6 +2986,7 @@ body {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 4px 14px rgba(17, 24, 39, 0.22);
+  transform: translateX(-50%);
   transition: width 0.18s ease, height 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -2570,20 +3019,12 @@ body {
   height: 15px;
 }
 
-.category-marker-dot {
-  width: 11px;
-  height: 11px;
-  margin-top: 6px;
-  border-radius: 50%;
-  background: var(--category-color);
-  border: 2px solid #fff;
-  box-shadow: 0 2px 5px rgba(17, 24, 39, 0.22);
-  transition: width 0.18s ease, height 0.18s ease, margin-top 0.18s ease;
-}
-
 .category-marker-label {
+  position: absolute;
+  left: 50%;
+  top: 54px;
   max-width: 180px;
-  margin-top: 3px;
+  transform: translateX(-50%);
   color: var(--category-color);
   font-size: 13px;
   font-weight: 800;
@@ -2632,9 +3073,9 @@ body {
 
 .category-marker-card:hover .category-marker-dot,
 .category-marker-card--selected .category-marker-dot {
+  top: 38px;
   width: 15px;
   height: 15px;
-  margin-top: 8px;
 }
 
 .category-marker-card:hover .category-marker-label,
@@ -2648,6 +3089,7 @@ body {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+  padding-inline: 0px;
 }
 
 .thumbnail-block {

@@ -66,11 +66,11 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             </button>
             <button
               className={`nav-btn ${viewMode === 'shop' && !isSearchPanelOpen ? 'active' : ''}`}
-              title="Car Part Shops"
+              title="Auto Parts Dealers"
               onClick={() => handleNavClick('shop')}
             >
               <ShopIcon size={20} state={viewMode === 'shop' && !isSearchPanelOpen ? 'filled' : 'default'} />
-              <span className="nav-text">Car Part Shops</span>
+              <span className="nav-text">Auto Parts Dealers</span>
             </button>
             <button
               className={`nav-btn ${viewMode === 'detailers' && !isSearchPanelOpen ? 'active' : ''}`}

@@ -767,6 +767,7 @@ function App() {
             searchRef={searchRef}
             onDirection={handleShowDirection}
             hideOnDesktop={!!selectedMechanic}
+            onUseMyLocation={() => setMapPanTrigger(Date.now())}
           />
         )}
 

@@ -39,13 +39,9 @@ const DEFAULT_LONGITUDE = -0.1870;
 const DEFAULT_LATITUDE = 5.6037;
 const DEFAULT_ZOOM = 15.95;
 const MAX_MAP_ZOOM = 20;
-// Zoom used when flying to a single selected marker (no route framing involved) —
-// kept well below MAX_MAP_ZOOM so selection doesn't zoom in past street-level context.
 const SELECT_ZOOM = 16;
-// Cap for the zoom leaflet is allowed to fit a route to, matching a comfortable
-// street-level view (similar to Apple/Google Maps route previews) instead of maxing out.
 const ROUTE_MAX_ZOOM = 16;
-const TRANSITION_DURATION = 500;
+const TRANSITION_DURATION = 300;
 
 function getCoordinate(value) {
   const coordinate = typeof value === 'string' ? Number(value) : value;
@@ -61,13 +57,18 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-function createCategoryIcon(mechanic, selected = false) {
+// Memoized cache for marker icons — avoids recreating L.divIcon on every render
+const iconCache = new Map();
+function getCategoryIcon(mechanic, selected = false) {
+  const key = `${mechanic.id}-${selected}`;
+  if (iconCache.has(key)) return iconCache.get(key);
+
   const category = getMechanicCategory(mechanic.specialty);
   const glyph = CATEGORY_GLYPH[category] || CATEGORY_GLYPH.mechanic;
   const name = escapeHtml(mechanic.name || 'Gears');
   const selectedClass = selected ? ' category-marker-card--selected' : '';
 
-  return L.divIcon({
+  const divIcon = L.divIcon({
     className: 'category-marker-icon',
     html: `
       <div class="category-marker-card category-marker-card--${category}${selectedClass}">
@@ -82,21 +83,30 @@ function createCategoryIcon(mechanic, selected = false) {
     iconAnchor: [95, 48],
     popupAnchor: [0, -50],
   });
+
+  iconCache.set(key, divIcon);
+  return divIcon;
+}
+
+// Clear stale entries from the icon cache to prevent memory leaks
+function pruneIconCache(activeIds) {
+  const idSet = new Set(activeIds);
+  for (const key of iconCache.keys()) {
+    const id = key.split('-')[0];
+    if (!idSet.has(id)) iconCache.delete(key);
+  }
 }
 
 // Component to handle map centering when a mechanic is selected
 function MapCenterer({ center, userLocation, mapPanTrigger, routeActive }) {
   const map = useMap();
 
-  // Center on mechanic selection — skipped while a route is active, since RouteFitter
-  // owns framing in that case (racing both here caused the map to over-zoom).
   useEffect(() => {
     if (center && !routeActive) {
       map.flyTo(center, SELECT_ZOOM, { animate: true, duration: TRANSITION_DURATION / 1000 });
     }
   }, [center, map, routeActive]);
 
-  // Center on user location when requested (or initial load)
   useEffect(() => {
     if (mapPanTrigger > 0 && userLocation) {
       map.flyTo([userLocation.lat, userLocation.lng], DEFAULT_ZOOM, { animate: true, duration: TRANSITION_DURATION / 1000 });
@@ -106,8 +116,6 @@ function MapCenterer({ center, userLocation, mapPanTrigger, routeActive }) {
   return null;
 }
 
-// Frames the map to show the full route. Prefers the actual routed path's bounds
-// (once fetched) over the raw two-point bounds, so the whole road path stays in view.
 function RouteFitter({ userLocation, routeTarget, routePath }) {
   const map = useMap();
 
@@ -147,10 +155,17 @@ const UserLocationIcon = L.divIcon({
   iconAnchor: [12, 12]
 });
 
+// We use a single CARTO Voyager tile layer (with labels) instead of two separate
+// layers (nolabels + only_labels), halving the tile requests.
+const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const TILE_SUBDOMAINS = 'abcd';
+const TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
 export default function MapLayout({ mechanics, selectedMechanic, onSelectMechanic, userLocation, mapPanTrigger, routeTarget }) {
   const defaultCenter = [DEFAULT_LATITUDE, DEFAULT_LONGITUDE];
   const [mapCenter, setMapCenter] = useState(null);
   const [routePath, setRoutePath] = useState(null);
+
   const mappedMechanics = useMemo(
     () => mechanics
       .map((m) => ({
@@ -162,6 +177,11 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
     [mechanics],
   );
 
+  // Prune icon cache when mechanic set changes
+  useEffect(() => {
+    pruneIconCache(mappedMechanics.map((m) => m.id));
+  }, [mappedMechanics]);
+
   useEffect(() => {
     const lat = getCoordinate(selectedMechanic?.lat);
     const lng = getCoordinate(selectedMechanic?.lng);
@@ -170,31 +190,69 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
     }
   }, [selectedMechanic]);
 
-  // Fetch the real road-network path between the user and the route target (OSRM's
-  // public routing API), instead of drawing a straight as-the-crow-flies line.
+  // Fetch the real road-network path between the user and the route target.
+  // Debounced: only fires if userLocation + routeTarget stay stable for 150ms,
+  // preventing rapid-fire API calls during map interaction.
   useEffect(() => {
     if (!userLocation || !routeTarget) {
       setRoutePath(null);
       return;
     }
+
     let cancelled = false;
-    const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${routeTarget.lng},${routeTarget.lat}?overview=full&geometries=geojson`;
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return;
-        const coords = data?.routes?.[0]?.geometry?.coordinates;
-        if (Array.isArray(coords) && coords.length > 0) {
-          setRoutePath(coords.map(([lng, lat]) => [lat, lng]));
-        } else {
-          setRoutePath(null);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setRoutePath(null);
-      });
-    return () => { cancelled = true; };
+    // Debounce — wait 150ms of stability before fetching
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${routeTarget.lng},${routeTarget.lat}?overview=full&geometries=geojson`;
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          if (cancelled) return;
+          const coords = data?.routes?.[0]?.geometry?.coordinates;
+          if (Array.isArray(coords) && coords.length > 0) {
+            setRoutePath(coords.map(([lng, lat]) => [lat, lng]));
+          } else {
+            setRoutePath(null);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setRoutePath(null);
+        });
+    }, 150);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [userLocation, routeTarget]);
+
+  // Memoize the marker elements to avoid recreating the array on every render
+  const markerElements = useMemo(() =>
+    mappedMechanics.map((m) => (
+      <Marker
+        key={m.id}
+        position={[m.lat, m.lng]}
+        icon={getCategoryIcon(m, selectedMechanic?.id === m.id)}
+        zIndexOffset={selectedMechanic?.id === m.id ? 500 : 0}
+        eventHandlers={{
+          click: () => onSelectMechanic(m),
+        }}
+      >
+        <Popup>
+          <strong>{m.name}</strong><br />
+          {m.area}
+        </Popup>
+      </Marker>
+    )),
+    [mappedMechanics, selectedMechanic?.id, onSelectMechanic],
+  );
+
+  const routeLinePositions = useMemo(() => {
+    if (!userLocation || !routeTarget) return null;
+    return routePath && routePath.length > 0
+      ? routePath
+      : [[userLocation.lat, userLocation.lng], [routeTarget.lat, routeTarget.lng]];
+  }, [userLocation, routeTarget, routePath]);
 
   return (
     <div className="map-container-wrapper">
@@ -205,31 +263,30 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
         minZoom={12}
         style={{ height: '100vh', width: '100%', zIndex: 0 }}
         zoomControl={false}
+        wheelDebounceTime={80}
+        zoomSnap={0.5}
+        fadeAnimation={true}
+        zoomAnimation={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          maxNativeZoom={20}
+          attribution={TILE_ATTRIBUTION}
+          url={TILE_URL}
+          subdomains={TILE_SUBDOMAINS}
+          maxNativeZoom={18}
           maxZoom={MAX_MAP_ZOOM}
-          detectRetina={true}
+          updateWhenZooming={false}
+          updateWhenIdle={true}
+          updateInterval={200}
+          keepBuffer={2}
         />
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          pane="shadowPane"
-          maxNativeZoom={20}
-          maxZoom={MAX_MAP_ZOOM}
-          detectRetina={true}
-        />
-        
+
         <MapCenterer center={mapCenter} userLocation={userLocation} mapPanTrigger={mapPanTrigger} routeActive={!!routeTarget} />
         <MapZoomStyler />
         <RouteFitter userLocation={userLocation} routeTarget={routeTarget} routePath={routePath} />
 
-        {userLocation && routeTarget && (
+        {routeLinePositions && (
           <Polyline
-            positions={routePath && routePath.length > 0 ? routePath : [[userLocation.lat, userLocation.lng], [routeTarget.lat, routeTarget.lng]]}
+            positions={routeLinePositions}
             pathOptions={{ color: '#155e42', weight: 4, opacity: 0.85, lineCap: 'round' }}
           />
         )}
@@ -242,24 +299,7 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
           />
         )}
 
-        {mappedMechanics.map((m) => {
-          return (
-            <Marker
-              key={m.id}
-              position={[m.lat, m.lng]}
-              icon={createCategoryIcon(m, selectedMechanic?.id === m.id)}
-              zIndexOffset={selectedMechanic?.id === m.id ? 500 : 0}
-              eventHandlers={{
-                click: () => onSelectMechanic(m),
-              }}
-            >
-              <Popup>
-                <strong>{m.name}</strong><br />
-                {m.area}
-              </Popup>
-            </Marker>
-          );
-        })}
+        {markerElements}
       </MapContainer>
     </div>
   );

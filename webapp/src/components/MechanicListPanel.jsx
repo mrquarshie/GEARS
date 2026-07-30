@@ -13,13 +13,42 @@ import {
   StarRatingIcon,
 } from './icons';
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onDirection, hideOnDesktop }) {
+const PRODUCT_PLACEHOLDER_COLORS = [
+  '#dcfce7', '#fefce8', '#f5d0fe', '#dbeafe', '#ffedd5',
+  '#fce7f3', '#e0e7ff', '#ccfbf1', '#fef3c7', '#e0f2fe',
+];
+
+function hashToColor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return PRODUCT_PLACEHOLDER_COLORS[Math.abs(hash) % PRODUCT_PLACEHOLDER_COLORS.length];
+}
+
+function FeaturedProduct({ item }) {
+  return (
+    <div className="featured-product">
+      <div
+        className="featured-product-image"
+        style={{ background: item.imageUrl ? undefined : hashToColor(item.name || '') }}
+      >
+        {item.imageUrl && <img src={item.imageUrl} alt={item.name} />}
+      </div>
+      <h5 className="featured-product-name">{item.name}</h5>
+      {item.price && <p className="featured-product-price">₵ {item.price}</p>}
+    </div>
+  );
+}
+
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onDirection, hideOnDesktop, onUseMyLocation }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilterTab, setActiveFilterTab] = useState('Services');
   const [currentSort, setCurrentSort] = useState('Near You');
+  const [isScanning, setIsScanning] = useState(false);
   
   // --- Swipeable Bottom Sheet State ---
   const [sheetState, setSheetState] = useState('minimized'); // 'minimized', 'half', 'expanded'
@@ -46,7 +75,34 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     return Array.from(uniqueMatches.values()).slice(0, 5);
   }, [searchTerm, mechanics]);
 
+  const popularProducts = useMemo(() => {
+    if (viewMode !== 'shop') return [];
+    return mechanics
+      .filter(m => (m.products || []).length > 0)
+      .flatMap(m => (m.products || []).map(p => ({ ...p, mechanicName: m.name, mechanicId: m.id })))
+      .slice(0, 8);
+  }, [mechanics, viewMode]);
+
   const sortOptions = ['Near You', 'Top Rated', 'Most Popular', 'Open Now'];
+
+  // Stop scanning once mechanics have distance data (location was obtained)
+  useEffect(() => {
+    if (isScanning && mechanics.some(m => m.distance)) {
+      setIsScanning(false);
+    }
+  }, [mechanics, isScanning]);
+
+  // Auto-stop scanning after 8s timeout as fallback
+  useEffect(() => {
+    if (!isScanning) return;
+    const timer = setTimeout(() => setIsScanning(false), 8000);
+    return () => clearTimeout(timer);
+  }, [isScanning]);
+
+  const handleScanLocation = () => {
+    setIsScanning(true);
+    if (onUseMyLocation) onUseMyLocation();
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -115,24 +171,31 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       className={`mechanic-list-panel ${isDragging ? 'dragging' : ''} ${hideOnDesktop ? 'mechanic-list-panel--hidden-desktop' : ''}`}
       style={dynamicStyle}
     >
-      <div 
-        className="list-header"
+      <div
+        className="list-drag-strip"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <div className="mobile-drag-handle"></div>
-        <h1>
+      </div>
+
+      <div className="mechanic-list-scroll">
+        <h1 className="list-title">
           {viewMode === 'detailers' ? (
             <>Discover Car Detailers</>
           ) : viewMode === 'fuel' ? (
             <>Find Fuel Stations</>
           ) : viewMode === 'shop' ? (
-            <>Car Parts Shops</>
+            <>Auto Parts Dealers</>
           ) : (
             <>A Mechanic,<br />When You Need One.</>
           )}
         </h1>
+
+        {/* Sticky "silver" search bar: sits in normal flow under the title at rest,
+            then pins to the top of the scroll area once the title scrolls past it. */}
+        <div className="search-sticky-bar">
         <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
           <div className="search-input-box">
             <SearchIcon size={18} className="search-icon" />
@@ -252,8 +315,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             })()}
           </div>
         </form>
+        </div>
         <div className="list-meta">
-          <span className="count">{mechanics.length} {viewMode === 'detailers' ? 'DETAILERS' : viewMode === 'fuel' ? 'FUEL STATIONS' : viewMode === 'shop' ? 'SHOPS' : 'MECHANICS'} · {viewMode === 'saved' ? 'SAVED' : 'NEAR YOU'}</span>
+          <span className="count">{mechanics.length} {viewMode === 'detailers' ? 'Detailers' : viewMode === 'fuel' ? 'Fuel Stations' : viewMode === 'shop' ? 'Auto Parts Dealers' : 'Mechanics'} · {viewMode === 'saved' ? 'Saved' : 'Near You'}</span>
           <div className="sort-container" ref={sortRef}>
             <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
               {currentSort}
@@ -278,112 +342,209 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
           </div>
         </div>
 
-        <div className="location-banner">
+        <div
+          className={`location-banner ${isScanning ? 'location-banner--scanning' : ''}`}
+          role="button"
+          tabIndex={0}
+          onClick={handleScanLocation}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleScanLocation(); }}
+        >
           <div className="location-icon-wrapper">
-            {viewMode === 'fuel' ? (
+            {isScanning ? (
+              <div className="scanning-spinner"></div>
+            ) : viewMode === 'fuel' ? (
               <FillingStationIcon size={20} state="filled" color="var(--forest)" />
             ) : (
               <LocationIcon size={20} state="filled" color="var(--forest)" />
             )}
           </div>
           <div className="location-banner-text">
-            <h4>{viewMode === 'fuel' ? 'Fuel Delivery' : 'Use my location to find the mechanics'}</h4>
+            <h4>{isScanning ? 'Scanning for mechanics nearby...' : viewMode === 'fuel' ? 'Fuel Delivery' : 'Use my location to find the mechanics'}</h4>
             <p>
-              {(() => {
+              {isScanning ? (
+                'Finding the closest mechanics around you'
+              ) : (
+                (() => {
                 const validTimes = mechanics.map(m => m.timeInMinutes).filter(t => t != null);
                 if (validTimes.length > 0) {
                   const minT = Math.max(1, Math.floor(Math.min(...validTimes)));
                   const maxT = Math.ceil(Math.max(...validTimes));
                   const prefix = viewMode === 'fuel' ? 'All fuel stations' : 'All Mechanics';
-                  if (minT === maxT) return `${prefix} ~${minT} minutes drive from you`;
-                  return `${prefix} ${minT} - ${maxT} minutes drive from you`;
+
+                  const floorToRange = (t) => {
+                    if (t <= 10) return '5–10';
+                    if (t <= 20) return '10–20';
+                    if (t <= 30) return '20–30';
+                    if (t <= 40) return '30–40';
+                    if (t <= 50) return '40–50';
+                    return '50–60';
+                  };
+
+                  const minRange = floorToRange(minT);
+                  const maxRange = floorToRange(maxT);
+
+                  if (minRange === maxRange) return `${prefix} ${minRange} minutes drive from you`;
+                  return `${prefix} ${minRange} to ${maxRange} minutes drive from you`;
                 }
                 return 'Allow location access to see driving times';
-              })()}
+              })()
+              )}
             </p>
           </div>
         </div>
-      </div>
 
-      <div className="mechanic-cards">
-        {mechanics.map((m) => (
-          <div key={m.id} className="mechanic-card" onClick={() => onSelect(m)}>
-            <div className="card-top">
-              <div className="avatar-placeholder" style={viewMode === 'fuel' && (m.name.toLowerCase().includes('shell') || m.name.toLowerCase().includes('goil')) ? { background: 'transparent' } : {}}>
-                {viewMode === 'fuel' && m.name.toLowerCase().includes('shell') ? (
-                  <img src="https://upload.wikimedia.org/wikipedia/en/thumb/e/e8/Shell_logo.svg/100px-Shell_logo.svg.png" alt="Shell" style={{width: '100%', height: '100%', objectFit: 'contain'}} />
-                ) : viewMode === 'fuel' && m.name.toLowerCase().includes('goil') ? (
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Goil_Logo.svg/100px-Goil_Logo.svg.png" alt="Goil" style={{width: '100%', height: '100%', objectFit: 'contain'}} />
-                ) : (
-                  <span className="avatar-letter">{m.name.charAt(0).toUpperCase()}</span>
-                )}
-              </div>
-              <div className="card-top-right">
-                <span className="distance"><LocationIcon size={12} state="filled" color="var(--forest)" /> {m.distance ? m.distance : '--'}</span>
-                {viewMode !== 'fuel' && <span className="rating-badge">{m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <StarRatingIcon size={10} state="filled" /></span>}
-                {viewMode !== 'fuel' && <span className="status-badge">Open</span>}
-              </div>
-            </div>
-            
-            <h3 className="mechanic-name">{m.name}</h3>
-            <p className="mechanic-area">{m.area}</p>
-            
-            {viewMode === 'fuel' ? (
-              <div className="fuel-prices" style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'var(--muted)', marginTop: '8px', marginBottom: '8px' }}>
-                <span>Petrol - <span style={{ color: 'var(--text)', fontWeight: 600 }}>¢14.65</span></span>
-                <span>Diesel - <span style={{ color: 'var(--text)', fontWeight: 600 }}>¢15.08</span></span>
-              </div>
-            ) : (
-              <p className="mechanic-specialty">⚙ {m.specialty || 'General Repairs'}</p>
-            )}
-            
-            {viewMode === 'detailers' && (
-              <div className="detailer-thumbnails">
-                <div className="thumbnail-block"></div>
-                <div className="thumbnail-block"></div>
-                <div className="thumbnail-block"></div>
-              </div>
-            )}
-            
-            <div className="card-actions">
-              <div className="card-actions-left">
-                <div className="icon-group">
-                  <button
-                    className={`icon-btn ${savedMechanics.includes(m.id) ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
-                  >
-                    <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
-                  </button>
-                  {viewMode !== 'fuel' && <button className="icon-btn"><RateIcon size={16} /></button>}
-                  {viewMode !== 'fuel' && <button className="icon-btn"><ShareIcon size={16} /></button>}
+        {viewMode === 'shop' && popularProducts.length > 0 && (
+          <div className="popular-products-section">
+            <h3 className="popular-products-title">Popular Products</h3>
+            <div className="popular-products-scroll">
+              {popularProducts.map((p, i) => (
+                <div key={i} className="popular-product-card">
+                  <div className="popular-product-image" style={{ background: hashToColor(p.name || '') }}>
+                    {p.imageUrl && <img src={p.imageUrl} alt={p.name} />}
+                    <button className="popular-product-bookmark" onClick={(e) => e.stopPropagation()}>
+                      <BookmarkIcon size={14} />
+                    </button>
+                  </div>
+                  <div className="popular-product-info">
+                    <p className="popular-product-shop">
+                      <span className="popular-product-from">From </span>
+                      {p.mechanicName}
+                    </p>
+                    <h4 className="popular-product-name">{p.name}</h4>
+                    {p.price && <p className="popular-product-price">₵ {p.price}</p>}
+                  </div>
                 </div>
-                <div className="card-actions-divider"></div>
-              </div>
-              <div className="action-group">
-                <button
-                  type="button"
-                  className="icon-btn"
-                  onClick={(e) => { e.stopPropagation(); onDirection(m); }}
-                  aria-label="Direction"
-                >
-                  <LocationIcon size={16} />
-                </button>
-                {viewMode === 'fuel' ? (
-                  <button className="action-btn outline" style={{ cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
-                    <FillingStationIcon size={14} /> Delivery <span style={{ background: '#fff0e6', color: '#ff8a4c', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', marginLeft: '4px', fontWeight: 600 }}>Soon</span>
-                  </button>
-                ) : (
-                  <button 
-                    className="action-btn outline" 
-                    onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
-                  >
-                    <CallIcon size={14} /> Call
-                  </button>
-                )}
-              </div>
+              ))}
             </div>
           </div>
-        ))}
+        )}
+
+        <div className="mechanic-cards">
+        {mechanics.map((m) => {
+          const featuredProducts = (m.products || []).slice(0, 3);
+          const showFeatured = viewMode === 'shop' && featuredProducts.length > 0;
+
+          return (
+          <div key={m.id} className="mechanic-card" onClick={() => onSelect(m)}>
+            {viewMode === 'fuel' ? (
+              <>
+                <div className="card-body">
+                  <div className="fuel-card-header">
+                    <img
+                      className="fuel-card-logo"
+                      src={
+                        m.name.toLowerCase().includes('shell')
+                          ? 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e8/Shell_logo.svg/100px-Shell_logo.svg.png'
+                          : m.name.toLowerCase().includes('goil')
+                          ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Goil_Logo.svg/100px-Goil_Logo.svg.png'
+                          : 'https://placehold.co/32x32'
+                      }
+                      alt={m.name}
+                    />
+                    <div className="fuel-distance-badge">
+                      <LocationIcon size={12} state="filled" color="var(--forest)" />
+                      <span>{m.distance || '--'}</span>
+                    </div>
+                  </div>
+                  <div className="card-header">
+                    <h3 className="card-name">{m.name}</h3>
+                    <p className="card-area">{m.area}</p>
+                  </div>
+                  <div className="fuel-price-chips">
+                    <div className="fuel-price-chip">
+                      <span className="fuel-price-label">Petrol -</span><span className="fuel-price-value"> ₵14.65</span>
+                    </div>
+                    <div className="fuel-price-chip">
+                      <span className="fuel-price-label">Diesel -</span><span className="fuel-price-value fuel-price-diesel"> ₵15.08</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="card-bottom-bar">
+                  <div className="card-bottom-left">
+                    <button
+                      className={`card-bottom-icon ${savedMechanics.includes(m.id) ? 'active' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
+                    >
+                      <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
+                    </button>
+                    <div className="card-bottom-divider"></div>
+                  </div>
+                  <button
+                    className="card-bottom-action"
+                    onClick={(e) => { e.stopPropagation(); onDirection(m); }}
+                  >
+                    <LocationIcon size={16} />
+                    <span className="card-action-label">Direction</span>
+                  </button>
+                  <button className="card-bottom-action fuel-delivery-btn" onClick={(e) => e.stopPropagation()}>
+                    <FillingStationIcon size={14} />
+                    <span>Delivery</span>
+                    <span className="delivery-soon-pill">Soon</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="card-body">
+                  <div className="card-header">
+                    <h3 className="card-name">{m.name}</h3>
+                    <p className="card-area">{m.area}{m.distance ? ` · ${m.distance} away` : ''}</p>
+                  </div>
+
+                  {!showFeatured && viewMode !== 'detailers' && (
+                    <p className="card-specialty">{m.specialty || 'General Repairs'}</p>
+                  )}
+
+                  {showFeatured && (
+                    <div className="card-featured-products">
+                      {featuredProducts.map((p, i) => (
+                        <FeaturedProduct key={p.id || i} item={p} />
+                      ))}
+                    </div>
+                  )}
+
+                  {viewMode === 'detailers' && (
+                    <div className="detailer-thumbnails">
+                      <div className="thumbnail-block"></div>
+                      <div className="thumbnail-block"></div>
+                      <div className="thumbnail-block"></div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="card-bottom-bar">
+                  <div className="card-bottom-left">
+                    <button
+                      className={`card-bottom-icon ${savedMechanics.includes(m.id) ? 'active' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
+                    >
+                      <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
+                    </button>
+                    <button className="card-bottom-icon"><RateIcon size={16} /></button>
+                    <button className="card-bottom-icon"><ShareIcon size={16} /></button>
+                    <div className="card-bottom-divider"></div>
+                  </div>
+                  <button
+                    className="card-bottom-action"
+                    onClick={(e) => { e.stopPropagation(); onDirection(m); }}
+                  >
+                    <LocationIcon size={16} />
+                    <span className="card-action-label">Direction</span>
+                  </button>
+                  <button
+                    className="card-bottom-action"
+                    onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
+                  >
+                    <CallIcon size={16} />
+                    <span>Call</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          );
+        })}
+        </div>
       </div>
     </div>
   );
