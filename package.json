@@ -1,8 +1,0 @@
-{
-  "name": "gears",
-  "private": true,
-  "scripts": {
-    "install": "cd webapp && npm install",
-    "build": "cd webapp && npm run build && cd .. && rm -rf dist && cp -r webapp/dist dist"
-  }
-}

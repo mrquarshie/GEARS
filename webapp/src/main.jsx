@@ -844,7 +844,7 @@ function App() {
       )}
       
       {/* Floating Add Button for authorized admins only */}
-      {user && (user.email === 'aciestech21@gmail.com' || user.email === 'skyemmanuel42@gmail.com') && (
+      {user && (user.email === 'aciestech21@gmail.com' || user.email === 'skyemmanuel42@gmail.com' || user.email === 'princeessandoh316@gmail.com') && (
         <button 
           className="floating-add-btn" 
           onClick={() => setModal('add')}
