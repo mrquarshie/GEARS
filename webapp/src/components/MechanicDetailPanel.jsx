@@ -58,7 +58,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
       <div className="mechanic-detail-collapsed">
         <div className="detail-collapsed-info" onClick={() => setCollapsed(false)}>
           <h2 className="detail-collapsed-name">{mechanic.name}</h2>
-          <p className="detail-collapsed-area">{mechanic.area}{mechanic.distance ? ` · ${mechanic.distance} away` : ''}</p>
+          <p className="detail-collapsed-area">{mechanic.area}{mechanic.distance ? ` · ${mechanic.distance}` : ''}</p>
         </div>
         <button className="detail-collapsed-close" onClick={onClose} aria-label="Close"><X size={18}/></button>
       </div>
@@ -112,7 +112,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
               <span className="detail-hero-avatar-letter">{mechanic.name.charAt(0).toUpperCase()}</span>
             </div>
             <h2 className="detail-hero-name">{mechanic.name}</h2>
-            <p className="detail-hero-area">{mechanic.area}{mechanic.distance ? ` · ${mechanic.distance} away` : ''}</p>
+            <p className="detail-hero-area">{mechanic.area}{mechanic.distance ? ` · ${mechanic.distance}` : ''}</p>
 
             {isCreator && (
               <div className="creator-actions">

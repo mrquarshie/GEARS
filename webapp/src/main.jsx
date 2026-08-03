@@ -422,12 +422,14 @@ function App() {
   const [viewMode, setViewMode] = useState('all');
   const [userLocation, setUserLocation] = useState(null);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
+  const [isLocatingScan, setIsLocatingScan] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
   const searchRef = useRef(null);
 
   const handleShowDirection = (mechanic) => {
-    if (!mechanic || mechanic.lat == null || mechanic.lng == null) return;
+    if (!mechanic) { setRouteTarget(null); return; }
+    if (mechanic.lat == null || mechanic.lng == null) return;
     setRouteTarget({ lat: mechanic.lat, lng: mechanic.lng });
   };
 
@@ -578,10 +580,17 @@ function App() {
       let timeInMinutes = null;
       if (userLocation && m.lat && m.lng) {
         rawDist = calculateDistance(userLocation.lat, userLocation.lng, m.lat, m.lng);
-        distStr = rawDist.toFixed(1) + 'Km';
         timeInMinutes = (rawDist / 30) * 60;
+        const rounded = Math.max(5, Math.round(timeInMinutes / 5) * 5);
+        if (rounded >= 60) {
+          const hrs = Math.floor(rounded / 60);
+          const mins = rounded % 60;
+          distStr = mins > 0 ? `${hrs} hr ${mins} min drive away` : `${hrs} hr drive away`;
+        } else {
+          distStr = rounded + ' min drive away';
+        }
       }
-      return { ...m, distance: distStr, _rawDist: rawDist, timeInMinutes };
+      return { ...m, distance: distStr, _rawDist: timeInMinutes ?? Infinity, timeInMinutes };
     });
 
     if (viewMode === 'saved') {
@@ -752,6 +761,7 @@ function App() {
           userLocation={userLocation}
           mapPanTrigger={mapPanTrigger}
           routeTarget={routeTarget}
+          isLocatingScan={isLocatingScan}
         />
 
         {!isSearchPanelOpen && (
@@ -768,6 +778,7 @@ function App() {
             onDirection={handleShowDirection}
             hideOnDesktop={!!selectedMechanic}
             onUseMyLocation={() => setMapPanTrigger(Date.now())}
+            onScanStateChange={setIsLocatingScan}
           />
         )}
 

@@ -229,6 +229,50 @@ body {
   color: var(--forest);
 }
 
+/* Bookmarks/History: title + tabs pin together to the top of the scroll area while
+   the cards (and, for History, the subtitle) scroll underneath. */
+.list-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--cream);
+}
+
+/* Shown instead of the title/search/meta/banner while "near me" results are filtered
+   to a drive-time window — tapping back clears the filter and restores the full list. */
+.near-me-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px;
+}
+
+.near-me-back {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #fafafa;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.near-me-back:hover {
+  background: #f3f4f6;
+}
+
+.near-me-label {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--forest);
+}
+
 /* Sticky "silver" search bar: sits in normal flow under the title at rest, then
    pins to the top of .mechanic-list-scroll once the title scrolls past it. */
 .search-sticky-bar {
@@ -604,6 +648,50 @@ body {
   animation: gears-spin 0.8s linear infinite;
 }
 
+/* Bookmark sub-tabs */
+.bookmark-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.bookmark-tab {
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+}
+
+.bookmark-tab.active {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.bookmark-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--forest);
+  border-radius: 2px 2px 0 0;
+}
+
+.history-subtitle {
+  margin: 0;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.6);
+}
+
 @keyframes gears-spin {
   to { transform: rotate(360deg); }
 }
@@ -631,6 +719,16 @@ body {
 
 .mechanic-card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.mechanic-card--active {
+  background: #fafafa;
+  outline-color: var(--forest);
+  outline-width: 1.5px;
+}
+
+.mechanic-card--active:hover {
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
@@ -663,15 +761,82 @@ body {
 }
 
 .card-specialty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
   font-size: 13px;
-  color: var(--forest);
   font-weight: 500;
-  background: #f0fdf4;
-  border-radius: 999px;
-  padding: 2px 10px 2px 8px;
-  display: inline-flex;
+  color: var(--forest);
+  background: #fafafa;
+  border-radius: 24px;
+  padding: 2px 8px;
   align-self: flex-start;
+}
+
+/* Badges row (mechanic cards) */
+.card-badges-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.card-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--forest);
+  border-radius: 8px;
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline-offset: -1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-badge-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fafafa;
+  border-radius: 24px;
+  outline: 0.5px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -0.5px;
+  padding: 2px 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.card-badge-value {
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.card-badge-rating {
+  font-size: 14px;
+  font-weight: 400;
+  color: #FF8D28;
+}
+
+.card-badge-open {
+  background: #ecfdf5;
+  outline: 1px solid rgba(16, 185, 129, 0.2);
+  outline-offset: -1px;
+  border-radius: 16px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--forest);
 }
 
 /* Featured products row in shop cards */
@@ -769,6 +934,17 @@ body {
 .card-bottom-icon:hover,
 .card-bottom-action:hover {
   background: #f3f4f6;
+}
+
+.card-bottom-icon.active,
+.card-bottom-action.active {
+  outline: 2px solid var(--forest);
+  outline-offset: -2px;
+  background: #f0fdf4;
+}
+
+.card-bottom-action.active svg {
+  color: var(--forest);
 }
 
 .card-bottom-icon.active {
@@ -2906,6 +3082,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .user-location-marker .dot {
@@ -2932,6 +3109,31 @@ body {
 @keyframes mapPulse {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(2); opacity: 0; }
+}
+
+/* Radar-scan rings shown on the user's location dot while "Use my location" is
+   searching — three rings staggered on a loop, like a ride-hailing driver search. */
+.user-location-marker--scanning .radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  animation: radarExpand 3s ease-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.user-location-marker--scanning .radar-ring-2 { animation-delay: 1s; }
+.user-location-marker--scanning .radar-ring-3 { animation-delay: 2s; }
+
+@keyframes radarExpand {
+  0% { transform: scale(0.3); opacity: 0.8; }
+  100% { transform: scale(8); opacity: 0; }
 }
 
 /* Category Markers */

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target } from '@phosphor-icons/react';
+import { Target, ArrowLeft } from '@phosphor-icons/react';
 import {
   BookmarkIcon,
   CallIcon,
@@ -12,6 +12,31 @@ import {
   ShareIcon,
   StarRatingIcon,
 } from './icons';
+
+// Expanding drive-time windows used by the "Use my location" search: start tight
+// (5-10 min) and widen in 10-minute steps up to an hour until a window has a match.
+const NEAR_ME_BUCKETS = [
+  { min: 5, max: 10 },
+  { min: 10, max: 20 },
+  { min: 20, max: 30 },
+  { min: 30, max: 40 },
+  { min: 40, max: 50 },
+  { min: 50, max: 60 },
+];
+
+function rangeLabel(t) {
+  const bucket = NEAR_ME_BUCKETS.find(b => t <= b.max) || NEAR_ME_BUCKETS[NEAR_ME_BUCKETS.length - 1];
+  return `${bucket.min}–${bucket.max}`;
+}
+
+function findNearMeBucket(list) {
+  for (const bucket of NEAR_ME_BUCKETS) {
+    if (list.some(m => m.timeInMinutes != null && m.timeInMinutes <= bucket.max)) {
+      return bucket;
+    }
+  }
+  return null;
+}
 
 const PRODUCT_PLACEHOLDER_COLORS = [
   '#dcfce7', '#fefce8', '#f5d0fe', '#dbeafe', '#ffedd5',
@@ -41,7 +66,12 @@ function FeaturedProduct({ item }) {
   );
 }
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onDirection, hideOnDesktop, onUseMyLocation }) {
+// The actual bucket search resolves almost instantly (location is usually already
+// known), which makes the scanning UI flash by unnoticed. Force it to run for at
+// least this long so the loading/radar sequence is actually visible.
+const MIN_SCAN_MS = 3500;
+
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -49,7 +79,10 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const [activeFilterTab, setActiveFilterTab] = useState('Services');
   const [currentSort, setCurrentSort] = useState('Near You');
   const [isScanning, setIsScanning] = useState(false);
-  
+  const [nearMeRange, setNearMeRange] = useState(null);
+  const [bookmarkSubTab, setBookmarkSubTab] = useState('Mechanics');
+  const [directionTargetId, setDirectionTargetId] = useState(null);
+
   // --- Swipeable Bottom Sheet State ---
   const [sheetState, setSheetState] = useState('minimized'); // 'minimized', 'half', 'expanded'
   const [dragOffset, setDragOffset] = useState(0);
@@ -59,6 +92,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const sortRef = useRef(null);
   const filterRef = useRef(null);
   const searchWrapperRef = useRef(null);
+  const scanStartRef = useRef(0);
 
   const suggestions = useMemo(() => {
     if (!searchTerm) return [];
@@ -83,13 +117,32 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       .slice(0, 8);
   }, [mechanics, viewMode]);
 
+  // Filter bookmarks by sub-tab category
+  const bookmarkedMechanics = useMemo(() => {
+    if (viewMode !== 'saved' && viewMode !== 'history') return mechanics;
+    const subTabMap = {
+      Mechanics: m => !['Car Detailing', 'Fuel Station', 'Shop', 'Parts Shop', 'Auto Parts'].includes(m.specialty),
+      Shops: m => ['Shop', 'Parts Shop', 'Auto Parts'].includes(m.specialty),
+      Detailers: m => m.specialty === 'Car Detailing',
+      'Filling Stations': m => m.specialty === 'Fuel Station',
+    };
+    const filterFn = subTabMap[bookmarkSubTab] || subTabMap.Mechanics;
+    return mechanics.filter(filterFn);
+  }, [mechanics, viewMode, bookmarkSubTab]);
+
   const sortOptions = ['Near You', 'Top Rated', 'Most Popular', 'Open Now'];
 
-  // Stop scanning once mechanics have distance data (location was obtained)
+  // Once mechanics have distance data (location was obtained), wait out whatever's
+  // left of MIN_SCAN_MS so the scanning/radar sequence always plays for a beat,
+  // then find the tightest drive-time window that actually has a mechanic in it.
   useEffect(() => {
-    if (isScanning && mechanics.some(m => m.distance)) {
+    if (!isScanning || !mechanics.some(m => m.distance)) return;
+    const remaining = Math.max(0, MIN_SCAN_MS - (Date.now() - scanStartRef.current));
+    const timer = setTimeout(() => {
       setIsScanning(false);
-    }
+      setNearMeRange(findNearMeBucket(mechanics));
+    }, remaining);
+    return () => clearTimeout(timer);
   }, [mechanics, isScanning]);
 
   // Auto-stop scanning after 8s timeout as fallback
@@ -99,10 +152,27 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     return () => clearTimeout(timer);
   }, [isScanning]);
 
+  // Leaving "near me" mode when the category changes avoids showing a stale filter.
+  useEffect(() => {
+    setNearMeRange(null);
+  }, [viewMode]);
+
+  // Let the map show a radar-scanning animation on the user's location dot while active.
+  useEffect(() => {
+    if (onScanStateChange) onScanStateChange(isScanning);
+  }, [isScanning, onScanStateChange]);
+
   const handleScanLocation = () => {
+    scanStartRef.current = Date.now();
     setIsScanning(true);
     if (onUseMyLocation) onUseMyLocation();
   };
+
+  const displayedMechanics = nearMeRange
+    ? mechanics.filter(m => m.timeInMinutes != null && m.timeInMinutes <= nearMeRange.max)
+    : viewMode === 'saved' ? bookmarkedMechanics
+    : viewMode === 'history' ? bookmarkedMechanics
+    : mechanics;
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -181,6 +251,39 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       </div>
 
       <div className="mechanic-list-scroll">
+        {nearMeRange && (
+          <div className="near-me-header">
+            <button
+              type="button"
+              className="near-me-back"
+              onClick={() => setNearMeRange(null)}
+              aria-label="Back"
+            >
+              <ArrowLeft size={18} weight="bold" />
+            </button>
+            <span className="near-me-label">{nearMeRange.min} - {nearMeRange.max} minutes from my location</span>
+          </div>
+        )}
+
+        {!nearMeRange && (
+        <>
+        {(viewMode === 'saved' || viewMode === 'history') ? (
+          /* Title + tabs pin to the top together while the cards below scroll. */
+          <div className="list-sticky-header">
+            <h1 className="list-title">{viewMode === 'saved' ? 'Bookmarks' : 'History'}</h1>
+            <div className="bookmark-tabs">
+              {['Mechanics', 'Shops', 'Detailers', 'Filling Stations'].map(tab => (
+                <button
+                  key={tab}
+                  className={`bookmark-tab ${bookmarkSubTab === tab ? 'active' : ''}`}
+                  onClick={() => setBookmarkSubTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
         <h1 className="list-title">
           {viewMode === 'detailers' ? (
             <>Discover Car Detailers</>
@@ -192,9 +295,15 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             <>A Mechanic,<br />When You Need One.</>
           )}
         </h1>
+        )}
+
+        {viewMode === 'history' && (
+          <p className="history-subtitle">Your calls, directions and interactions since last month</p>
+        )}
 
         {/* Sticky "silver" search bar: sits in normal flow under the title at rest,
             then pins to the top of the scroll area once the title scrolls past it. */}
+        {viewMode !== 'saved' && viewMode !== 'history' && (
         <div className="search-sticky-bar">
         <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
           <div className="search-input-box">
@@ -316,8 +425,10 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
           </div>
         </form>
         </div>
+        )}
+        {viewMode !== 'saved' && viewMode !== 'history' && (
         <div className="list-meta">
-          <span className="count">{mechanics.length} {viewMode === 'detailers' ? 'Detailers' : viewMode === 'fuel' ? 'Fuel Stations' : viewMode === 'shop' ? 'Auto Parts Dealers' : 'Mechanics'} · {viewMode === 'saved' ? 'Saved' : 'Near You'}</span>
+          <span className="count">{displayedMechanics.length} {viewMode === 'detailers' ? 'Detailers' : viewMode === 'fuel' ? 'Fuel Stations' : viewMode === 'shop' ? 'Auto Parts Dealers' : 'Mechanics'} · {viewMode === 'saved' ? 'Bookmarks' : 'Near You'}</span>
           <div className="sort-container" ref={sortRef}>
             <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
               {currentSort}
@@ -341,7 +452,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             )}
           </div>
         </div>
+        )}
 
+        {viewMode !== 'saved' && viewMode !== 'history' && (
         <div
           className={`location-banner ${isScanning ? 'location-banner--scanning' : ''}`}
           role="button"
@@ -371,17 +484,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                   const maxT = Math.ceil(Math.max(...validTimes));
                   const prefix = viewMode === 'fuel' ? 'All fuel stations' : 'All Mechanics';
 
-                  const floorToRange = (t) => {
-                    if (t <= 10) return '5–10';
-                    if (t <= 20) return '10–20';
-                    if (t <= 30) return '20–30';
-                    if (t <= 40) return '30–40';
-                    if (t <= 50) return '40–50';
-                    return '50–60';
-                  };
-
-                  const minRange = floorToRange(minT);
-                  const maxRange = floorToRange(maxT);
+                  const minRange = rangeLabel(minT);
+                  const maxRange = rangeLabel(maxT);
 
                   if (minRange === maxRange) return `${prefix} ${minRange} minutes drive from you`;
                   return `${prefix} ${minRange} to ${maxRange} minutes drive from you`;
@@ -392,6 +496,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             </p>
           </div>
         </div>
+        )}
+        </>
+        )}
 
         {viewMode === 'shop' && popularProducts.length > 0 && (
           <div className="popular-products-section">
@@ -420,12 +527,12 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         )}
 
         <div className="mechanic-cards">
-        {mechanics.map((m) => {
+        {displayedMechanics.map((m) => {
           const featuredProducts = (m.products || []).slice(0, 3);
           const showFeatured = viewMode === 'shop' && featuredProducts.length > 0;
 
           return (
-          <div key={m.id} className="mechanic-card" onClick={() => onSelect(m)}>
+          <div key={m.id} className={`mechanic-card ${directionTargetId === m.id ? 'mechanic-card--active' : ''}`} onClick={() => { setDirectionTargetId(null); onSelect(m); }}>
             {viewMode === 'fuel' ? (
               <>
                 <div className="card-body">
@@ -443,7 +550,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                     />
                     <div className="fuel-distance-badge">
                       <LocationIcon size={12} state="filled" color="var(--forest)" />
-                      <span>{m.distance || '--'}</span>
+                      <span>{m.distance ? m.distance.replace(/ drive away$/, '') : '--'}</span>
                     </div>
                   </div>
                   <div className="card-header">
@@ -470,8 +577,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                     <div className="card-bottom-divider"></div>
                   </div>
                   <button
-                    className="card-bottom-action"
-                    onClick={(e) => { e.stopPropagation(); onDirection(m); }}
+                    className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); }}
                   >
                     <LocationIcon size={16} />
                     <span className="card-action-label">Direction</span>
@@ -486,13 +593,41 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             ) : (
               <>
                 <div className="card-body">
+                  <div className="card-badges-row">
+                    <div className="card-avatar">{m.name.charAt(0).toUpperCase()}</div>
+                    <div className="card-badges">
+                      {m.distance && (
+                        <div className="card-badge-pill">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="0.75" />
+                            <path d="M6 3.5v3l2 1.5" stroke="currentColor" strokeWidth="0.75" strokeLinecap="round" />
+                          </svg>
+                          <span className="card-badge-value">{m.distance.replace(/ drive away$/, '')}</span>
+                        </div>
+                      )}
+                      {m.rating && m.rating !== 'New' && (
+                        <div className="card-badge-pill">
+                          <span className="card-badge-rating">{Number(m.rating).toFixed(1)}</span>
+                          <StarRatingIcon size={10} state="filled" />
+                        </div>
+                      )}
+                      <div className="card-badge-open">Open</div>
+                    </div>
+                  </div>
+
                   <div className="card-header">
                     <h3 className="card-name">{m.name}</h3>
-                    <p className="card-area">{m.area}{m.distance ? ` · ${m.distance} away` : ''}</p>
+                    <p className="card-area">{m.area}</p>
                   </div>
 
                   {!showFeatured && viewMode !== 'detailers' && (
-                    <p className="card-specialty">{m.specialty || 'General Repairs'}</p>
+                    <div className="card-specialty">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="0.75" />
+                        <circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.2" />
+                      </svg>
+                      {m.specialty || 'General Repairs'}
+                    </div>
                   )}
 
                   {showFeatured && (
@@ -525,8 +660,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                     <div className="card-bottom-divider"></div>
                   </div>
                   <button
-                    className="card-bottom-action"
-                    onClick={(e) => { e.stopPropagation(); onDirection(m); }}
+                    className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); }}
                   >
                     <LocationIcon size={16} />
                     <span className="card-action-label">Direction</span>

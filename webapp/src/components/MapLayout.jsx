@@ -155,13 +155,22 @@ const UserLocationIcon = L.divIcon({
   iconAnchor: [12, 12]
 });
 
+// Radar-style scanning rings shown while "Use my location" is searching for nearby
+// mechanics — mirrors the ripple effect ride-hailing apps use while finding drivers.
+const UserLocationScanningIcon = L.divIcon({
+  className: 'user-location-marker user-location-marker--scanning',
+  html: '<div class="radar-ring radar-ring-1"></div><div class="radar-ring radar-ring-2"></div><div class="radar-ring radar-ring-3"></div><div class="pulse"></div><div class="dot"></div>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+});
+
 // We use a single CARTO Voyager tile layer (with labels) instead of two separate
 // layers (nolabels + only_labels), halving the tile requests.
 const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 const TILE_SUBDOMAINS = 'abcd';
 const TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
-export default function MapLayout({ mechanics, selectedMechanic, onSelectMechanic, userLocation, mapPanTrigger, routeTarget }) {
+export default function MapLayout({ mechanics, selectedMechanic, onSelectMechanic, userLocation, mapPanTrigger, routeTarget, isLocatingScan }) {
   const defaultCenter = [DEFAULT_LATITUDE, DEFAULT_LONGITUDE];
   const [mapCenter, setMapCenter] = useState(null);
   const [routePath, setRoutePath] = useState(null);
@@ -294,7 +303,7 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
-            icon={UserLocationIcon}
+            icon={isLocatingScan ? UserLocationScanningIcon : UserLocationIcon}
             zIndexOffset={1000}
           />
         )}
