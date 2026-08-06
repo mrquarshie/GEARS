@@ -779,6 +779,7 @@ function App() {
             hideOnDesktop={!!selectedMechanic}
             onUseMyLocation={() => setMapPanTrigger(Date.now())}
             onScanStateChange={setIsLocatingScan}
+            onNavigateHome={() => setViewMode('all')}
           />
         )}
 
