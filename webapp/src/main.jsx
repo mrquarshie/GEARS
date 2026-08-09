@@ -777,7 +777,20 @@ function App() {
             searchRef={searchRef}
             onDirection={handleShowDirection}
             hideOnDesktop={!!selectedMechanic}
-            onUseMyLocation={() => setMapPanTrigger(Date.now())}
+              onUseMyLocation={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+                      setMapPanTrigger(Date.now());
+                    },
+                    (err) => console.warn("Location error:", err),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                  );
+                } else {
+                  setMapPanTrigger(Date.now());
+                }
+              }}
             onScanStateChange={setIsLocatingScan}
             onNavigateHome={() => setViewMode('all')}
           />

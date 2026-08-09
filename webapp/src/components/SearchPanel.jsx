@@ -27,6 +27,9 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
   
   const filterRef = useRef(null);
   const searchWrapperRef = useRef(null);
+  const searchFocusedRef = useRef(false);
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const suggestions = useMemo(() => {
     if (!searchTerm) return [];
@@ -54,6 +57,20 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Prevent visual-viewport scrolling when the search input is focused on mobile.
+  useEffect(() => {
+    if (!isMobile) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const lock = () => {
+      if (searchFocusedRef.current && viewport.offsetTop > 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    viewport.addEventListener('scroll', lock);
+    return () => viewport.removeEventListener('scroll', lock);
+  }, [isMobile]);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -109,6 +126,10 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
               }}
               onFocus={() => {
                 if (searchTerm) setShowSuggestions(true);
+                if (isMobile) searchFocusedRef.current = true;
+              }}
+              onBlur={() => {
+                searchFocusedRef.current = false;
               }}
             />
           </div>

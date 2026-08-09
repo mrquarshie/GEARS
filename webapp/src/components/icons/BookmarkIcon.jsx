@@ -5,7 +5,7 @@ import './Icons.css';
 export default function BookmarkIcon({ size = 20, state = 'default', filled = false, className = '', title, ...props }) {
   return (
     <IconShell
-      size={size}
+      size={20}
       defaultSize={"20"}
       viewBox="0 0 20 20"
       state={state}

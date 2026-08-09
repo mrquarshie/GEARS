@@ -26,3 +26,8 @@ ios/.symlinks/
 *.key
 *.mobileprovision
 .env
+
+# Web app
+webapp/certs/
+webapp/dist/
+webapp/node_modules/

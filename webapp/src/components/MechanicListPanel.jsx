@@ -72,27 +72,27 @@ function getVerificationTier(mechanic) {
   return 3;
 }
 
-function VerifiedIcon({ size = 16 }) {
+function VerifiedIcon({ size = 20 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={20} height={20} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path opacity="0.2" d="M14.5 8C14.5 8.78188 13.3863 9.37188 13.0825 10.1056C12.79 10.8131 13.1712 12.0212 12.5962 12.5962C12.0212 13.1712 10.8131 12.79 10.1056 13.0825C9.375 13.3863 8.78125 14.5 8 14.5C7.21875 14.5 6.625 13.3863 5.89437 13.0825C5.18687 12.79 3.97875 13.1712 3.40375 12.5962C2.82875 12.0212 3.21 10.8131 2.9175 10.1056C2.61375 9.375 1.5 8.78125 1.5 8C1.5 7.21875 2.61375 6.625 2.9175 5.89437C3.21 5.1875 2.82875 3.97875 3.40375 3.40375C3.97875 2.82875 5.1875 3.21 5.89437 2.9175C6.62812 2.61375 7.21875 1.5 8 1.5C8.78125 1.5 9.375 2.61375 10.1056 2.9175C10.8131 3.21 12.0212 2.82875 12.5962 3.40375C13.1712 3.97875 12.79 5.18687 13.0825 5.89437C13.3863 6.62812 14.5 7.21875 14.5 8Z" fill="#145E42" />
       <path d="M14.1163 6.42625C13.8806 6.18 13.6369 5.92625 13.545 5.70312C13.46 5.49875 13.455 5.16 13.45 4.83187C13.4406 4.22187 13.4306 3.53062 12.95 3.05C12.4694 2.56937 11.7781 2.55937 11.1681 2.55C10.84 2.545 10.5012 2.54 10.2969 2.455C10.0744 2.36312 9.82 2.11937 9.57375 1.88375C9.1425 1.46937 8.6525 1 8 1C7.3475 1 6.85812 1.46937 6.42625 1.88375C6.18 2.11937 5.92625 2.36312 5.70312 2.455C5.5 2.54 5.16 2.545 4.83187 2.55C4.22187 2.55937 3.53062 2.56937 3.05 3.05C2.56937 3.53062 2.5625 4.22187 2.55 4.83187C2.545 5.16 2.54 5.49875 2.455 5.70312C2.36312 5.92562 2.11937 6.18 1.88375 6.42625C1.46937 6.8575 1 7.3475 1 8C1 8.6525 1.46937 9.14187 1.88375 9.57375C2.11937 9.82 2.36312 10.0738 2.455 10.2969C2.54 10.5012 2.545 10.84 2.55 11.1681C2.55937 11.7781 2.56937 12.4694 3.05 12.95C3.53062 13.4306 4.22187 13.4406 4.83187 13.45C5.16 13.455 5.49875 13.46 5.70312 13.545C5.92562 13.6369 6.18 13.8806 6.42625 14.1163C6.8575 14.5306 7.3475 15 8 15C8.6525 15 9.14187 14.5306 9.57375 14.1163C9.82 13.8806 10.0738 13.6369 10.2969 13.545C10.5012 13.46 10.84 13.455 11.1681 13.45C11.7781 13.4406 12.4694 13.4306 12.95 12.95C13.4306 12.4694 13.4406 11.7781 13.45 11.1681C13.455 10.84 13.46 10.5012 13.545 10.2969C13.6369 10.0744 13.8806 9.82 14.1163 9.57375C14.5306 9.1425 15 8.6525 15 8C15 7.3475 14.5306 6.85812 14.1163 6.42625ZM13.3944 8.88188C13.095 9.19438 12.785 9.5175 12.6206 9.91438C12.4631 10.2956 12.4562 10.7312 12.45 11.1531C12.4437 11.5906 12.4369 12.0488 12.2425 12.2425C12.0481 12.4363 11.5931 12.4437 11.1531 12.45C10.7312 12.4562 10.2956 12.4631 9.91438 12.6206C9.5175 12.785 9.19438 13.095 8.88188 13.3944C8.56938 13.6937 8.25 14 8 14C7.75 14 7.42812 13.6925 7.11812 13.3944C6.80812 13.0962 6.4825 12.785 6.08563 12.6206C5.70438 12.4631 5.26875 12.4562 4.84688 12.45C4.40938 12.4437 3.95125 12.4369 3.7575 12.2425C3.56375 12.0481 3.55625 11.5931 3.55 11.1531C3.54375 10.7312 3.53687 10.2956 3.37937 9.91438C3.215 9.5175 2.905 9.19438 2.60562 8.88188C2.30625 8.56938 2 8.25 2 8C2 7.75 2.3075 7.42812 2.60562 7.11812C2.90375 6.80812 3.215 6.4825 3.37937 6.08563C3.53687 5.70438 3.54375 5.26875 3.55 4.84688C3.55625 4.40938 3.56312 3.95125 3.7575 3.7575C3.95187 3.56375 4.40688 3.55625 4.84688 3.55C5.26875 3.54375 5.70438 3.53687 6.08563 3.37937C6.4825 3.215 6.80562 2.905 7.11812 2.60562C7.43062 2.30625 7.75 2 8 2C8.25 2 8.57188 2.3075 8.88188 2.60562C9.19188 2.90375 9.5175 3.215 9.91438 3.37937C10.2956 3.53687 10.7312 3.54375 11.1531 3.55C11.5906 3.55625 12.0488 3.56312 12.2425 3.7575C12.4363 3.95187 12.4437 4.40688 12.45 4.84688C12.4562 5.26875 12.4631 5.70438 12.6206 6.08563C12.785 6.4825 13.095 6.80562 13.3944 7.11812C13.6937 7.43062 14 7.75 14 8C14 8.25 13.6925 8.57188 13.3944 8.88188ZM10.8538 6.14625C10.9002 6.19269 10.9371 6.24783 10.9623 6.30853C10.9874 6.36923 11.0004 6.43429 11.0004 6.5C11.0004 6.56571 10.9874 6.63077 10.9623 6.69147C10.9371 6.75217 10.9002 6.80731 10.8538 6.85375L7.35375 10.3538C7.30731 10.4002 7.25217 10.4371 7.19147 10.4623C7.13077 10.4874 7.06571 10.5004 7 10.5004C6.93429 10.5004 6.86923 10.4874 6.80853 10.4623C6.74783 10.4371 6.69269 10.4002 6.64625 10.3538L5.14625 8.85375C5.05243 8.75993 4.99972 8.63268 4.99972 8.5C4.99972 8.36732 5.05243 8.24007 5.14625 8.14625C5.24007 8.05243 5.36732 7.99972 5.5 7.99972C5.63268 7.99972 5.75993 8.05243 5.85375 8.14625L7 9.29313L10.1462 6.14625C10.1927 6.09976 10.2478 6.06288 10.3085 6.03772C10.3692 6.01256 10.4343 5.99961 10.5 5.99961C10.5657 5.99961 10.6308 6.01256 10.6915 6.03772C10.7522 6.06288 10.8073 6.09976 10.8538 6.14625Z" fill="#145E42" />
     </svg>
   );
 }
 
-function ClaimedIcon({ size = 16 }) {
+function ClaimedIcon({ size = 20 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={20} height={20} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path opacity="0.2" d="M14.5 8C14.5 8.78188 13.3863 9.37188 13.0825 10.1056C12.79 10.8131 13.1712 12.0212 12.5962 12.5962C12.0212 13.1712 10.8131 12.79 10.1056 13.0825C9.375 13.3863 8.78125 14.5 8 14.5C7.21875 14.5 6.625 13.3863 5.89437 13.0825C5.18687 12.79 3.97875 13.1712 3.40375 12.5962C2.82875 12.0212 3.21 10.8131 2.9175 10.1056C2.61375 9.375 1.5 8.78125 1.5 8C1.5 7.21875 2.61375 6.625 2.9175 5.89437C3.21 5.1875 2.82875 3.97875 3.40375 3.40375C3.97875 2.82875 5.1875 3.21 5.89437 2.9175C6.62812 2.61375 7.21875 1.5 8 1.5C8.78125 1.5 9.375 2.61375 10.1056 2.9175C10.8131 3.21 12.0212 2.82875 12.5962 3.40375C13.1712 3.97875 12.79 5.18687 13.0825 5.89437C13.3863 6.62812 14.5 7.21875 14.5 8Z" fill="black" fillOpacity="0.4" />
       <path d="M14.1163 6.42625C13.8806 6.18 13.6369 5.92625 13.545 5.70312C13.46 5.49875 13.455 5.16 13.45 4.83187C13.4406 4.22187 13.4306 3.53062 12.95 3.05C12.4694 2.56937 11.7781 2.55937 11.1681 2.55C10.84 2.545 10.5012 2.54 10.2969 2.455C10.0744 2.36312 9.82 2.11937 9.57375 1.88375C9.1425 1.46937 8.6525 1 8 1C7.3475 1 6.85812 1.46937 6.42625 1.88375C6.18 2.11937 5.92625 2.36312 5.70312 2.455C5.5 2.54 5.16 2.545 4.83187 2.55C4.22187 2.55937 3.53062 2.56937 3.05 3.05C2.56937 3.53062 2.5625 4.22187 2.55 4.83187C2.545 5.16 2.54 5.49875 2.455 5.70312C2.36312 5.92562 2.11937 6.18 1.88375 6.42625C1.46937 6.8575 1 7.3475 1 8C1 8.6525 1.46937 9.14187 1.88375 9.57375C2.11937 9.82 2.36312 10.0738 2.455 10.2969C2.54 10.5012 2.545 10.84 2.55 11.1681C2.55937 11.7781 2.56937 12.4694 3.05 12.95C3.53062 13.4306 4.22187 13.4406 4.83187 13.45C5.16 13.455 5.49875 13.46 5.70312 13.545C5.92562 13.6369 6.18 13.8806 6.42625 14.1163C6.8575 14.5306 7.3475 15 8 15C8.6525 15 9.14187 14.5306 9.57375 14.1163C9.82 13.8806 10.0738 13.6369 10.2969 13.545C10.5012 13.46 10.84 13.455 11.1681 13.45C11.7781 13.4406 12.4694 13.4306 12.95 12.95C13.4306 12.4694 13.4406 11.7781 13.45 11.1681C13.455 10.84 13.46 10.5012 13.545 10.2969C13.6369 10.0744 13.8806 9.82 14.1163 9.57375C14.5306 9.1425 15 8.6525 15 8C15 7.3475 14.5306 6.85812 14.1163 6.42625ZM13.3944 8.88188C13.095 9.19438 12.785 9.5175 12.6206 9.91438C12.4631 10.2956 12.4562 10.7312 12.45 11.1531C12.4437 11.5906 12.4369 12.0488 12.2425 12.2425C12.0481 12.4363 11.5931 12.4437 11.1531 12.45C10.7312 12.4562 10.2956 12.4631 9.91438 12.6206C9.5175 12.785 9.19438 13.095 8.88188 13.3944C8.56938 13.6937 8.25 14 8 14C7.75 14 7.42812 13.6925 7.11812 13.3944C6.80812 13.0962 6.4825 12.785 6.08563 12.6206C5.70438 12.4631 5.26875 12.4562 4.84688 12.45C4.40938 12.4437 3.95125 12.4369 3.7575 12.2425C3.56375 12.0481 3.55625 11.5931 3.55 11.1531C3.54375 10.7312 3.53687 10.2956 3.37937 9.91438C3.215 9.5175 2.905 9.19438 2.60562 8.88188C2.30625 8.56938 2 8.25 2 8C2 7.75 2.3075 7.42812 2.60562 7.11812C2.90375 6.80812 3.215 6.4825 3.37937 6.08563C3.53687 5.70438 3.54375 5.26875 3.55 4.84688C3.55625 4.40938 3.56312 3.95125 3.7575 3.7575C3.95187 3.56375 4.40688 3.55625 4.84688 3.55C5.26875 3.54375 5.70438 3.53687 6.08563 3.37937C6.4825 3.215 6.80562 2.905 7.11812 2.60562C7.43062 2.30625 7.75 2 8 2C8.25 2 8.57188 2.3075 8.88188 2.60562C9.19188 2.90375 9.5175 3.215 9.91438 3.37937C10.2956 3.53687 10.7312 3.54375 11.1531 3.55C11.5906 3.55625 12.0488 3.56312 12.2425 3.7575C12.4363 3.95187 12.4437 4.40688 12.45 4.84688C12.4562 5.26875 12.4631 5.70438 12.6206 6.08563C12.785 6.4825 13.095 6.80562 13.3944 7.11812C13.6937 7.43062 14 7.75 14 8C14 8.25 13.6925 8.57188 13.3944 8.88188ZM10.8538 6.14625C10.9002 6.19269 10.9371 6.24783 10.9623 6.30853C10.9874 6.36923 11.0004 6.43429 11.0004 6.5C11.0004 6.56571 10.9874 6.63077 10.9623 6.69147C10.9371 6.75217 10.9002 6.80731 10.8538 6.85375L7.35375 10.3538C7.30731 10.4002 7.25217 10.4371 7.19147 10.4623C7.13077 10.4874 7.06571 10.5004 7 10.5004C6.93429 10.5004 6.86923 10.4874 6.80853 10.4623C6.74783 10.4371 6.69269 10.4002 6.64625 10.3538L5.14625 8.85375C5.05243 8.75993 4.99972 8.63268 4.99972 8.5C4.99972 8.36732 5.05243 8.24007 5.14625 8.14625C5.24007 8.05243 5.36732 7.99972 5.5 7.99972C5.63268 7.99972 5.75993 8.05243 5.85375 8.14625L7 9.29313L10.1462 6.14625C10.1927 6.09976 10.2478 6.06288 10.3085 6.03772C10.3692 6.01256 10.4343 5.99961 10.5 5.99961C10.5657 5.99961 10.6308 6.01256 10.6915 6.03772C10.7522 6.06288 10.8073 6.09976 10.8538 6.14625Z" fill="black" fillOpacity="0.4" />
     </svg>
   );
 }
 
-function UnverifiedIcon({ size = 16 }) {
+function UnverifiedIcon({ size = 20 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={20} height={20} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="0.75" />
       <path d="M7.5 5v3.5M7.5 11h0.01" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
     </svg>
@@ -126,7 +126,10 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const sortRef = useRef(null);
   const filterRef = useRef(null);
   const searchWrapperRef = useRef(null);
+  const panelRef = useRef(null);
   const scanStartRef = useRef(0);
+  const searchFocusedRef = useRef(false);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const suggestions = useMemo(() => {
     if (!searchTerm) return [];
@@ -195,6 +198,21 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   useEffect(() => {
     if (onScanStateChange) onScanStateChange(isScanning);
   }, [isScanning, onScanStateChange]);
+
+  // Prevent visual-viewport scrolling when the search input is focused on mobile,
+  // so the map and panels stay fixed (native-app keyboard feel).
+  useEffect(() => {
+    if (!isMobile) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const lock = () => {
+      if (searchFocusedRef.current && viewport.offsetTop > 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    viewport.addEventListener('scroll', lock);
+    return () => viewport.removeEventListener('scroll', lock);
+  }, [isMobile]);
 
   const handleScanLocation = () => {
     scanStartRef.current = Date.now();
@@ -267,9 +285,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   // Calculate dynamic transform based on state and drag offset
   let transformBase = 'calc(100% - 150px)'; // minimized
   if (sheetState === 'half') transformBase = '50vh';
-  if (sheetState === 'expanded') transformBase = '200px';
+  if (sheetState === 'expanded') transformBase = '240px';
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const isFullPage = isMobile && (viewMode === 'saved' || viewMode === 'history');
   const dynamicStyle = isMobile && !isFullPage ? {
     transform: `translateY(calc(${transformBase} + ${dragOffset}px))`
@@ -285,6 +302,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   return (
     <div
+      ref={panelRef}
       className={`mechanic-list-panel ${isDragging ? 'dragging' : ''} ${hideOnDesktop ? 'mechanic-list-panel--hidden-desktop' : ''} ${isFullPage ? 'mechanic-list-panel--fullpage' : ''}`}
       style={dynamicStyle}
     >
@@ -374,8 +392,25 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 setSearchTerm(e.target.value);
                 setShowSuggestions(true);
               }}
+              onPointerDown={() => {
+                if (isMobile && sheetState !== 'expanded') {
+                  if (panelRef.current) {
+                    panelRef.current.style.transition = 'none';
+                    panelRef.current.style.transform = 'translateY(240px)';
+                  }
+                  setSheetState('expanded');
+                  setDragOffset(0);
+                }
+              }}
               onFocus={() => {
                 if (searchTerm) setShowSuggestions(true);
+                if (isMobile) {
+                  searchFocusedRef.current = true;
+                  if (panelRef.current) panelRef.current.style.transition = '';
+                }
+              }}
+              onBlur={() => {
+                searchFocusedRef.current = false;
               }}
             />
           </div>
@@ -691,7 +726,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                   </div>
                   <button
                     className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); }}
+                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); if (isMobile && nextId) setSheetState('minimized'); }}
                   >
                     <LocationIcon size={16} />
                     <span className="card-action-label">Direction</span>
@@ -777,7 +812,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                   </div>
                   <button
                     className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); }}
+                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); if (isMobile && nextId) setSheetState('minimized'); }}
                   >
                     <LocationIcon size={16} />
                     <span className="card-action-label">Direction</span>

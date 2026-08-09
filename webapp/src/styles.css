@@ -308,6 +308,11 @@ body {
     0 1px 4px 0 rgba(12, 12, 13, 0.1);
 }
 
+.search-input-box:focus-within {
+  border-color: #000000;
+  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.1);
+}
+
 .search-input-box input:focus {
   outline: none;
 }
@@ -1332,7 +1337,7 @@ body {
 
 /* Hide scroll indicators on mobile */
 @media (max-width: 768px) {
-  .card-action-label {
+  .mechanic-card .card-action-label {
     display: none;
   }
 
@@ -1447,7 +1452,7 @@ body {
   color: var(--ink);
   line-height: 1.3;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  /* -webkit-line-clamp: 2; */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1514,6 +1519,7 @@ body {
   background: #fafafa;
   padding: 0;
   position: relative;
+  flex-shrink: 0;
 }
 
 .detail-hero-avatar {
@@ -1561,6 +1567,15 @@ body {
   font-size: 16px;
   font-weight: 600;
   color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-verify-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .detail-hero-area {
@@ -1600,6 +1615,7 @@ body {
   padding: 12px 12px 0;
   border-bottom: 1px solid rgba(0,0,0,0.05);
   gap: 4px;
+  margin-bottom: 12px;
 }
 
 .tab-btn {
@@ -1639,6 +1655,7 @@ body {
 
 .overview-tab {
   padding: 0;
+  background: #ffffff;
 }
 
 .empty-tab-text {
@@ -1648,22 +1665,25 @@ body {
   font-size: 14px;
 }
 
-/* Info rows — used in Overview tab */
+/* Info rows — icon on left, label + value stacked on the right. */
 .info-row {
   padding: 12px 16px;
   border-bottom: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.info-row--last {
+.info-row:last-child {
   border-bottom: none;
 }
 
-.info-row-header {
+.info-row-content {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  color: rgba(0,0,0,0.5);
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
 
 .info-row-label {
@@ -1671,15 +1691,21 @@ body {
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', ui-sans-serif, system-ui, sans-serif;
   text-transform: uppercase;
+  color: rgba(0,0,0,0.5);
 }
 
-.info-row-text {
+.info-row-value {
   margin: 0;
   font-size: 16px;
   font-weight: 500;
   color: var(--ink);
   line-height: 1.5;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.info-row-value--sm {
+  font-size: 14px;
+  font-weight: 400;
 }
 
 /* Specialty tags */
@@ -1691,22 +1717,23 @@ body {
 
 .specialty-tag {
   background: #fafafa;
-  color: var(--forest);
+  color: #065f46;
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
 }
 
 /* Bottom action bar */
 .detail-bottom-bar {
-  padding: 12px;
+  padding: 12px 12px max(20px, env(safe-area-inset-bottom));
   background: #fafafa;
   border-top: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  /* gap: 10px; */
+  flex-shrink: 0;
 }
 
 .detail-bottom-left {
@@ -1721,8 +1748,11 @@ body {
 
 .detail-bottom-divider {
   width: 1px;
-  height: 36px;
-  background: rgba(0,0,0,0.05);
+  height: 28px;
+  transform-origin: top left;
+  /* transform: rotate(90deg); */
+  border: 1px solid rgba(0,0,0,0.1);
+  outline-offset: -0.5px;
   flex-shrink: 0;
 }
 
@@ -1733,7 +1763,7 @@ body {
   justify-content: center;
   height: 40px;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   background: #ffffff;
@@ -1746,12 +1776,11 @@ body {
 }
 
 .bottom-icon-btn {
-  width: 40px;
-  padding: 0;
+  padding: 8px 10px;
 }
 
 .bottom-action-btn {
-  padding: 0 12px;
+  padding: 8px 10px;
   gap: 6px;
 }
 
@@ -3115,12 +3144,8 @@ body {
   }
   
   .detail-bottom-bar {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 12px 16px;
-    gap: 8px;
-    justify-content: flex-start;
+    padding: 12px 12px max(20px, env(safe-area-inset-bottom));
+    background: #fafafa;
   }
 
   .detail-bottom-left, .detail-bottom-right {

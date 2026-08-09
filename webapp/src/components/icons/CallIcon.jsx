@@ -5,7 +5,7 @@ import './Icons.css';
 export default function CallIcon({ size = 16, state = 'default', filled = false, className = '', title, ...props }) {
   return (
     <IconShell
-      size={size}
+      size={20}
       defaultSize={"16"}
       viewBox="0 0 16 16"
       state={state}
