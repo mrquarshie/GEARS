@@ -2,7 +2,7 @@ import React from 'react';
 import { IconShell } from './IconShell';
 import './Icons.css';
 
-export default function LocationIcon({ size = 16, state = 'default', filled = false, className = '', title, ...props }) {
+export default function LocationIcon({ size = 20, state = 'default', filled = false, className = '', title, ...props }) {
   return (
     <IconShell
       size={size}

@@ -24,6 +24,46 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilterTab, setActiveFilterTab] = useState('Services');
   const [activeMainTab, setActiveMainTab] = useState('All Services');
+
+  const placeholderPhrases = [
+    'Mechanics',
+    'Detailers',
+    'Auto Parts',
+    'Fuel Stations',
+    'in Accra',
+    'in Kumasi',
+    'Brakes',
+    'Engine Repair',
+    'Car Wash',
+    'Diagnostics',
+  ];
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [placeholderText, setPlaceholderText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = placeholderPhrases[placeholderIdx];
+    let timer;
+    if (!isDeleting) {
+      if (placeholderText.length < current.length) {
+        timer = setTimeout(() => {
+          setPlaceholderText(current.slice(0, placeholderText.length + 1));
+        }, 50);
+      } else {
+        timer = setTimeout(() => setIsDeleting(true), 3000);
+      }
+    } else {
+      if (placeholderText.length > 0) {
+        timer = setTimeout(() => {
+          setPlaceholderText(placeholderText.slice(0, -1));
+        }, 25);
+      } else {
+        setIsDeleting(false);
+        setPlaceholderIdx(prev => (prev + 1) % placeholderPhrases.length);
+      }
+    }
+    return () => clearTimeout(timer);
+  }, [placeholderText, isDeleting, placeholderIdx]);
   
   const filterRef = useRef(null);
   const searchWrapperRef = useRef(null);
@@ -37,13 +77,21 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
     const uniqueMatches = new Map();
     mechanics.forEach(m => {
       if (m.name?.toLowerCase().includes(term)) uniqueMatches.set(m.name, { type: 'Name', value: m.name });
-      else if (m.area?.toLowerCase().includes(term)) uniqueMatches.set(m.area, { type: 'Area', value: m.area });
-      else if (m.services?.some(s => s.toLowerCase().includes(term))) {
-        const match = m.services.find(s => s.toLowerCase().includes(term));
-        if (match) uniqueMatches.set(match, { type: 'Service', value: match });
-      }
+      if (m.area?.toLowerCase().includes(term)) uniqueMatches.set(m.area, { type: 'Area', value: m.area });
+      if (m.specialty?.toLowerCase().includes(term)) uniqueMatches.set(m.specialty, { type: 'Category', value: m.specialty });
+      if (m.locationDetail?.toLowerCase().includes(term)) uniqueMatches.set(m.locationDetail, { type: 'Location', value: m.locationDetail });
+      if (m.about?.toLowerCase().includes(term)) uniqueMatches.set(m.about, { type: 'About', value: m.about });
+      (m.specialties || []).forEach(s => { if (s.toLowerCase().includes(term)) uniqueMatches.set(s, { type: 'Speciality', value: s }); });
+      (m.services || []).forEach(s => { 
+        const serviceName = typeof s === 'string' ? s : s.name;
+        if (serviceName?.toLowerCase().includes(term)) uniqueMatches.set(serviceName, { type: 'Service', value: serviceName });
+      });
+      (m.products || []).forEach(p => { if (p.name?.toLowerCase().includes(term)) uniqueMatches.set(p.name, { type: 'Product', value: p.name }); });
+      (m.fuelPrices || []).forEach(f => { if (f.type?.toLowerCase().includes(term)) uniqueMatches.set(f.type, { type: 'Fuel', value: f.type }); });
+      (m.facilities || []).forEach(f => { if (f.toLowerCase?.().includes(term)) uniqueMatches.set(f, { type: 'Facility', value: f }); });
+      if (m.phone?.toLowerCase().includes(term)) uniqueMatches.set(m.phone, { type: 'Phone', value: m.phone });
     });
-    return Array.from(uniqueMatches.values()).slice(0, 5);
+    return Array.from(uniqueMatches.values()).slice(0, 8);
   }, [searchTerm, mechanics]);
 
   const [popularProducts, setPopularProducts] = useState([]);
@@ -118,7 +166,7 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
             <input 
               ref={searchRef}
               type="text" 
-              placeholder="Search Location" 
+              placeholder=""
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -132,6 +180,12 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
                 searchFocusedRef.current = false;
               }}
             />
+            {!searchTerm && (
+              <span className="search-placeholder-animated">
+                <span className="search-placeholder-prefix">Search </span>
+                <span className="search-placeholder-suffix">{placeholderText}<span className="placeholder-cursor">|</span></span>
+              </span>
+            )}
           </div>
           
           {showSuggestions && suggestions.length > 0 && (

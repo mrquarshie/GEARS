@@ -612,9 +612,17 @@ function App() {
     const term = searchedArea.toLowerCase();
     return list.filter(
       (m) =>
-        m.area?.toLowerCase().includes(term) ||
         m.name?.toLowerCase().includes(term) ||
-        m.specialty?.toLowerCase().includes(term),
+        m.area?.toLowerCase().includes(term) ||
+        m.specialty?.toLowerCase().includes(term) ||
+        m.locationDetail?.toLowerCase().includes(term) ||
+        m.about?.toLowerCase().includes(term) ||
+        m.phone?.toLowerCase().includes(term) ||
+        (m.specialties || []).some(s => s.toLowerCase().includes(term)) ||
+        (m.services || []).some(s => (typeof s === 'string' ? s : s.name)?.toLowerCase().includes(term)) ||
+        (m.products || []).some(p => p.name?.toLowerCase().includes(term)) ||
+        (m.fuelPrices || []).some(f => f.type?.toLowerCase().includes(term)) ||
+        (m.facilities || []).some(f => f.toLowerCase?.().includes(term)),
     );
   }, [allMechanics, searchedArea, viewMode, savedMechanics, userLocation]);
 
