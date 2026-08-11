@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -100,50 +100,74 @@ function pruneIconCache(activeIds) {
 // Component to handle map centering when a mechanic is selected
 function MapCenterer({ center, userLocation, mapPanTrigger, routeActive }) {
   const map = useMap();
+  // Tracks which "Locate Me" tap we've already flown to, so the frequent
+  // userLocation updates from the GPS watch don't keep re-triggering flyTo
+  // (and resetting the zoom) every time the user tries to pan or zoom.
+  const firedForTriggerRef = useRef(null);
 
   useEffect(() => {
     if (center && !routeActive) {
       map.flyTo(center, SELECT_ZOOM, { animate: true, duration: TRANSITION_DURATION / 1000 });
     }
-  }, [center, map, routeActive]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center, routeActive]);
 
   useEffect(() => {
-    if (mapPanTrigger > 0 && userLocation) {
-      map.flyTo([userLocation.lat, userLocation.lng], DEFAULT_ZOOM, { animate: true, duration: TRANSITION_DURATION / 1000 });
-    }
-  }, [mapPanTrigger, userLocation, map]);
+    if (mapPanTrigger <= 0 || !userLocation) return;
+    if (firedForTriggerRef.current === mapPanTrigger) return;
+    firedForTriggerRef.current = mapPanTrigger;
+    map.flyTo([userLocation.lat, userLocation.lng], DEFAULT_ZOOM, { animate: true, duration: TRANSITION_DURATION / 1000 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapPanTrigger, userLocation]);
 
   return null;
 }
 
 function RouteFitter({ userLocation, routeTarget, routePath }) {
   const map = useMap();
+  // Tracks which routeTarget we've already fit the view to, so the frequent
+  // userLocation updates from the GPS watch don't keep yanking the camera
+  // back to the route bounds every time the user tries to pan or zoom.
+  const firedForKeyRef = useRef(null);
 
   useEffect(() => {
-    if (!userLocation || !routeTarget) return;
+    if (!routeTarget) {
+      firedForKeyRef.current = null;
+      return;
+    }
+    if (!userLocation) return;
+
+    const key = `${routeTarget.lat},${routeTarget.lng}`;
+    if (firedForKeyRef.current === key) return;
+    firedForKeyRef.current = key;
+
     const bounds = routePath && routePath.length > 0
       ? routePath
       : [[userLocation.lat, userLocation.lng], [routeTarget.lat, routeTarget.lng]];
     map.flyToBounds(bounds, { padding: [80, 80], duration: TRANSITION_DURATION / 1000, maxZoom: ROUTE_MAX_ZOOM });
-  }, [userLocation, routeTarget, routePath, map]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeTarget, userLocation]);
 
   return null;
 }
 
 function MapZoomStyler() {
   const map = useMap();
+  const mapRef = useRef(map);
+  mapRef.current = map;
 
   useEffect(() => {
+    const m = mapRef.current;
     const updateMarkerScale = () => {
-      const zoom = map.getZoom();
+      const zoom = m.getZoom();
       const scale = Math.min(1.24, Math.max(0.84, 0.9 + (zoom - 14) * 0.055));
-      map.getContainer().style.setProperty('--map-marker-scale', scale.toFixed(2));
+      m.getContainer().style.setProperty('--map-marker-scale', scale.toFixed(2));
     };
 
     updateMarkerScale();
-    map.on('zoomend', updateMarkerScale);
-    return () => map.off('zoomend', updateMarkerScale);
-  }, [map]);
+    m.on('zoomend', updateMarkerScale);
+    return () => m.off('zoomend', updateMarkerScale);
+  }, []);
 
   return null;
 }
@@ -196,6 +220,10 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
     const lng = getCoordinate(selectedMechanic?.lng);
     if (lat !== null && lng !== null) {
       setMapCenter([lat, lng]);
+    } else {
+      // Clear so MapCenterer doesn't replay a stale center once routeActive
+      // flips back to false after the detail panel closes.
+      setMapCenter(null);
     }
   }, [selectedMechanic]);
 

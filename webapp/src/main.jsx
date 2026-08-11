@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import osmMechanicsData from './osm_mechanics.json';
 import mockExtrasData from './mockExtras.json';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { List, MapTrifold, NavigationArrow, Gear, X, Plus } from '@phosphor-icons/react';
+import { List, NavigationArrow, Gear, X, Plus } from '@phosphor-icons/react';
 import {
   addDoc,
   collection,
@@ -82,6 +82,28 @@ function RateModal({ mechanic, user, close, onRated, show, openAuth }) {
 
   const tagsList = ["Quality Service", "On Time", "Affordable", "Safe", "Excellent Job", "Good Conversation"];
   const starLabels = { 1: 'Terrible', 2: 'Bad', 3: 'Satisfied', 4: 'Good', 5: 'Excellent' };
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const commentFocusedRef = useRef(false);
+
+  // Prevent visual-viewport scrolling when the comment field is focused on
+  // mobile, so the modal stays put instead of the page shifting under the
+  // on-screen keyboard (same fix as the home search input).
+  useEffect(() => {
+    if (!isMobile) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const lock = () => {
+      // Reset both axes unconditionally — the app has no scrollable
+      // document, so any window scroll while focused (vertical or
+      // horizontal) is the keyboard-focus glitch, not a legitimate scroll.
+      if (commentFocusedRef.current) {
+        window.scrollTo(0, 0);
+      }
+    };
+    viewport.addEventListener('scroll', lock);
+    return () => viewport.removeEventListener('scroll', lock);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!db || !user || !mechanic.id) { setLoadingExisting(false); return; }
@@ -239,9 +261,17 @@ function GoogleGLogo({ size = 18 }) {
   );
 }
 
-function AuthModal({ close, onSuccess }) {
+// Headline shown per sign-in reason, so the prompt explains why the user was
+// stopped instead of a generic message that doesn't match what they tapped.
+const AUTH_REASON_COPY = {
+  bookmark: 'Sign up to bookmark a mechanic shop or retailer.',
+  rate: 'Sign up to rate and review.',
+};
+
+function AuthModal({ close, onSuccess, reason }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const headline = AUTH_REASON_COPY[reason] || 'Find trusted mechanics, anywhere in Ghana.';
 
   const loginWithGoogle = async () => {
     if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
@@ -284,7 +314,7 @@ function AuthModal({ close, onSuccess }) {
         </div>
 
         <div className="auth-body">
-          <h2>Find trusted mechanics, anywhere in Ghana.</h2>
+          <h2>{headline}</h2>
 
           {errorMsg && <div style={{ color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>{errorMsg}</div>}
 
@@ -482,12 +512,18 @@ function App() {
 
   // Keep fixed mobile sheets/modals sized to the *real* visible viewport, so the
   // on-screen keyboard doesn't squish or reflow them like a browser tab — it should
-  // just overlay, the way a native app's keyboard does.
+  // just overlay, the way a native app's keyboard does. Also track how tall the
+  // keyboard itself currently is (0 when it's down) as --keyboard-height, so a
+  // scrollable list that sits under it can pad its bottom by that much — letting
+  // rows that would otherwise be trapped behind the keyboard scroll up into view,
+  // without the sheet itself resizing/squishing.
   useEffect(() => {
     const viewport = window.visualViewport;
     const setVh = () => {
       const height = viewport ? viewport.height : window.innerHeight;
       document.documentElement.style.setProperty('--vh', `${height * 0.01}px`);
+      const keyboardHeight = viewport ? Math.max(0, window.innerHeight - viewport.height) : 0;
+      document.documentElement.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
     };
     setVh();
     const target = viewport || window;
@@ -496,6 +532,30 @@ function App() {
     return () => {
       target.removeEventListener('resize', setVh);
       target.removeEventListener('scroll', setVh);
+    };
+  }, []);
+
+  // Counter the *visual* viewport pan Safari/Chrome apply when a focused input
+  // sits inside a `position:fixed` sheet (to "scroll" it above the keyboard).
+  // That pan is a property of visualViewport.offsetLeft/Top, not a document
+  // scroll — window.scrollTo(0,0) never touches it, which is why fixed sheets
+  // could still visibly drift (including horizontally) while typing. Shifting
+  // the whole app root by the exact inverse offset cancels the drift outright,
+  // everywhere in the app, instead of chasing it sheet by sheet.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const root = document.getElementById('root');
+    if (!viewport || !root) return;
+    const compensate = () => {
+      root.style.transform = `translate(${-viewport.offsetLeft}px, ${-viewport.offsetTop}px)`;
+    };
+    compensate();
+    viewport.addEventListener('resize', compensate);
+    viewport.addEventListener('scroll', compensate);
+    return () => {
+      viewport.removeEventListener('resize', compensate);
+      viewport.removeEventListener('scroll', compensate);
+      root.style.transform = '';
     };
   }, []);
 
@@ -628,9 +688,60 @@ function App() {
 
   const show = (message) => { setNotice(message); setTimeout(() => setNotice(''), 3500); };
 
+  // Which category page (viewMode) a mechanic belongs to.
+  const categoryForMechanic = (m) => {
+    if (m.specialty === 'Car Detailing') return 'detailers';
+    if (m.specialty === 'Fuel Station') return 'fuel';
+    if (['Shop', 'Parts Shop', 'Auto Parts', 'Car Parts'].includes(m.specialty)) return 'shop';
+    return 'all';
+  };
+
+  // Does `term` match anything (name/specialty/services/etc — NOT area/location,
+  // those are handled separately as a location search) within `category`?
+  const categoryHasMatch = (term, category) =>
+    allMechanics.some((m) => {
+      if (categoryForMechanic(m) !== category) return false;
+      return (
+        m.name?.toLowerCase().includes(term) ||
+        m.specialty?.toLowerCase().includes(term) ||
+        m.about?.toLowerCase().includes(term) ||
+        m.phone?.toLowerCase().includes(term) ||
+        (m.specialties || []).some((s) => s.toLowerCase().includes(term)) ||
+        (m.services || []).some((s) => (typeof s === 'string' ? s : s.name)?.toLowerCase().includes(term)) ||
+        (m.products || []).some((p) => p.name?.toLowerCase().includes(term)) ||
+        (m.fuelPrices || []).some((f) => f.type?.toLowerCase().includes(term)) ||
+        (m.facilities || []).some((f) => f.toLowerCase?.().includes(term))
+      );
+    });
+
+  // Applies a search term and, if it isn't a location search, jumps to
+  // whichever category page actually has matches — so searching a detailer's
+  // name from the mechanics home page (or a mechanic's name from the
+  // detailers page, etc.) lands you on the results instead of "0 found".
+  // Location searches ("Accra") never redirect — they filter within
+  // whichever page the user is already on.
+  const handleSmartSearch = (term) => {
+    setSearchedArea(term);
+    if (!term) return;
+
+    const t = term.toLowerCase();
+    const isLocationMatch = allMechanics.some(
+      (m) => m.area?.toLowerCase().includes(t) || m.locationDetail?.toLowerCase().includes(t),
+    );
+    if (isLocationMatch) return;
+
+    const currentCategory = ['detailers', 'fuel', 'shop'].includes(viewMode) ? viewMode : 'all';
+    if (categoryHasMatch(t, currentCategory)) return;
+
+    const target = ['detailers', 'fuel', 'shop', 'all'].find(
+      (c) => c !== currentCategory && categoryHasMatch(t, c),
+    );
+    if (target) setViewMode(target);
+  };
+
   const toggleSave = async (mechanic) => {
     if (!user) {
-      setModal('auth');
+      setModal({ type: 'auth', reason: 'bookmark' });
       return;
     }
     const isSaved = savedMechanics.includes(mechanic.id);
@@ -753,9 +864,6 @@ function App() {
             <List size={20} />
           </button>
           <div className="mobile-map-actions">
-            <button className="map-action-btn" aria-label="Map Layers">
-              <MapTrifold size={20} />
-            </button>
             <button className="map-action-btn" aria-label="Locate Me" onClick={() => setMapPanTrigger(Date.now())}>
               <NavigationArrow size={20} />
             </button>
@@ -776,13 +884,14 @@ function App() {
           <MechanicListPanel
             mechanics={mechanics}
             searchedArea={searchedArea}
-            onSearch={setSearchedArea}
+            onSearch={handleSmartSearch}
             onSelect={handleSelectMechanic}
             user={user}
             savedMechanics={savedMechanics}
             onToggleSave={toggleSave}
             viewMode={viewMode}
             searchRef={searchRef}
+            onOpenSearch={() => setIsSearchPanelOpen(true)}
             onDirection={handleShowDirection}
             hideOnDesktop={!!selectedMechanic}
               onUseMyLocation={() => {
@@ -801,6 +910,7 @@ function App() {
               }}
             onScanStateChange={setIsLocatingScan}
             onNavigateHome={() => setViewMode('all')}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
           />
         )}
 
@@ -808,11 +918,12 @@ function App() {
           <SearchPanel
             mechanics={mechanics}
             searchedArea={searchedArea}
-            onSearch={setSearchedArea}
+            onSearch={handleSmartSearch}
             onSelect={handleSelectMechanic}
             user={user}
             savedMechanics={savedMechanics}
             onToggleSave={toggleSave}
+            viewMode={viewMode}
             searchRef={searchRef}
             onClose={() => setIsSearchPanelOpen(false)}
           />
@@ -834,11 +945,12 @@ function App() {
       {notice && <div className="toast" role="status">{notice}</div>}
 
       {/* Auth modal */}
-      {modal === 'auth' && (
+      {(modal === 'auth' || modal?.type === 'auth') && (
         <AuthModal
           close={() => setModal(null)}
           onSuccess={(u) => { setUser(u); setModal(null); }}
           show={show}
+          reason={modal?.reason}
         />
       )}
       {modal?.type === 'auth-for-rate' && (
@@ -846,6 +958,7 @@ function App() {
           close={() => setModal(null)}
           onSuccess={(u) => { setUser(u); setModal({ type: 'rate', mechanic: modal.mechanic }); }}
           show={show}
+          reason="rate"
         />
       )}
 

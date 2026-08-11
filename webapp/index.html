@@ -2,7 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=overlays-content" />
+    <!-- user-scalable=no: this is a map app with its own pinch/pan handling
+         (Leaflet), so page-level browser zoom is never wanted — it's also
+         what was causing the app to get stuck "zoomed in" after a focused
+         input, since once the browser's own viewport zoom drifts, fixed
+         panels visually shift until the user manually pinches back out. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content" />
     <meta name="theme-color" content="#155e42" />
     <meta name="description" content="Gears — Find trusted mechanics near you across Ghana. Search garages by area, read ratings, and call a mechanic directly." />
     <meta property="og:title" content="Gears — Mechanics near you in Ghana" />

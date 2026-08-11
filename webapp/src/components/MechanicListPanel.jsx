@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft } from '@phosphor-icons/react';
+import { Target, ArrowLeft, X, Wrench } from '@phosphor-icons/react';
 import {
   BookmarkIcon,
   CallIcon,
@@ -12,6 +12,8 @@ import {
   ShareIcon,
   StarRatingIcon,
 } from './icons';
+import { getPlaceholderPhrases } from '../searchPlaceholders';
+import { useTypewriterPlaceholder } from '../hooks/useTypewriterPlaceholder';
 
 // Expanding drive-time windows used by the "Use my location" search: start tight
 // (5-10 min) and widen in 10-minute steps up to an hour until a window has a match.
@@ -36,6 +38,40 @@ function findNearMeBucket(list) {
     }
   }
   return null;
+}
+
+const BENTO_CARD_COUNT = 3;
+
+function useBentoRevealLoop(active) {
+  const [filledCount, setFilledCount] = useState(0);
+
+  useEffect(() => {
+    if (!active) {
+      setFilledCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    (async () => {
+      while (!cancelled) {
+        setFilledCount(0);
+        await wait(600);
+        for (let i = 1; i <= 3; i++) {
+          if (cancelled) return;
+          setFilledCount(i);
+          await wait(600);
+        }
+        if (cancelled) return;
+        await wait(800);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [active]);
+
+  return { filledCount };
 }
 
 const PRODUCT_PLACEHOLDER_COLORS = [
@@ -104,7 +140,7 @@ function UnverifiedIcon({ size = 20 }) {
 // least this long so the loading/radar sequence is actually visible.
 const MIN_SCAN_MS = 3500;
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -115,6 +151,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const [nearMeRange, setNearMeRange] = useState(null);
   const [bookmarkSubTab, setBookmarkSubTab] = useState('Mechanics');
   const [directionTargetId, setDirectionTargetId] = useState(null);
+  // Mirrors the detail panel's collapsed peek bar: shrinks the whole list
+  // sheet down to a small tracking bar so the route on the map is visible.
+  const [directionPeek, setDirectionPeek] = useState(false);
   const [verificationSheet, setVerificationSheet] = useState(null);
 
   // --- Swipeable Bottom Sheet State ---
@@ -142,7 +181,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       if (m.locationDetail?.toLowerCase().includes(term)) uniqueMatches.set(m.locationDetail, { type: 'Location', value: m.locationDetail });
       if (m.about?.toLowerCase().includes(term)) uniqueMatches.set(m.about, { type: 'About', value: m.about });
       (m.specialties || []).forEach(s => { if (s.toLowerCase().includes(term)) uniqueMatches.set(s, { type: 'Speciality', value: s }); });
-      (m.services || []).forEach(s => { 
+      (m.services || []).forEach(s => {
         const serviceName = typeof s === 'string' ? s : s.name;
         if (serviceName?.toLowerCase().includes(term)) uniqueMatches.set(serviceName, { type: 'Service', value: serviceName });
       });
@@ -177,45 +216,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   const sortOptions = ['Near You', 'Top Rated', 'Most Popular', 'Open Now'];
 
-  const placeholderPhrases = [
-    'Mechanics',
-    'Detailers',
-    'Auto Parts',
-    'Fuel Stations',
-    'in Accra',
-    'in Kumasi',
-    'Brakes',
-    'Engine Repair',
-    'Car Wash',
-    'Diagnostics',
-  ];
-  const [placeholderIdx, setPlaceholderIdx] = useState(0);
-  const [placeholderText, setPlaceholderText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const current = placeholderPhrases[placeholderIdx];
-    let timer;
-    if (!isDeleting) {
-      if (placeholderText.length < current.length) {
-        timer = setTimeout(() => {
-          setPlaceholderText(current.slice(0, placeholderText.length + 1));
-        }, 50);
-      } else {
-        timer = setTimeout(() => setIsDeleting(true), 3000);
-      }
-    } else {
-      if (placeholderText.length > 0) {
-        timer = setTimeout(() => {
-          setPlaceholderText(placeholderText.slice(0, -1));
-        }, 25);
-      } else {
-        setIsDeleting(false);
-        setPlaceholderIdx(prev => (prev + 1) % placeholderPhrases.length);
-      }
-    }
-    return () => clearTimeout(timer);
-  }, [placeholderText, isDeleting, placeholderIdx]);
+  const placeholderPhrases = getPlaceholderPhrases(viewMode);
+  const placeholderText = useTypewriterPlaceholder(placeholderPhrases);
 
   // Once mechanics have distance data (location was obtained), wait out whatever's
   // left of MIN_SCAN_MS so the scanning/radar sequence always plays for a beat,
@@ -242,6 +244,13 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     setNearMeRange(null);
   }, [viewMode]);
 
+  // Reset sheet to minimized when switching categories so the map is pannable.
+  // (The animated placeholder resets itself when the phrase set changes.)
+  useEffect(() => {
+    setSheetState('minimized');
+    setDragOffset(0);
+  }, [viewMode]);
+
   // Let the map show a radar-scanning animation on the user's location dot while active.
   useEffect(() => {
     if (onScanStateChange) onScanStateChange(isScanning);
@@ -254,7 +263,10 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     const viewport = window.visualViewport;
     if (!viewport) return;
     const lock = () => {
-      if (searchFocusedRef.current && viewport.offsetTop > 0) {
+      // Reset both axes unconditionally — the app has no scrollable
+      // document, so any window scroll while focused (vertical or
+      // horizontal) is the keyboard-focus glitch, not a legitimate scroll.
+      if (searchFocusedRef.current) {
         window.scrollTo(0, 0);
       }
     };
@@ -271,12 +283,50 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const displayedMechanics = nearMeRange
     ? mechanics.filter(m => m.timeInMinutes != null && m.timeInMinutes <= nearMeRange.max)
     : viewMode === 'saved' ? bookmarkedMechanics
-    : viewMode === 'history' ? bookmarkedMechanics
-    : mechanics;
+      : viewMode === 'history' ? bookmarkedMechanics
+        : mechanics;
 
   const sortedMechanics = useMemo(() => {
     return [...displayedMechanics].sort((a, b) => getVerificationTier(a) - getVerificationTier(b));
   }, [displayedMechanics]);
+
+  const isBookmarksEmpty = (viewMode === 'saved' || viewMode === 'history') && sortedMechanics.length === 0;
+  const { filledCount } = useBentoRevealLoop(isBookmarksEmpty);
+  const [carouselSlide, setCarouselSlide] = useState(0);
+  const [carouselAnimate, setCarouselAnimate] = useState(true);
+  const trackRef = useRef(null);
+
+  useEffect(() => {
+    if (!isBookmarksEmpty) {
+      setCarouselSlide(0);
+      setCarouselAnimate(true);
+      return;
+    }
+    const totalSlides = 6;
+    const interval = setInterval(() => {
+      setCarouselSlide(prev => {
+        const next = prev + 1;
+        if (next >= totalSlides) {
+          // Jump back to start — disable animation for seamless reset
+          setCarouselAnimate(false);
+          return 0;
+        }
+        setCarouselAnimate(true);
+        return next;
+      });
+    }, 5200);
+    return () => clearInterval(interval);
+  }, [isBookmarksEmpty]);
+
+  // Re-enable transition after a reset jump settles
+  useEffect(() => {
+    if (carouselSlide === 0 && !carouselAnimate) {
+      const timer = requestAnimationFrame(() => {
+        setCarouselAnimate(true);
+      });
+      return () => cancelAnimationFrame(timer);
+    }
+  }, [carouselSlide, carouselAnimate]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -306,7 +356,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     if (!isDragging) return;
     const currentY = e.touches[0].clientY;
     const delta = currentY - dragStartY.current;
-    
+
     // Allow dragging up (negative delta) or down (positive delta)
     setDragOffset(delta);
   };
@@ -326,7 +376,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       if (sheetState === 'expanded') setSheetState('half');
       else if (sheetState === 'half') setSheetState('minimized');
     }
-    
+
     setDragOffset(0); // Reset visual offset
   };
 
@@ -348,6 +398,39 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     );
   }, [verificationSheet]);
 
+  const directionPeekTarget = directionPeek ? mechanics.find(m => m.id === directionTargetId) : null;
+  if (directionPeekTarget) {
+    return (
+      <>
+        <div className="mechanic-detail-collapsed">
+          <div className="detail-collapsed-info" onClick={() => setDirectionPeek(false)}>
+            <h2 className="detail-collapsed-name">{directionPeekTarget.name}</h2>
+            <p className="detail-collapsed-area">{directionPeekTarget.area}{directionPeekTarget.distance ? ` · ${directionPeekTarget.distance}` : ''}</p>
+          </div>
+          <div className="detail-collapsed-actions">
+            {directionPeekTarget.phone && (
+              <button
+                className="detail-collapsed-call"
+                aria-label="Call"
+                onClick={() => { window.location.href = `tel:${directionPeekTarget.phone.replace(/\s+/g, '')}`; }}
+              >
+                <CallIcon size={16} />
+              </button>
+            )}
+            <button
+              className="detail-collapsed-close"
+              aria-label="Close"
+              onClick={() => { setDirectionTargetId(null); onDirection(null); setDirectionPeek(false); }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+        {verificationPortal}
+      </>
+    );
+  }
+
   return (
     <div
       ref={panelRef}
@@ -356,22 +439,25 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     >
       {isFullPage && (
         <div className="fullpage-header">
-          <button className="fullpage-back-btn" onClick={onNavigateHome} aria-label="Back">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <button className="fullpage-back-btn" onClick={onOpenSidebar} aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
           <h1 className="fullpage-title">{viewMode === 'saved' ? 'Bookmarks' : 'History'}</h1>
+          <div className="fullpage-spacer" />
         </div>
       )}
-      <div
-        className="list-drag-strip"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="mobile-drag-handle"></div>
-      </div>
+      {!isFullPage && (
+        <div
+          className="list-drag-strip"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="mobile-drag-handle"></div>
+        </div>
+      )}
 
       <div className="mechanic-list-scroll">
         {nearMeRange && (
@@ -389,261 +475,291 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         )}
 
         {!nearMeRange && (
-        <>
-        {(viewMode === 'saved' || viewMode === 'history') ? (
-          /* Title + tabs pin to the top together while the cards below scroll. */
-          <div className="list-sticky-header">
-            <h1 className="list-title">{viewMode === 'saved' ? 'Bookmarks' : 'History'}</h1>
-            <div className="bookmark-tabs">
-              {['Mechanics', 'Shops', 'Detailers', 'Filling Stations'].map(tab => (
-                <button
-                  key={tab}
-                  className={`bookmark-tab ${bookmarkSubTab === tab ? 'active' : ''}`}
-                  onClick={() => setBookmarkSubTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-        <h1 className="list-title">
-          {viewMode === 'detailers' ? (
-            <>Discover Car Detailers</>
-          ) : viewMode === 'fuel' ? (
-            <>Find Fuel Stations</>
-          ) : viewMode === 'shop' ? (
-            <>Auto Parts Dealers</>
-          ) : (
-            <>A Mechanic,<br />When You Need One.</>
-          )}
-        </h1>
-        )}
-
-        {viewMode === 'history' && (
-          <p className="history-subtitle">Your calls, directions and interactions since last month</p>
-        )}
-
-        {/* Sticky "silver" search bar: sits in normal flow under the title at rest,
-            then pins to the top of the scroll area once the title scrolls past it. */}
-        {viewMode !== 'saved' && viewMode !== 'history' && (
-        <div className="search-sticky-bar">
-        <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
-          <div className="search-input-box">
-            <SearchIcon size={18} className="search-icon" />
-            <input 
-              ref={searchRef}
-              type="text" 
-              placeholder=""
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onPointerDown={() => {
-                if (isMobile && sheetState !== 'expanded') {
-                  if (panelRef.current) {
-                    panelRef.current.style.transition = 'none';
-                    panelRef.current.style.transform = 'translateY(240px)';
-                  }
-                  setSheetState('expanded');
-                  setDragOffset(0);
-                }
-              }}
-              onFocus={() => {
-                if (searchTerm) setShowSuggestions(true);
-                if (isMobile) {
-                  searchFocusedRef.current = true;
-                  if (panelRef.current) panelRef.current.style.transition = '';
-                }
-              }}
-              onBlur={() => {
-                searchFocusedRef.current = false;
-              }}
-            />
-            {!searchTerm && (
-              <span className="search-placeholder-animated">
-                <span className="search-placeholder-prefix">Search </span>
-                <span className="search-placeholder-suffix">{placeholderText}<span className="placeholder-cursor">|</span></span>
-              </span>
+          <>
+            {(viewMode === 'saved' || viewMode === 'history') ? (
+              /* Title + tabs pin to the top together while the cards below scroll.
+                 (Title is skipped in full-page mode — fullpage-header already shows it.) */
+              <div className="list-sticky-header">
+                {!isFullPage && <h1 className="list-title">{viewMode === 'saved' ? 'Bookmarks' : 'History'}</h1>}
+                <div className="bookmark-tabs">
+                  {['Mechanics', 'Shops', 'Detailers', 'Filling Stations'].map(tab => (
+                    <button
+                      key={tab}
+                      className={`bookmark-tab ${bookmarkSubTab === tab ? 'active' : ''}`}
+                      onClick={() => setBookmarkSubTab(tab)}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <h1 className="list-title">
+                {viewMode === 'detailers' ? (
+                  <>Discover Car Detailers</>
+                ) : viewMode === 'fuel' ? (
+                  <>Find Fuel Stations</>
+                ) : viewMode === 'shop' ? (
+                  <>Auto Parts Dealers</>
+                ) : (
+                  <>A Mechanic,<br />When You Need One.</>
+                )}
+              </h1>
             )}
-          </div>
-          
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="search-suggestions">
-              {suggestions.map((s, i) => (
-                <div 
-                  key={i} 
-                  className="suggestion-item" 
-                  onClick={() => {
-                    setSearchTerm(s.value);
-                    setShowSuggestions(false);
-                    onSearch(s.value);
-                  }}
-                >
-                  <SearchIcon size={14} className="suggestion-icon" />
-                  <span className="suggestion-text">{s.value}</span>
-                  <span className="suggestion-type">{s.type}</span>
-                </div>
-              ))}
-            </div>
-          )}
 
-          <div className="filter-container" ref={filterRef}>
-            <button type="button" className="filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-              <FilterIcon size={18} />
-            </button>
-            {isFilterOpen && (() => {
-              const filterPopup = (
-                <div className="filter-popup">
-                  <div className="mobile-drag-handle"></div>
-                  <div className="filter-header">
-                    <h2>Filters</h2>
-                    <button type="button" className="clear-all-btn">Clear all</button>
-                  </div>
-                  <div className="filter-tabs">
-                    <div className={`filter-tab ${activeFilterTab === 'Services' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Services')}>Services <span className="tab-badge">2</span></div>
-                    <div className={`filter-tab ${activeFilterTab === 'Availability' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Availability')}>Availability</div>
-                    <div className={`filter-tab ${activeFilterTab === 'Distance' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Distance')}>Distance</div>
-                    <div className={`filter-tab ${activeFilterTab === 'Rating' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Rating')}>Rating</div>
+            {viewMode === 'history' && (
+              <p className="history-subtitle">Your calls, directions and interactions since last month</p>
+            )}
+
+            {/* Sticky "silver" search bar: sits in normal flow under the title at rest,
+            then pins to the top of the scroll area once the title scrolls past it. */}
+            {viewMode !== 'saved' && viewMode !== 'history' && (
+              <div className="search-sticky-bar">
+                <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
+                  <div className="search-input-box">
+                    <SearchIcon size={18} className="search-icon" />
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      placeholder=""
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onPointerDown={(e) => {
+                        if (isMobile && onOpenSearch) {
+                          // Hand off to the full-screen search overlay instead of
+                          // expanding the sheet in place.
+                          e.preventDefault();
+                          onOpenSearch();
+                          return;
+                        }
+                        if (isMobile && sheetState !== 'expanded') {
+                          if (panelRef.current) {
+                            panelRef.current.style.transition = 'none';
+                            panelRef.current.style.transform = 'translateY(240px)';
+                          }
+                          setSheetState('expanded');
+                          setDragOffset(0);
+                        }
+                      }}
+                      onFocus={() => {
+                        if (searchTerm) setShowSuggestions(true);
+                        if (isMobile) {
+                          searchFocusedRef.current = true;
+                          if (panelRef.current) panelRef.current.style.transition = '';
+                        }
+                      }}
+                      onBlur={() => {
+                        searchFocusedRef.current = false;
+                      }}
+                    />
+                    {!searchTerm && (
+                      <span className="search-placeholder-animated">
+                        <span className="search-placeholder-prefix">Search </span>
+                        <span className="search-placeholder-suffix">{placeholderText}<span className="placeholder-cursor">|</span></span>
+                      </span>
+                    )}
+                    {searchTerm && (
+                    
+                        <svg 
+                      aria-label="Clear search"
+                          onClick={() => {
+                            setSearchTerm('');
+                            setShowSuggestions(false);
+                            onSearch('');
+                          }}
+                        xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          <path d="M5.33464 15.8334L4.16797 14.6667L8.83464 10.0001L4.16797 5.33341L5.33464 4.16675L10.0013 8.83341L14.668 4.16675L15.8346 5.33341L11.168 10.0001L15.8346 14.6667L14.668 15.8334L10.0013 11.1667L5.33464 15.8334Z" fill="black" fill-opacity="0.6" />
+                        </svg>
+               
+                    )}
                   </div>
 
-                  {activeFilterTab === 'Services' && (
-                    <div className="filter-body">
-                      <button type="button" className="filter-pill active">General Repair</button>
-                      <button type="button" className="filter-pill">Breaks</button>
-                      <button type="button" className="filter-pill">Electric Fault</button>
-                      <button type="button" className="filter-pill">Lights</button>
-                      <button type="button" className="filter-pill active">Engine</button>
-                      <button type="button" className="filter-pill">Spraying</button>
-                      <button type="button" className="filter-pill">Upgrade</button>
-                      <button type="button" className="filter-pill">Diagnostics</button>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="search-suggestions">
+                      {suggestions.map((s, i) => (
+                        <div
+                          key={i}
+                          className="suggestion-item"
+                          onClick={() => {
+                            setSearchTerm(s.value);
+                            setShowSuggestions(false);
+                            onSearch(s.value);
+                          }}
+                        >
+                          <SearchIcon size={14} className="suggestion-icon" />
+                          <span className="suggestion-text">{s.value}</span>
+                          <span className="suggestion-type">{s.type}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  {activeFilterTab === 'Availability' && (
-                    <div className="filter-body">
-                      <button type="button" className="filter-pill active">Weekdays</button>
-                      <button type="button" className="filter-pill">24/7</button>
-                      <button type="button" className="filter-pill">Week Days Only</button>
-                      <button type="button" className="filter-pill">Weekends Only</button>
-                      <button type="button" className="filter-pill active">Engine</button>
-                      <button type="button" className="filter-pill">Spraying</button>
-                    </div>
-                  )}
+                  <div className="filter-container" ref={filterRef}>
+                    <button type="button" className="filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                      <FilterIcon size={18} />
+                    </button>
+                    {isFilterOpen && (() => {
+                      const filterPopup = (
+                        <div className="filter-popup">
+                          <div className="mobile-drag-handle"></div>
+                          <div className="filter-header">
+                            <h2>Filters</h2>
+                            <button type="button" className="clear-all-btn">Clear all</button>
+                          </div>
+                          <div className="filter-tabs">
+                            <div className={`filter-tab ${activeFilterTab === 'Services' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Services')}>Services <span className="tab-badge">2</span></div>
+                            <div className={`filter-tab ${activeFilterTab === 'Availability' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Availability')}>Availability</div>
+                            <div className={`filter-tab ${activeFilterTab === 'Distance' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Distance')}>Distance</div>
+                            <div className={`filter-tab ${activeFilterTab === 'Rating' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Rating')}>Rating</div>
+                          </div>
 
-                  {activeFilterTab === 'Distance' && (
-                    <div className="filter-body">
-                      <button type="button" className="filter-pill alt">1 km</button>
-                      <button type="button" className="filter-pill alt active">3 km</button>
-                      <button type="button" className="filter-pill alt">5 km</button>
-                      <button type="button" className="filter-pill alt">10 km+</button>
-                    </div>
-                  )}
+                          {activeFilterTab === 'Services' && (
+                            <div className="filter-body">
+                              <button type="button" className="filter-pill active">General Repair</button>
+                              <button type="button" className="filter-pill">Breaks</button>
+                              <button type="button" className="filter-pill">Electric Fault</button>
+                              <button type="button" className="filter-pill">Lights</button>
+                              <button type="button" className="filter-pill active">Engine</button>
+                              <button type="button" className="filter-pill">Spraying</button>
+                              <button type="button" className="filter-pill">Upgrade</button>
+                              <button type="button" className="filter-pill">Diagnostics</button>
+                            </div>
+                          )}
 
-                  {activeFilterTab === 'Rating' && (
-                    <div className="filter-body">
-                      <button type="button" className="filter-pill alt">Any</button>
-                      <button type="button" className="filter-pill alt">4.0+</button>
-                      <button type="button" className="filter-pill alt active">4.5+</button>
-                    </div>
-                  )}
-                  <div className="filter-footer">
-                    <button type="button" className="filter-apply-btn" onClick={() => setIsFilterOpen(false)}>Apply</button>
+                          {activeFilterTab === 'Availability' && (
+                            <div className="filter-body">
+                              <button type="button" className="filter-pill active">Weekdays</button>
+                              <button type="button" className="filter-pill">24/7</button>
+                              <button type="button" className="filter-pill">Week Days Only</button>
+                              <button type="button" className="filter-pill">Weekends Only</button>
+                              <button type="button" className="filter-pill active">Engine</button>
+                              <button type="button" className="filter-pill">Spraying</button>
+                            </div>
+                          )}
+
+                          {activeFilterTab === 'Distance' && (
+                            <div className="filter-body">
+                              <button type="button" className="filter-pill alt">1 km</button>
+                              <button type="button" className="filter-pill alt active">3 km</button>
+                              <button type="button" className="filter-pill alt">5 km</button>
+                              <button type="button" className="filter-pill alt">10 km+</button>
+                            </div>
+                          )}
+
+                          {activeFilterTab === 'Rating' && (
+                            <div className="filter-body">
+                              <button type="button" className="filter-pill alt">Any</button>
+                              <button type="button" className="filter-pill alt">4.0+</button>
+                              <button type="button" className="filter-pill alt active">4.5+</button>
+                            </div>
+                          )}
+                          <div className="filter-footer">
+                            <button type="button" className="filter-apply-btn" onClick={() => setIsFilterOpen(false)}>Apply</button>
+                          </div>
+                        </div>
+                      );
+
+                      // On mobile the sheet is portaled to <body> — an ancestor's transform
+                      // (used for the drag/minimize system) would otherwise hijack this
+                      // "fixed" sheet's containing block and push it off-screen.
+                      if (isMobile) {
+                        return createPortal(
+                          <>
+                            <div className="filter-backdrop" onClick={() => setIsFilterOpen(false)}></div>
+                            {filterPopup}
+                          </>,
+                          document.body
+                        );
+                      }
+                      return filterPopup;
+                    })()}
                   </div>
-                </div>
-              );
-
-              // On mobile the sheet is portaled to <body> — an ancestor's transform
-              // (used for the drag/minimize system) would otherwise hijack this
-              // "fixed" sheet's containing block and push it off-screen.
-              if (isMobile) {
-                return createPortal(
-                  <>
-                    <div className="filter-backdrop" onClick={() => setIsFilterOpen(false)}></div>
-                    {filterPopup}
-                  </>,
-                  document.body
-                );
-              }
-              return filterPopup;
-            })()}
-          </div>
-        </form>
-        </div>
-        )}
-        {viewMode !== 'saved' && viewMode !== 'history' && (
-        <div className="list-meta">
-          <span className="count">{sortedMechanics.length} {viewMode === 'detailers' ? 'Detailers' : viewMode === 'fuel' ? 'Fuel Stations' : viewMode === 'shop' ? 'Auto Parts Dealers' : 'Mechanics'} · {viewMode === 'saved' ? 'Bookmarks' : 'Near You'}</span>
-          <div className="sort-container" ref={sortRef}>
-            <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
-              {currentSort} ↓
-            </span>
-            {isSortOpen && (
-              <div className="sort-dropdown">
-                {sortOptions.map(option => (
-                  <div 
-                    key={option} 
-                    className={`sort-option ${currentSort === option ? 'active' : ''}`}
-                    onClick={() => {
-                      setCurrentSort(option);
-                      setIsSortOpen(false);
-                    }}
-                  >
-                    {option}
-                    {currentSort === option && <Target size={16} weight="bold" />}
-                  </div>
-                ))}
+                </form>
               </div>
             )}
-          </div>
-        </div>
-        )}
-
-        {viewMode !== 'saved' && viewMode !== 'history' && (
-        <div
-          className={`location-banner ${isScanning ? 'location-banner--scanning' : ''}`}
-          role="button"
-          tabIndex={0}
-          onClick={handleScanLocation}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleScanLocation(); }}
-        >
-          <div className="location-icon-wrapper">
-            {isScanning ? (
-              <div className="scanning-spinner"></div>
-            ) : viewMode === 'fuel' ? (
-              <FillingStationIcon size={24} state="filled" color="var(--forest)" />
-            ) : (
-              <LocationIcon size={24} state="filled" color="var(--forest)" />
+            {viewMode !== 'saved' && viewMode !== 'history' && (
+              <div className="list-meta">
+                <span className="count">
+                  {searchedArea ? (
+                    <><strong>{sortedMechanics.length}</strong> search results for &ldquo;<strong>{searchedArea}</strong>&rdquo;</>
+                  ) : (
+                    <>{sortedMechanics.length} {viewMode === 'detailers' ? 'Detailers' : viewMode === 'fuel' ? 'Fuel Stations' : viewMode === 'shop' ? 'Auto Parts Dealers' : 'Mechanics'} · {viewMode === 'saved' ? 'Bookmarks' : 'Near You'}</>
+                  )}
+                </span>
+                {!searchedArea && (
+                <div className="sort-container" ref={sortRef}>
+                  <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
+                    {currentSort} ↓
+                  </span>
+                  {isSortOpen && (
+                    <div className="sort-dropdown">
+                      {sortOptions.map(option => (
+                        <div
+                          key={option}
+                          className={`sort-option ${currentSort === option ? 'active' : ''}`}
+                          onClick={() => {
+                            setCurrentSort(option);
+                            setIsSortOpen(false);
+                          }}
+                        >
+                          {option}
+                          {currentSort === option && <Target size={16} weight="bold" />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                )}
+              </div>
             )}
-          </div>
-          <div className="location-banner-text">
-            <h4>{isScanning ? 'Scanning for mechanics nearby...' : viewMode === 'fuel' ? 'Fuel Delivery' : 'Use my location to find the mechanics'}</h4>
-            <p>
-              {isScanning ? (
-                'Finding the closest mechanics around you'
-              ) : (
-                (() => {
-                const validTimes = mechanics.map(m => m.timeInMinutes).filter(t => t != null);
-                if (validTimes.length > 0) {
-                  const minT = Math.max(1, Math.floor(Math.min(...validTimes)));
-                  const maxT = Math.ceil(Math.max(...validTimes));
-                  const prefix = viewMode === 'fuel' ? 'All fuel stations' : 'All Mechanics';
 
-                  const minRange = rangeLabel(minT);
-                  const maxRange = rangeLabel(maxT);
+            {viewMode !== 'saved' && viewMode !== 'history' && (
+              <div
+                className={`location-banner ${isScanning ? 'location-banner--scanning' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={handleScanLocation}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleScanLocation(); }}
+              >
+                <div className="location-icon-wrapper">
+                  {isScanning ? (
+                    <div className="scanning-spinner"></div>
+                  ) : viewMode === 'fuel' ? (
+                    <FillingStationIcon size={24} state="filled" color="var(--forest)" />
+                  ) : (
+                    <LocationIcon size={24} state="filled" color="var(--forest)" />
+                  )}
+                </div>
+                <div className="location-banner-text">
+                  <h4>{isScanning ? 'Scanning for mechanics nearby...' : viewMode === 'fuel' ? 'Fuel Delivery' : 'Use my location to find the mechanics'}</h4>
+                  <p>
+                    {isScanning ? (
+                      'Finding the closest mechanics around you'
+                    ) : (
+                      (() => {
+                        const validTimes = mechanics.map(m => m.timeInMinutes).filter(t => t != null);
+                        if (validTimes.length > 0) {
+                          const minT = Math.max(1, Math.floor(Math.min(...validTimes)));
+                          const maxT = Math.ceil(Math.max(...validTimes));
+                          const prefix = viewMode === 'fuel' ? 'All fuel stations' : 'All Mechanics';
 
-                  if (minRange === maxRange) return `${prefix} ${minRange} minutes drive from you`;
-                  return `${prefix} ${minRange} to ${maxRange} minutes drive from you`;
-                }
-                return 'Allow location access to see driving times';
-              })()
-              )}
-            </p>
-          </div>
-        </div>
-        )}
-        </>
+                          const minRange = rangeLabel(minT);
+                          const maxRange = rangeLabel(maxT);
+
+                          if (minRange === maxRange) return `${prefix} ${minRange} minutes drive from you`;
+                          return `${prefix} ${minRange} to ${maxRange} minutes drive from you`;
+                        }
+                        return 'Allow location access to see driving times';
+                      })()
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {viewMode === 'shop' && popularProducts.length > 0 && (
@@ -673,219 +789,245 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         )}
 
         <div className="mechanic-cards">
-        {(viewMode === 'saved' || viewMode === 'history') && sortedMechanics.length === 0 ? (
-          <div className="bookmarks-empty">
-            <div className="bookmarks-empty-cards">
-              {[0, 1, 2].map(i => (
-                <div key={i} className={`bookmarks-empty-card ${i !== 1 ? 'bookmarks-empty-card--dim' : ''}`}>
-                  <div className="skeleton-card-body">
-                    <div className="skeleton-card-top">
-                      <div className="skeleton-avatar"></div>
-                      <div className="skeleton-badges">
-                        <div className="skeleton-badge"></div>
-                        <div className="skeleton-badge"></div>
+          {(viewMode === 'saved' || viewMode === 'history') && sortedMechanics.length === 0 ? (
+            <div className="bookmarks-empty">
+              <div className="bookmarks-empty-cards">
+                <div
+                  ref={trackRef}
+                  className="bookmarks-empty-cards-track"
+                  style={{
+                    transform: `translateX(-${carouselSlide * (292 + 16)}px)`,
+                    transition: carouselAnimate ? 'transform 1.2s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+                  }}
+                >
+                  {[0, 1, 2, 0, 1, 2].map((cardIdx, i) => {
+                    const filled = cardIdx < filledCount;
+                    return (
+                      <div
+                        key={`${i}-${cardIdx}`}
+                        className={[
+                          'bookmarks-empty-card',
+                          i % 3 !== 1 ? 'bookmarks-empty-card--dim' : '',
+                        ].filter(Boolean).join(' ')}
+                      >
+                      <div className="skeleton-card-body">
+                        <div className="skeleton-card-top">
+                          <div className="skeleton-avatar"></div>
+                          <div className="skeleton-badges">
+                            <div className="skeleton-badge"></div>
+                            <div className="skeleton-badge"></div>
+                            <span className="bookmarks-empty-open-pill">Open</span>
+                          </div>
+                        </div>
+                        <div className="skeleton-name"></div>
+                        <div className="bookmarks-empty-area">Osu, Accra</div>
+                        <div className="bookmarks-empty-specialty">
+                          <Wrench size={12} weight="bold" />
+                          General Repairs
+                        </div>
+                      </div>
+                      <div className="skeleton-card-bar">
+                        <div className="skeleton-bar-left">
+                          <div className={`bookmarks-empty-bookmark-btn ${filled ? 'bookmarks-empty-bookmark-btn--active' : ''}`}>
+                            <BookmarkIcon size={16} state={filled ? 'filled' : 'default'} color={filled ? '#145E42' : 'currentColor'} />
+                          </div>
+                          <div className="skeleton-bar-btn"><RateIcon size={16} /></div>
+                          <div className="skeleton-bar-btn"><ShareIcon size={16} /></div>
+                          <div className="bookmarks-empty-bar-divider" />
+                        </div>
+                        <div className="bookmarks-empty-call-btn">
+                          <CallIcon size={16} />
+                          Call
+                        </div>
                       </div>
                     </div>
-                    <div className="skeleton-name"></div>
-                    <div className="skeleton-area"></div>
-                    <div className="skeleton-specialty"></div>
-                  </div>
-                  <div className="skeleton-card-bar">
-                    <div className="skeleton-bar-left">
-                      <div className="skeleton-bar-btn"></div>
-                      <div className="skeleton-bar-btn"></div>
-                      <div className="skeleton-bar-btn"></div>
-                    </div>
-                    <div className="skeleton-bar-right">
-                      <div className="skeleton-bar-btn"></div>
-                    </div>
-                  </div>
+                  );
+                })}
                 </div>
-              ))}
-            </div>
-            <p className="bookmarks-empty-text">
-              {viewMode === 'saved'
-                ? 'Save mechanics, detailers, shops, or fuel stations you want to find again quickly.'
-                : 'Your calls, directions and interactions will appear here.'}
-            </p>
-            <button className="bookmarks-empty-btn" onClick={onNavigateHome}>
-              Discover Mechanics
-            </button>
-          </div>
-        ) : (
-        sortedMechanics.map((m, idx) => {
-          const tier = getVerificationTier(m);
-          const prevTier = idx > 0 ? getVerificationTier(sortedMechanics[idx - 1]) : 0;
-          const showDivider = tier === 3 && prevTier <= 2;
-          const tierIcon = tier === 1 ? <VerifiedIcon size={14} /> : tier === 2 ? <ClaimedIcon size={14} /> : null;
-          const featuredProducts = (m.products || []).slice(0, 3);
-          const showFeatured = viewMode === 'shop' && featuredProducts.length > 0;
-
-          return (
-          <React.Fragment key={m.id}>
-            {showDivider && (
-              <div className="verification-divider" onClick={() => setVerificationSheet({ tier: 3 })}>
-                <div className="verification-divider-line"></div>
-                <span className="verification-divider-label">Unverified</span>
-                <UnverifiedIcon size={14} color="var(--forest)" />
-                <div className="verification-divider-line"></div>
               </div>
-            )}
-          <div key={m.id} className={`mechanic-card ${directionTargetId === m.id ? 'mechanic-card--active' : ''}`} onClick={() => { setDirectionTargetId(null); onSelect(m); }}>
-            {viewMode === 'fuel' ? (
-              <>
-                <div className="card-body">
-                  <div className="fuel-card-header">
-                    <img
-                      className="fuel-card-logo"
-                      src={
-                        m.name.toLowerCase().includes('shell')
-                          ? 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e8/Shell_logo.svg/100px-Shell_logo.svg.png'
-                          : m.name.toLowerCase().includes('goil')
-                          ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Goil_Logo.svg/100px-Goil_Logo.svg.png'
-                          : 'https://placehold.co/32x32'
-                      }
-                      alt={m.name}
-                    />
-                    <div className="fuel-distance-badge">
-                      <LocationIcon size={12} state="filled" color="var(--forest)" />
-                      <span>{m.distance ? m.distance.replace(/ drive away$/, '') : '--'}</span>
+              <p className="bookmarks-empty-text">
+                {viewMode === 'saved'
+                  ? 'Save mechanics, detailers, shops, or fuel stations you want to find again quickly.'
+                  : 'Your calls, directions and interactions will appear here.'}
+              </p>
+              <button className="bookmarks-empty-btn" onClick={onNavigateHome}>
+                Discover Mechanics
+              </button>
+            </div>
+          ) : (
+            sortedMechanics.map((m, idx) => {
+              const tier = getVerificationTier(m);
+              const prevTier = idx > 0 ? getVerificationTier(sortedMechanics[idx - 1]) : 0;
+              const showDivider = tier === 3 && prevTier <= 2;
+              const tierIcon = tier === 1 ? <VerifiedIcon size={14} /> : tier === 2 ? <ClaimedIcon size={14} /> : null;
+              const featuredProducts = (m.products || []).slice(0, 3);
+              const showFeatured = viewMode === 'shop' && featuredProducts.length > 0;
+
+              return (
+                <React.Fragment key={m.id}>
+                  {showDivider && (
+                    <div className="verification-divider" onClick={() => setVerificationSheet({ tier: 3 })}>
+                      <div className="verification-divider-line"></div>
+                      <span className="verification-divider-label">Unverified</span>
+                      <UnverifiedIcon size={14} color="var(--forest)" />
+                      <div className="verification-divider-line"></div>
                     </div>
-                  </div>
-                  <div className="card-header">
-                    <h3 className="card-name">
-                      {m.name}
-                      {tierIcon && <span className="card-verify-icon" onClick={(e) => { e.stopPropagation(); setVerificationSheet({ tier, name: m.name }); }}>{tierIcon}</span>}
-                    </h3>
-                    <p className="card-area">{m.area}</p>
-                  </div>
-                  <div className="fuel-price-chips">
-                    <div className="fuel-price-chip">
-                      <span className="fuel-price-label">Petrol -</span><span className="fuel-price-value"> ₵14.65</span>
-                    </div>
-                    <div className="fuel-price-chip">
-                      <span className="fuel-price-label">Diesel -</span><span className="fuel-price-value fuel-price-diesel"> ₵15.08</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-bottom-bar">
-                  <div className="card-bottom-left">
-                    <button
-                      className={`card-bottom-icon ${savedMechanics.includes(m.id) ? 'active' : ''}`}
-                      onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
-                    >
-                      <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
-                    </button>
-                    <div className="card-bottom-divider"></div>
-                  </div>
-                  <button
-                    className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); if (isMobile && nextId) setSheetState('minimized'); }}
-                  >
-                    <LocationIcon size={16} />
-                    <span className="card-action-label">Direction</span>
-                  </button>
-                  <button className="card-bottom-action fuel-delivery-btn" onClick={(e) => e.stopPropagation()}>
-                    <FillingStationIcon size={14} />
-                    <span>Delivery</span>
-                    <span className="delivery-soon-pill">Soon</span>
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="card-body">
-                  <div className="card-badges-row">
-                    <div className="card-avatar">{m.name.charAt(0).toUpperCase()}</div>
-                    <div className="card-badges">
-                      {m.distance && (
-                        <div className="card-badge-pill">
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="0.75" />
-                            <path d="M6 3.5v3l2 1.5" stroke="currentColor" strokeWidth="0.75" strokeLinecap="round" />
-                          </svg>
-                          <span className="card-badge-value">{m.distance.replace(/ drive away$/, '')}</span>
+                  )}
+                  <div key={m.id} className={`mechanic-card ${directionTargetId === m.id ? 'mechanic-card--active' : ''}`} onClick={() => { setDirectionTargetId(null); onSelect(m); }}>
+                    {viewMode === 'fuel' ? (
+                      <>
+                        <div className="card-body">
+                          <div className="fuel-card-header">
+                            <img
+                              className="fuel-card-logo"
+                              src={
+                                m.name.toLowerCase().includes('shell')
+                                  ? 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e8/Shell_logo.svg/100px-Shell_logo.svg.png'
+                                  : m.name.toLowerCase().includes('goil')
+                                    ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Goil_Logo.svg/100px-Goil_Logo.svg.png'
+                                    : 'https://placehold.co/32x32'
+                              }
+                              alt={m.name}
+                            />
+                            <div className="fuel-distance-badge">
+                              <LocationIcon size={12} state="filled" color="var(--forest)" />
+                              <span>{m.distance ? m.distance.replace(/ drive away$/, '') : '--'}</span>
+                            </div>
+                          </div>
+                          <div className="card-header">
+                            <h3 className="card-name">
+                              {m.name}
+                              {tierIcon && <span className="card-verify-icon" onClick={(e) => { e.stopPropagation(); setVerificationSheet({ tier, name: m.name }); }}>{tierIcon}</span>}
+                            </h3>
+                            <p className="card-area">{m.area}</p>
+                          </div>
+                          <div className="fuel-price-chips">
+                            <div className="fuel-price-chip">
+                              <span className="fuel-price-label">Petrol -</span><span className="fuel-price-value"> ₵14.65</span>
+                            </div>
+                            <div className="fuel-price-chip">
+                              <span className="fuel-price-label">Diesel -</span><span className="fuel-price-value fuel-price-diesel"> ₵15.08</span>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {m.rating && m.rating !== 'New' && (
-                        <div className="card-badge-pill">
-                          <span className="card-badge-rating">{Number(m.rating).toFixed(1)}</span>
-                          <StarRatingIcon size={10} state="filled" />
+                        <div className="card-bottom-bar">
+                          <div className="card-bottom-left">
+                            <button
+                              className={`card-bottom-icon ${savedMechanics.includes(m.id) ? 'active' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
+                            >
+                              <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
+                            </button>
+                            <div className="card-bottom-divider"></div>
+                          </div>
+                          <button
+                            className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); setDirectionPeek(isMobile && !!nextId); }}
+                          >
+                            <LocationIcon size={16} />
+                            <span className="card-action-label">Direction</span>
+                          </button>
+                          <button className="card-bottom-action fuel-delivery-btn" onClick={(e) => e.stopPropagation()}>
+                            <FillingStationIcon size={14} />
+                            <span>Delivery</span>
+                            <span className="delivery-soon-pill">Soon</span>
+                          </button>
                         </div>
-                      )}
-                      <div className="card-badge-open">Open</div>
-                    </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="card-body">
+                          <div className="card-badges-row">
+                            <div className="card-avatar">{m.name.charAt(0).toUpperCase()}</div>
+                            <div className="card-badges">
+                              {m.distance && (
+                                <div className="card-badge-pill">
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="0.75" />
+                                    <path d="M6 3.5v3l2 1.5" stroke="currentColor" strokeWidth="0.75" strokeLinecap="round" />
+                                  </svg>
+                                  <span className="card-badge-value">{m.distance.replace(/ drive away$/, '')}</span>
+                                </div>
+                              )}
+                              {m.rating && m.rating !== 'New' && (
+                                <div className="card-badge-pill">
+                                  <span className="card-badge-rating">{Number(m.rating).toFixed(1)}</span>
+                                  <StarRatingIcon size={10} state="filled" />
+                                </div>
+                              )}
+                              <div className="card-badge-open">Open</div>
+                            </div>
+                          </div>
+
+                          <div className="card-header">
+                            <h3 className="card-name">
+                              {m.name}
+                              {tierIcon && <span className="card-verify-icon" onClick={(e) => { e.stopPropagation(); setVerificationSheet({ tier, name: m.name }); }}>{tierIcon}</span>}
+                            </h3>
+                            <p className="card-area">{m.area}</p>
+                          </div>
+
+                          {!showFeatured && viewMode !== 'detailers' && (
+                            <div className="card-specialty">
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="0.75" />
+                                <circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.2" />
+                              </svg>
+                              {m.specialty || 'General Repairs'}
+                            </div>
+                          )}
+
+                          {showFeatured && (
+                            <div className="card-featured-products">
+                              {featuredProducts.map((p, i) => (
+                                <FeaturedProduct key={p.id || i} item={p} />
+                              ))}
+                            </div>
+                          )}
+
+                          {viewMode === 'detailers' && (
+                            <div className="detailer-thumbnails">
+                              <div className="thumbnail-block"></div>
+                              <div className="thumbnail-block"></div>
+                              <div className="thumbnail-block"></div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="card-bottom-bar">
+                          <div className="card-bottom-left">
+                            <button
+                              className={`card-bottom-icon ${savedMechanics.includes(m.id) ? 'active' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
+                            >
+                              <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
+                            </button>
+                            <button className="card-bottom-icon"><RateIcon size={16} /></button>
+                            <button className="card-bottom-icon"><ShareIcon size={16} /></button>
+                            <div className="card-bottom-divider"></div>
+                          </div>
+                          <button
+                            className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); setDirectionPeek(isMobile && !!nextId); }}
+                          >
+                            <LocationIcon size={16} />
+                            <span className="card-action-label">Direction</span>
+                          </button>
+                          <button
+                            className="card-bottom-action"
+                            onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
+                          >
+                            <CallIcon size={16} />
+                            <span>Call</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
-
-                  <div className="card-header">
-                    <h3 className="card-name">
-                      {m.name}
-                      {tierIcon && <span className="card-verify-icon" onClick={(e) => { e.stopPropagation(); setVerificationSheet({ tier, name: m.name }); }}>{tierIcon}</span>}
-                    </h3>
-                    <p className="card-area">{m.area}</p>
-                  </div>
-
-                  {!showFeatured && viewMode !== 'detailers' && (
-                    <div className="card-specialty">
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="0.75" />
-                        <circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.2" />
-                      </svg>
-                      {m.specialty || 'General Repairs'}
-                    </div>
-                  )}
-
-                  {showFeatured && (
-                    <div className="card-featured-products">
-                      {featuredProducts.map((p, i) => (
-                        <FeaturedProduct key={p.id || i} item={p} />
-                      ))}
-                    </div>
-                  )}
-
-                  {viewMode === 'detailers' && (
-                    <div className="detailer-thumbnails">
-                      <div className="thumbnail-block"></div>
-                      <div className="thumbnail-block"></div>
-                      <div className="thumbnail-block"></div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="card-bottom-bar">
-                  <div className="card-bottom-left">
-                    <button
-                      className={`card-bottom-icon ${savedMechanics.includes(m.id) ? 'active' : ''}`}
-                      onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
-                    >
-                      <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
-                    </button>
-                    <button className="card-bottom-icon"><RateIcon size={16} /></button>
-                    <button className="card-bottom-icon"><ShareIcon size={16} /></button>
-                    <div className="card-bottom-divider"></div>
-                  </div>
-                  <button
-                    className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); if (isMobile && nextId) setSheetState('minimized'); }}
-                  >
-                    <LocationIcon size={16} />
-                    <span className="card-action-label">Direction</span>
-                  </button>
-                  <button
-                    className="card-bottom-action"
-                    onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
-                  >
-                    <CallIcon size={16} />
-                    <span>Call</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-          </React.Fragment>
-          );
-        })
-        )}
+                </React.Fragment>
+              );
+            })
+          )}
         </div>
       </div>
       {verificationPortal}

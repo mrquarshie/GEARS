@@ -112,7 +112,18 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
           <h2 className="detail-collapsed-name">{mechanic.name}</h2>
           <p className="detail-collapsed-area">{mechanic.area}{mechanic.distance ? ` · ${mechanic.distance}` : ''}</p>
         </div>
-        <button className="detail-collapsed-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
+        <div className="detail-collapsed-actions">
+          {mechanic.phone && (
+            <button
+              className="detail-collapsed-call"
+              aria-label="Call"
+              onClick={() => { window.location.href = `tel:${mechanic.phone.replace(/\s+/g, '')}`; }}
+            >
+              <CallIcon size={16} />
+            </button>
+          )}
+          <button className="detail-collapsed-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
+        </div>
       </div>
     );
   }
