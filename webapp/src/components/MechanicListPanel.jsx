@@ -290,6 +290,32 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     return [...displayedMechanics].sort((a, b) => getVerificationTier(a) - getVerificationTier(b));
   }, [displayedMechanics]);
 
+  const carouselCardData = useMemo(() => {
+    const sets = {
+      all: [
+        { area: 'Osu, Accra', specialty: 'General Repairs', icon: <Wrench size={12} weight="bold" /> },
+        { area: 'Adum, Kumasi', specialty: 'Diagnostics', icon: <Wrench size={12} weight="bold" /> },
+        { area: 'Tema Community 1', specialty: 'Engine Repair', icon: <Wrench size={12} weight="bold" /> },
+      ],
+      detailers: [
+        { area: 'Airport, Accra', specialty: 'Full Detailing', icon: <Wrench size={12} weight="bold" /> },
+        { area: 'East Legon', specialty: 'Paint Correction', icon: <Wrench size={12} weight="bold" /> },
+        { area: 'Labone, Accra', specialty: 'Ceramic Coating', icon: <Wrench size={12} weight="bold" /> },
+      ],
+      fuel: [
+        { area: 'Spintex, Accra', specialty: 'Petrol & Diesel', icon: <FillingStationIcon size={12} color="var(--forest)" /> },
+        { area: 'Madina, Accra', specialty: 'LPG Gas', icon: <FillingStationIcon size={12} color="var(--forest)" /> },
+        { area: 'Tema Motorway', specialty: 'Car Wash', icon: <FillingStationIcon size={12} color="var(--forest)" /> },
+      ],
+      shop: [
+        { area: 'Abossey Okai, Accra', specialty: 'Brake Pads', icon: <Wrench size={12} weight="bold" /> },
+        { area: 'Sodom & Gomorrah', specialty: 'Engine Oil', icon: <Wrench size={12} weight="bold" /> },
+        { area: 'Circle, Accra', specialty: 'Spark Plugs', icon: <Wrench size={12} weight="bold" /> },
+      ],
+    };
+    const key = viewMode === 'detailers' ? 'detailers' : viewMode === 'fuel' ? 'fuel' : viewMode === 'shop' ? 'shop' : 'all';
+    return sets[key];
+  }, [viewMode]);
   const isBookmarksEmpty = (viewMode === 'saved' || viewMode === 'history') && sortedMechanics.length === 0;
   const { filledCount } = useBentoRevealLoop(isBookmarksEmpty);
   const [carouselSlide, setCarouselSlide] = useState(0);
@@ -802,6 +828,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 >
                   {[0, 1, 2, 0, 1, 2].map((cardIdx, i) => {
                     const filled = cardIdx < filledCount;
+                    const data = carouselCardData[cardIdx];
                     return (
                       <div
                         key={`${i}-${cardIdx}`}
@@ -820,10 +847,10 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           </div>
                         </div>
                         <div className="skeleton-name"></div>
-                        <div className="bookmarks-empty-area">Osu, Accra</div>
+                        <div className="bookmarks-empty-area">{data.area}</div>
                         <div className="bookmarks-empty-specialty">
-                          <Wrench size={12} weight="bold" />
-                          General Repairs
+                          {data.icon}
+                          {data.specialty}
                         </div>
                       </div>
                       <div className="skeleton-card-bar">

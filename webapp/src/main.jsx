@@ -740,11 +740,28 @@ function App() {
   };
 
   const toggleSave = async (mechanic) => {
+    if (!mechanic) return;
+    const isSaved = savedMechanics.includes(mechanic.id);
+
+    // Play a short beep on save/unsave
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = isSaved ? 600 : 900;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (_) { /* ignore audio errors */ }
+
     if (!user) {
       setModal({ type: 'auth', reason: 'bookmark' });
       return;
     }
-    const isSaved = savedMechanics.includes(mechanic.id);
     const userRef = doc(db, 'users', user.uid);
     try {
       let newSaves;
