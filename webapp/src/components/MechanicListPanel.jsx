@@ -14,7 +14,9 @@ import {
 } from './icons';
 import { getPlaceholderPhrases } from '../searchPlaceholders';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriterPlaceholder';
+import { useTypewriterLoop } from '../hooks/useTypewriterLoop';
 import { ItemSheet } from './MechanicDetailPanel';
+import { getRecentInteraction, formatRelativeTime } from '../recentInteractions';
 
 // Expanding drive-time windows used by the "Use my location" search: start tight
 // (5-10 min) and widen in 10-minute steps up to an hour until a window has a match.
@@ -37,6 +39,62 @@ function findNearMeBucket(list) {
     if (list.some(m => m.timeInMinutes != null && m.timeInMinutes <= bucket.max)) {
       return bucket;
     }
+  }
+  return null;
+}
+
+const INTERACTION_LABELS = {
+  call: 'Called',
+  bookmark: 'Bookmarked',
+  direction: 'Direction',
+  rate: 'Rated',
+};
+
+function InteractionBadge({ action, timestamp }) {
+  const label = INTERACTION_LABELS[action];
+  if (!label) return null;
+  return (
+    <div className="card-interaction-badge">
+      {action === 'call' && <CallIcon size={16} />}
+      {action === 'bookmark' && <BookmarkIcon size={16} state="filled" />}
+      {action === 'direction' && <LocationIcon size={16} state="filled" />}
+      {action === 'rate' && <RateIcon size={16} />}
+      <div className="card-interaction-badge-text">
+        <span className="card-interaction-badge-label">{label}</span>
+        <span className="card-interaction-badge-time">{formatRelativeTime(timestamp)}</span>
+      </div>
+    </div>
+  );
+}
+
+// Types out each specialty one after the other, holding 7s each — the same
+// typewriter animation used by the search placeholder.
+function SpecialtyTypewriter({ specialties }) {
+  const text = useTypewriterLoop(specialties, { holdMs: 7000 });
+  return (
+    <span className="specialty-typewriter">
+      <span className="specialty-typewriter-text">{text}</span>
+      <span className="specialty-typewriter-cursor">|</span>
+    </span>
+  );
+}
+
+// When a search matched a mechanic via one of its products or services (rather
+// than its name/area/specialty), return that matched item so the card can show
+// it in place of the specialty.
+function findProductServiceMatch(mechanic, term) {
+  if (!term) return null;
+  const t = term.toLowerCase();
+  const product = (mechanic.products || []).find(p => p.name?.toLowerCase().includes(t));
+  if (product) return { type: 'product', label: product.name, price: product.price };
+  const service = (mechanic.services || []).find(s => {
+    const name = typeof s === 'string' ? s : s.name;
+    return name?.toLowerCase().includes(t);
+  });
+  if (service) {
+    const name = typeof service === 'string' ? service : service.name;
+    const price = typeof service === 'string' ? undefined : service.price;
+    return { type: 'service', label: name, price };
   }
   return null;
 }
@@ -141,7 +199,7 @@ function UnverifiedIcon({ size = 20 }) {
 // least this long so the loading/radar sequence is actually visible.
 const MIN_SCAN_MS = 3500;
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -176,7 +234,6 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const searchWrapperRef = useRef(null);
   const panelRef = useRef(null);
   const scanStartRef = useRef(0);
-  const searchFocusedRef = useRef(false);
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const suggestions = useMemo(() => {
@@ -261,28 +318,21 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     setSelectedFilters({ services: [], availability: [], distance: null, rating: null });
   }, [viewMode]);
 
+  // Auto-expand the sheet when a search is applied — otherwise a result can
+  // land mostly below the visible "minimized" peek, and reaching it means
+  // dragging the handle up first (the sheet's own drag gesture, not a
+  // scroll, only lives on that handle). Runs after the viewMode-reset
+  // effect above so it wins when a smart-search redirect changes both at
+  // once (e.g. searching a detailer's name while on the mechanics tab).
+  useEffect(() => {
+    if (searchedArea) setSheetState('expanded');
+  }, [searchedArea]);
+
   // Let the map show a radar-scanning animation on the user's location dot while active.
   useEffect(() => {
     if (onScanStateChange) onScanStateChange(isScanning);
   }, [isScanning, onScanStateChange]);
 
-  // Prevent visual-viewport scrolling when the search input is focused on mobile,
-  // so the map and panels stay fixed (native-app keyboard feel).
-  useEffect(() => {
-    if (!isMobile) return;
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const lock = () => {
-      // Reset both axes unconditionally — the app has no scrollable
-      // document, so any window scroll while focused (vertical or
-      // horizontal) is the keyboard-focus glitch, not a legitimate scroll.
-      if (searchFocusedRef.current) {
-        window.scrollTo(0, 0);
-      }
-    };
-    viewport.addEventListener('scroll', lock);
-    return () => viewport.removeEventListener('scroll', lock);
-  }, [isMobile]);
 
   const handleScanLocation = () => {
     scanStartRef.current = Date.now();
@@ -291,11 +341,21 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   };
 
   const displayedMechanics = useMemo(() => {
-    let list = nearMeRange
-      ? mechanics.filter(m => m.timeInMinutes != null && m.timeInMinutes <= nearMeRange.max)
-      : viewMode === 'saved' ? bookmarkedMechanics
-      : viewMode === 'history' ? bookmarkedMechanics
-      : mechanics;
+    let list;
+    if (nearMeRange) {
+      list = mechanics.filter(m => m.timeInMinutes != null && m.timeInMinutes <= nearMeRange.max);
+    } else if (viewMode === 'saved') {
+      list = bookmarkedMechanics;
+    } else if (viewMode === 'history') {
+      // Show only mechanics the user recently interacted with, most recent
+      // first, filtered by the active sub-tab category (bookmarkedMechanics).
+      const interacted = new Set(Object.keys(recentInteractions || {}));
+      list = bookmarkedMechanics
+        .filter(m => interacted.has(m.id))
+        .sort((a, b) => (recentInteractions[b.id]?.timestamp || 0) - (recentInteractions[a.id]?.timestamp || 0));
+    } else {
+      list = mechanics;
+    }
 
     const { services, availability, distance, rating } = selectedFilters;
 
@@ -336,11 +396,12 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     }
 
     return list;
-  }, [mechanics, nearMeRange, viewMode, bookmarkedMechanics, selectedFilters]);
+  }, [mechanics, nearMeRange, viewMode, bookmarkedMechanics, selectedFilters, recentInteractions]);
 
   const sortedMechanics = useMemo(() => {
+    if (viewMode === 'history') return displayedMechanics; // already sorted by recency
     return [...displayedMechanics].sort((a, b) => getVerificationTier(a) - getVerificationTier(b));
-  }, [displayedMechanics]);
+  }, [displayedMechanics, viewMode]);
 
   const activeFilterCount = selectedFilters.services.length + selectedFilters.availability.length + (selectedFilters.distance ? 1 : 0) + (selectedFilters.rating ? 1 : 0);
 
@@ -629,13 +690,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                       }}
                       onFocus={() => {
                         if (searchTerm) setShowSuggestions(true);
-                        if (isMobile) {
-                          searchFocusedRef.current = true;
-                          if (panelRef.current) panelRef.current.style.transition = '';
-                        }
-                      }}
-                      onBlur={() => {
-                        searchFocusedRef.current = false;
+                        if (isMobile && panelRef.current) panelRef.current.style.transition = '';
                       }}
                     />
                     {!searchTerm && (
@@ -1018,6 +1073,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
               const tierIcon = tier === 1 ? <VerifiedIcon size={14} /> : tier === 2 ? <ClaimedIcon size={14} /> : null;
               const featuredProducts = (m.products || []).slice(0, 3);
               const showFeatured = viewMode === 'shop' && featuredProducts.length > 0;
+              const recentInteraction = getRecentInteraction(recentInteractions || {}, m.id);
+              const searchMatch = searchedArea ? findProductServiceMatch(m, searchedArea) : null;
 
               return (
                 <React.Fragment key={m.id}>
@@ -1124,12 +1181,24 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           </div>
 
                           {!showFeatured && viewMode !== 'detailers' && (
-                            <div className="card-specialty">
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="0.75" />
-                                <circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.2" />
-                              </svg>
-                              {m.specialty || 'General Repairs'}
+                            <div className="card-specialty-row">
+                              {searchMatch ? (
+                                <div className="card-search-match">
+                                  <SearchIcon size={14} />
+                                  <span className="card-search-match-label">{searchMatch.label}</span>
+                                </div>
+                              ) : (m.specialties?.length || m.specialty) ? (
+                                <div className="card-specialty">
+                                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                    <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="0.75" />
+                                    <circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.2" />
+                                  </svg>
+                                  <SpecialtyTypewriter specialties={(m.specialties?.length ? m.specialties : [m.specialty])} />
+                                </div>
+                              ) : null}
+                              {recentInteraction && (
+                                <InteractionBadge action={recentInteraction.action} timestamp={recentInteraction.timestamp} />
+                              )}
                             </div>
                           )}
 
@@ -1164,14 +1233,14 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           </div>
                           <button
                             className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); setDirectionPeek(isMobile && !!nextId); }}
+                            onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); setDirectionPeek(isMobile && !!nextId); if (nextId) onRecordInteraction?.(m.id, 'direction'); }}
                           >
                             <LocationIcon size={16} />
                             <span className="card-action-label">Direction</span>
                           </button>
                           <button
                             className="card-bottom-action"
-                            onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; }}
+                            onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; onRecordInteraction?.(m.id, 'call'); }}
                           >
                             <CallIcon size={16} />
                             <span>Call</span>
@@ -1188,7 +1257,11 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       </div>
       {verificationPortal}
 
-      {productSheet && (
+      {/* Portaled to document.body — .mechanic-list-panel has a persistent
+          inline transform (for its swipe-to-drag sheet), and any ancestor
+          transform becomes the containing block for this sheet's own
+          position:fixed overlay, which broke its full-viewport positioning. */}
+      {productSheet && createPortal(
         <ItemSheet
           item={productSheet.item}
           mechanicName={productSheet.mechanicName}
@@ -1198,7 +1271,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             const m = mechanics.find(m => m.id === productSheet.mechanicId);
             if (m) onSelect(m);
           }}
-        />
+        />,
+        document.body
       )}
     </div>
   );

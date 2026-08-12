@@ -104,8 +104,12 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
               <HistoryIcon size={20} state={viewMode === 'history' && !isSearchPanelOpen ? 'filled' : 'default'} />
               <span className="nav-text">History</span>
             </button>
-            <button className="nav-btn" title="Notifications" onClick={() => setIsOpen(false)}>
-              <NotificationIcon size={20} />
+            <button
+              className={`nav-btn ${viewMode === 'notifications' && !isSearchPanelOpen ? 'active' : ''}`}
+              title="Notifications"
+              onClick={() => handleNavClick('notifications')}
+            >
+              <NotificationIcon size={20} state={viewMode === 'notifications' && !isSearchPanelOpen ? 'filled' : 'default'} />
               <span className="nav-text">Notifications</span>
             </button>
           </nav>

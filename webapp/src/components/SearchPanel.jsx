@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, X, Wrench, ClockCounterClockwise, ArrowRight } from '@phosphor-icons/react';
 import { LocationIcon, FillingStationIcon, CarDetailingIcon } from './icons';
 import { getPlaceholderPhrases } from '../searchPlaceholders';
@@ -43,8 +43,6 @@ function SuggestionRowIcon({ row, mechanicsByName }) {
 export default function SearchPanel({ mechanics, searchedArea, onSearch, searchRef, onClose, viewMode }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const inputFocusedRef = useRef(false);
 
   const placeholderPhrases = useMemo(() => getPlaceholderPhrases(viewMode), [viewMode]);
   const placeholderText = useTypewriterPlaceholder(placeholderPhrases);
@@ -53,25 +51,6 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, searchR
   useEffect(() => {
     searchRef?.current?.focus();
   }, [searchRef]);
-
-  // Prevent visual-viewport scrolling when the input is focused on mobile, so
-  // the map behind the overlay stays put instead of drifting under the
-  // on-screen keyboard (native-app keyboard feel, same fix as the home search bar).
-  useEffect(() => {
-    if (!isMobile) return;
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const lock = () => {
-      // Reset both axes unconditionally — this app has no scrollable
-      // document, so any window scroll while focused (vertical or
-      // horizontal) is the keyboard-focus glitch, not a legitimate scroll.
-      if (inputFocusedRef.current) {
-        window.scrollTo(0, 0);
-      }
-    };
-    viewport.addEventListener('scroll', lock);
-    return () => viewport.removeEventListener('scroll', lock);
-  }, [isMobile]);
 
   const mechanicsByName = useMemo(() => new Map(mechanics.map(m => [m.name, m])), [mechanics]);
 
@@ -156,8 +135,6 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, searchR
             placeholder=""
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => { inputFocusedRef.current = true; }}
-            onBlur={() => { inputFocusedRef.current = false; }}
           />
           {!searchTerm && (
             <span className="search-focused-placeholder-animated">

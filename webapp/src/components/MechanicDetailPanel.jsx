@@ -88,7 +88,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -102,8 +102,14 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
 
   const handleDirectionClick = () => {
     onDirection(mechanic);
+    onRecordInteraction?.(mechanic.id, 'direction');
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
     if (isMobile) setCollapsed(true);
+  };
+
+  const handleCallClick = () => {
+    window.location.href = `tel:${mechanic.phone.replace(/\s+/g, '')}`;
+    onRecordInteraction?.(mechanic.id, 'call');
   };
 
   if (collapsed) {
@@ -220,7 +226,11 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
 
         <div className="detail-bottom-bar">
           <div className="detail-bottom-left">
-            <button className="bottom-icon-btn" onClick={() => onToggleSave(mechanic)} aria-label="Save">
+            <button
+              className="bottom-icon-btn"
+              onClick={() => onToggleSave(mechanic)}
+              aria-label="Save"
+            >
               <BookmarkIcon size={20} state={savedMechanics.includes(mechanic.id) ? 'filled' : 'default'} color={savedMechanics.includes(mechanic.id) ? 'var(--forest)' : 'currentColor'} />
             </button>
             <button className="bottom-icon-btn" onClick={() => onRate(mechanic)} aria-label="Rate">
@@ -237,7 +247,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
               <LocationIcon size={16} />
               <span className="card-action-label">Direction</span>
             </button>
-            <button className="bottom-action-btn" onClick={() => window.location.href = `tel:${mechanic.phone.replace(/\s+/g, '')}`}>
+            <button className="bottom-action-btn" onClick={handleCallClick}>
               <CallIcon size={16} />
               <span>Call</span>
             </button>
@@ -395,7 +405,6 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
     if (!db || !mechanicId) return;
@@ -431,15 +440,6 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
 
   const isGrid = layout === 'grid';
   const isCards = layout === 'cards';
-
-  // Lightbox items mirror `items` 1:1 so the tapped card's index lines up.
-  const lightboxItems = items.map((item) => ({
-    image: item.imageUrl,
-    video: item.videoUrl,
-    title: item.name,
-    price: item.price,
-    description: item.description,
-  }));
 
   return (
     <div className="tab-content">
@@ -510,16 +510,6 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
           ))}
         </div>
       )}
-
-      {lightboxIndex !== null && (
-        <MediaLightbox
-          items={lightboxItems}
-          startIndex={lightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-          phone={mechanicPhone}
-          showOrder={isGrid}
-        />
-      )}
     </div>
   );
 }
@@ -573,55 +563,10 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, onClose, onSelect
   );
 }
 
-function ProductSheet({ product, mechanicName, mechanicPhone, onClose }) {
-  const whatsappHref = `https://wa.me/${(mechanicPhone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'd like to order: ${product.name || product.title}${product.price ? ` (GH₵${product.price})` : ''}`)}`;
-
-  return (
-    <div className="product-sheet-overlay" onClick={onClose}>
-      <div className="product-sheet" onClick={(e) => e.stopPropagation()}>
-        <button className="product-sheet-close" onClick={onClose} aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
-        </button>
-
-        <div className="product-sheet-image" style={{ background: product.imageUrl ? undefined : hashToColor(product.name || '') }}>
-          {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} />
-          ) : (
-            <div className="product-sheet-placeholder" />
-          )}
-        </div>
-
-        <div className="product-sheet-body">
-          <div className="product-sheet-shop">
-            <div className="product-sheet-shop-avatar">{mechanicName?.charAt(0).toUpperCase()}</div>
-            <span className="product-sheet-shop-name">{mechanicName}</span>
-          </div>
-          <h3 className="product-sheet-name">{product.name || product.title}</h3>
-          {product.price && <p className="product-sheet-price">₵{product.price}</p>}
-          {product.description && (
-            <>
-              <span className="product-sheet-desc-label">Description</span>
-              <p className="product-sheet-desc">{product.description}</p>
-            </>
-          )}
-        </div>
-
-        <div className="product-sheet-footer">
-          <a className="product-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
-            <WhatsappLogo size={20} weight="fill" />
-            Place Order Via WhatsApp
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Full-screen swipeable viewer shared by Products, Services, and Media tabs.
-// `items` is the full collection so swiping moves through all of them, not
-// just the one that was tapped. `showOrder` (products) adds a WhatsApp
-// order link built from the mechanic's phone number.
-function MediaLightbox({ items, startIndex, onClose, phone, showOrder }) {
+// Full-screen swipeable viewer used by the Media tab. `items` is the full
+// (filtered) media collection so swiping moves through all of them, not
+// just the tile that was tapped.
+function MediaLightbox({ items, startIndex, onClose }) {
   const [index, setIndex] = useState(startIndex);
   const touchStartXRef = useRef(null);
 
@@ -651,10 +596,6 @@ function MediaLightbox({ items, startIndex, onClose, phone, showOrder }) {
     if (Math.abs(dx) < 40) return;
     if (dx > 0) goPrev(); else goNext();
   };
-
-  const whatsappHref = showOrder && phone
-    ? `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'd like to order: ${item.title}${item.price ? ` (GH₵${item.price})` : ''}`)}`
-    : null;
 
   return (
     <div className="media-lightbox-overlay" onClick={onClose}>

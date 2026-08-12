@@ -232,7 +232,7 @@ body {
   left: 24px;
   width: 400px;
   bottom: 24px;
-  background: #ffffff;
+  background: var(--cream);
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   z-index: 10;
@@ -1301,6 +1301,103 @@ body {
   border-radius: 24px;
   padding: 2px 8px;
   align-self: flex-start;
+  min-width: 0;
+}
+
+.specialty-typewriter {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.specialty-typewriter-cursor {
+  display: inline-block;
+  margin-left: 1px;
+  color: var(--forest);
+  font-weight: 300;
+  animation: cursorBlink 0.8s step-end infinite;
+}
+
+.card-search-match {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--forest);
+  background: rgba(21, 94, 66, 0.08);
+  border-radius: 24px;
+  padding: 3px 10px;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.card-search-match-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-search-match-price {
+  font-weight: 500;
+  color: #34A853;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Wraps the specialty tag + the "recently interacted" badge on the same row. */
+.card-specialty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Shows the most recent explicit action (call/bookmark/direction/rate) taken
+   on this mechanic, for up to 3 days — see src/recentInteractions.js. */
+.card-interaction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 8px;
+  background: #D6F26B;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  border-left: 1px solid white;
+  border-top: 1px solid white;
+  border-bottom: 1px solid white;
+  box-shadow: 0 1px 4px rgba(12, 12, 13, 0.05), 0 1px 4px rgba(12, 12, 13, 0.10);
+  color: #000;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* Flush against the card's right edge — no right margin. */
+  margin-right: -16px;
+}
+
+.card-interaction-badge-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.card-interaction-badge-label {
+  color: #000;
+  font-family: 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+}
+
+.card-interaction-badge-time {
+  color: rgba(0, 0, 0, 0.50);
+  font-family: 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
 }
 
 /* Badges row (mechanic cards) */
@@ -1704,7 +1801,7 @@ body {
   left: 24px;
   width: 480px;
   bottom: 24px;
-  background: #ffffff;
+  background: var(--cream);
   border-radius: 32px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.15);
   outline: 1px solid rgba(0, 0, 0, 0.05);
@@ -2880,6 +2977,11 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+/* Media lightbox styling lives further down, next to .item-sheet — see the
+   "Media Lightbox" block (kept as the single source of truth; this file had
+   picked up a duplicate definition here from concurrent edits). */
+
 /* --- GOOGLE AUTH MODAL --- */
 .auth-modal-content {
   width: 555px;
@@ -3669,15 +3771,18 @@ body {
     left: 16px;
     right: 16px;
     bottom: 0;
-    top: auto;
+    /* Explicit top (not a computed height like `95vh`) so the gap from the
+       real top edge is a guaranteed value, not something that can come out
+       wrong if the viewport-height math is ever off on a given device —
+       exactly the "clipped at the top" bug this replaces. Height is left
+       implicit (top-to-bottom of a stable containing block), which also
+       means it doesn't shrink for the keyboard — same "keyboard overlays
+       on top" behavior as before, just derived more robustly. */
+    top: max(12px, env(safe-area-inset-top));
     width: auto;
     /* Above the hamburger/map-action buttons (.mobile-map-controls, z-index
        900) so they don't float over the search sheet while it's open. */
     z-index: 10010;
-    /* Plain `vh` (not the keyboard-reactive --vh) so the sheet stays a fixed
-       95% of the screen and the keyboard just overlays on top of it, instead
-       of the sheet shrinking down to a sliver when the keyboard opens. */
-    height: 95vh;
     border-radius: 24px 24px 0 0;
     animation: slideUp 0.3s ease-out;
   }
@@ -3963,6 +4068,18 @@ body {
   align-self: flex-end;
 }
 
+/* Desktop: center the product/service sheet vertically */
+@media (min-width: 769px) {
+  .item-sheet-overlay {
+    align-items: center;
+  }
+  .item-sheet {
+    margin-bottom: 0;
+    align-self: center;
+    animation: scaleUp 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
 @keyframes scaleUp {
   from { opacity: 0; transform: scale(0.95) translateY(12px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
@@ -4085,6 +4202,7 @@ body {
   text-decoration: none;
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
 
 /* Universal nav pill — glass-morphism button for overlays.
    On dark backgrounds it renders as a white frosted pill;
@@ -4263,3 +4381,251 @@ body {
   color: rgba(255, 255, 255, 0.70);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
+/* Notifications Page */
+.notifications-panel {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 400px;
+  bottom: 24px;
+  background: var(--cream);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Mobile: full-screen like the Bookmarks/History full-page view */
+@media (max-width: 768px) {
+  .notifications-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--cream);
+    z-index: 10000;
+  }
+}
+
+.notif-tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 20px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.notif-mark-read {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--forest);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.notif-mark-read:hover {
+  background: rgba(21, 94, 66, 0.06);
+}
+
+.notif-tab {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 10px 2px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.50);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-tab.active {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.notif-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--forest);
+  border-radius: 2px 2px 0 0;
+}
+
+.notif-tab-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--forest);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 16px 24px;
+}
+
+.notif-group {
+  margin-top: 12px;
+}
+
+.notif-group-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 0 4px;
+}
+
+.notif-card {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #ffffff;
+  border: none;
+  border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+  outline-offset: -1px;
+  box-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.05);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.notif-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.notif-card--unread {
+  outline: 1px solid rgba(21, 94, 66, 0.18);
+  background: #ffffff;
+}
+
+.notif-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notif-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notif-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.notif-card-time {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.notif-card-desc {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.notif-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--forest);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 64px 24px;
+}
+
+.notif-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: rgba(21, 94, 66, 0.08);
+  color: var(--forest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.notif-empty h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.notif-empty p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 280px;
+  line-height: 1.5;
+}
+

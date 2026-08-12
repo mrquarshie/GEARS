@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import osmMechanicsData from './osm_mechanics.json';
 import mockExtrasData from './mockExtras.json';
+import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { List, NavigationArrow, Gear, X, Plus } from '@phosphor-icons/react';
 import {
@@ -37,6 +38,7 @@ import MapLayout from './components/MapLayout';
 import MechanicListPanel from './components/MechanicListPanel';
 import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
+import NotificationsPanel from './components/NotificationsPanel';
 
 import authImgCar from './components/AuthImages/Car.png';
 import authImgSteer from './components/AuthImages/Steer.png';
@@ -83,27 +85,6 @@ function RateModal({ mechanic, user, close, onRated, show, openAuth }) {
   const tagsList = ["Quality Service", "On Time", "Affordable", "Safe", "Excellent Job", "Good Conversation"];
   const starLabels = { 1: 'Terrible', 2: 'Bad', 3: 'Satisfied', 4: 'Good', 5: 'Excellent' };
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const commentFocusedRef = useRef(false);
-
-  // Prevent visual-viewport scrolling when the comment field is focused on
-  // mobile, so the modal stays put instead of the page shifting under the
-  // on-screen keyboard (same fix as the home search input).
-  useEffect(() => {
-    if (!isMobile) return;
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const lock = () => {
-      // Reset both axes unconditionally — the app has no scrollable
-      // document, so any window scroll while focused (vertical or
-      // horizontal) is the keyboard-focus glitch, not a legitimate scroll.
-      if (commentFocusedRef.current) {
-        window.scrollTo(0, 0);
-      }
-    };
-    viewport.addEventListener('scroll', lock);
-    return () => viewport.removeEventListener('scroll', lock);
-  }, [isMobile]);
 
   useEffect(() => {
     if (!db || !user || !mechanic.id) { setLoadingExisting(false); return; }
@@ -455,7 +436,18 @@ function App() {
   const [isLocatingScan, setIsLocatingScan] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
+  const [recentInteractions, setRecentInteractions] = useState(loadRecentInteractions);
   const searchRef = useRef(null);
+
+  // Records the single most recent explicit action per mechanic (call,
+  // bookmark, direction, rate) so cards can show "Called 2 min ago" etc.
+  const recordInteraction = (mechanicId, action) => {
+    setRecentInteractions((prev) => {
+      const next = { ...prev, [mechanicId]: { action, timestamp: Date.now() } };
+      saveRecentInteractions(next);
+      return next;
+    });
+  };
 
   const handleShowDirection = (mechanic) => {
     if (!mechanic) { setRouteTarget(null); return; }
@@ -790,6 +782,8 @@ function App() {
       setSavedMechanics(newSaves);
       localStorage.setItem('savedMechanics', JSON.stringify(newSaves));
     }
+
+    if (!isSaved) recordInteraction(mechanic.id, 'bookmark');
   };
 
   const submitMechanic = async (listing, existingData) => {
@@ -842,6 +836,7 @@ function App() {
     setAllMechanics((prev) =>
       prev.map((m) => m.id === mechanicId ? { ...m, rating: newRating } : m),
     );
+    recordInteraction(mechanicId, 'rate');
   };
 
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -897,7 +892,7 @@ function App() {
           isLocatingScan={isLocatingScan}
         />
 
-        {!isSearchPanelOpen && (
+        {!isSearchPanelOpen && viewMode !== 'notifications' && (
           <MechanicListPanel
             mechanics={mechanics}
             searchedArea={searchedArea}
@@ -910,6 +905,8 @@ function App() {
             searchRef={searchRef}
             onOpenSearch={() => setIsSearchPanelOpen(true)}
             onDirection={handleShowDirection}
+            recentInteractions={recentInteractions}
+            onRecordInteraction={recordInteraction}
             hideOnDesktop={!!selectedMechanic}
               onUseMyLocation={() => {
                 if (navigator.geolocation) {
@@ -946,6 +943,14 @@ function App() {
           />
         )}
 
+        {viewMode === 'notifications' && (
+          <NotificationsPanel
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+            onSelectMechanic={handleSelectMechanic}
+            mechanics={mechanics}
+          />
+        )}
+
         <MechanicDetailPanel
            mechanic={selectedMechanic}
            onClose={handleCloseDetail}
@@ -956,6 +961,7 @@ function App() {
            savedMechanics={savedMechanics}
            onToggleSave={toggleSave}
            onDirection={handleShowDirection}
+           onRecordInteraction={recordInteraction}
         />
       </div>
 
