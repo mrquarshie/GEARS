@@ -16,11 +16,11 @@
     "hours": "Mon-Sat · 7:00 AM – 6:00 PM",
     "specialties": ["General Repairs", "Auto-Electrical", "Foreign Cars", "Diagnostics"],
     "products": [
-      { "name": "Bosch Spark Plug Set (4pc)", "price": "450.00" },
-      { "name": "Bosch Spark Plug Set (4pc)", "price": "450.00" }
+      { "name": "Bosch Spark Plug Set (4pc)", "price": "450.00", "imageUrl": "/mock-media/ikad-spark-plug-1.png" },
+      { "name": "Bosch Spark Plug Set (4pc)", "price": "450.00", "imageUrl": "/mock-media/ikad-spark-plug-2.png" }
     ],
     "services": [
-      { "name": "Engine Diagnostics & Repair", "description": "Full inspection, fault codes, repair", "price": "150+" },
+      { "name": "Engine Diagnostics & Repair", "description": "Full inspection, fault codes, repair", "price": "150+", "imageUrl": "/mock-media/ikad-engine-diagnostics.png", "videoUrl": "/mock-media/ikad-service-1.mp4" },
       { "name": "Electrical Fault Finding", "description": "Auto-electrical, foreign & local cars", "price": "80+" },
       { "name": "Brake System Service", "description": "Pads, bleeding, rotor inspection", "price": "60+" },
       { "name": "AC Repair & Regas", "description": "Gas recharge and compressor check", "price": "120+" },
@@ -28,11 +28,12 @@
     ],
     "media": [
       { "url": "", "category": "Workshop", "label": "Workshop front", "color": "#f5e6c8" },
-      { "url": "", "category": "Workshop", "label": "Engine bay", "color": "#e6e2da" },
+      { "url": "/mock-media/ikad-engine-diagnostics.png", "category": "Workshop", "label": "Engine bay" },
       { "url": "", "category": "Jobs", "label": "AC job", "color": "#cfe8d8" },
       { "url": "", "category": "Jobs", "label": "Brake job", "color": "#f0d6d6" },
       { "url": "", "category": "Jobs", "label": "Wiring repair", "color": "#dcd6ea" },
-      { "url": "", "category": "Certs", "label": "Tools & gear", "color": "#ece2c8" }
+      { "url": "", "category": "Certs", "label": "Tools & gear", "color": "#ece2c8" },
+      { "url": "/mock-media/ikad-service-1.mp4", "type": "video", "category": "Jobs", "label": "Diagnostics walkthrough" }
     ],
     "reviews": [
       { "userName": "Kofi A.", "value": 5, "comment": "Sent updates, pictures, and receipts throughout. Barely had to reach out.", "date": "2026-06-02" },

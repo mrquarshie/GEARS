@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { X, Pencil, Trash, Plus, Wrench } from '@phosphor-icons/react';
+import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo } from '@phosphor-icons/react';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import {
@@ -91,6 +91,7 @@ function UnverifiedIcon({ size = 20 }) {
 export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
+  const [detailSheetItem, setDetailSheetItem] = useState(null);
 
   useEffect(() => {
     setActiveTab('Overview');
@@ -122,7 +123,9 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
               <CallIcon size={16} />
             </button>
           )}
-          <button className="detail-collapsed-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
+          <button className="detail-collapsed-close" onClick={onClose} aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
+          </button>
         </div>
       </div>
     );
@@ -166,7 +169,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         </Helmet>
 
         <button className="close-panel-btn" onClick={onClose} aria-label="Close">
-          <X size={18} />
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
         </button>
 
         <div className="detail-hero">
@@ -206,11 +209,11 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         <div className="detail-scroll">
           <div className="detail-content">
             {activeTab === 'Overview' && <OverviewTab mechanic={mechanic} category={category} onRate={onRate} />}
-            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" />}
-            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" />}
-            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} />}
+            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
+            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
+            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
             {activeTab === 'Fuel Prices' && <FuelPricesTab fuelPrices={mechanic.fuelPrices} />}
-            {activeTab === 'Media' && <MediaTab mechanicId={mechanic.id} user={user} fallbackMedia={mechanic.media} />}
+            {activeTab === 'Media' && <MediaTab mechanicId={mechanic.id} user={user} fallbackMedia={mechanic.media} extraMedia={(mechanic.products || []).filter(p => p.imageUrl)} />}
             {activeTab === 'Reviews' && <ReviewsTab mechanicId={mechanic.id} mechanic={mechanic} fallbackReviews={mechanic.reviews} />}
           </div>
         </div>
@@ -240,6 +243,15 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
             </button>
           </div>
         </div>
+
+        {detailSheetItem && (
+          <ItemSheet
+            item={detailSheetItem}
+            mechanicName={mechanic.name}
+            mechanicPhone={mechanic.phone}
+            onClose={() => setDetailSheetItem(null)}
+          />
+        )}
       </div>
     </>
   );
@@ -376,13 +388,14 @@ function ReviewsTab({ mechanicId, mechanic, fallbackReviews }) {
   );
 }
 
-function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list' }) {
+function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, onItemTap }) {
   const [items, setItems] = useState(fallbackItems || []);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
     if (!db || !mechanicId) return;
@@ -419,6 +432,15 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   const isGrid = layout === 'grid';
   const isCards = layout === 'cards';
 
+  // Lightbox items mirror `items` 1:1 so the tapped card's index lines up.
+  const lightboxItems = items.map((item) => ({
+    image: item.imageUrl,
+    video: item.videoUrl,
+    title: item.name,
+    price: item.price,
+    description: item.description,
+  }));
+
   return (
     <div className="tab-content">
       {user && db && (
@@ -446,13 +468,24 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
       {isGrid ? (
         <div className="product-grid">
           {items.map((item, i) => (
-            <ProductCard key={item.id || i} item={item} />
+            <ProductCard key={item.id || i} item={item} onClick={() => onItemTap({ ...item, type: 'product' })} />
           ))}
         </div>
       ) : isCards ? (
         <div className="service-cards">
           {items.map((item, i) => (
-            <div key={item.id || i} className="service-card">
+            <div key={item.id || i} className="service-card" onClick={() => onItemTap({ ...item, type: 'service' })}>
+              <div
+                className="service-card-image"
+                style={{ background: item.imageUrl ? undefined : hashToColor(item.name || '') }}
+              >
+                {item.imageUrl && <img src={item.imageUrl} alt={item.name} />}
+                {item.videoUrl && (
+                  <span className="service-card-play-badge" aria-hidden="true">
+                    <CaretRight size={12} weight="fill" />
+                  </span>
+                )}
+              </div>
               <div className="service-card-body">
                 <h4 className="service-card-name">{item.name}</h4>
                 {item.description && <p className="service-card-desc">{item.description}</p>}
@@ -464,7 +497,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
       ) : (
         <div className="item-list">
           {items.map((item, i) => (
-            <div key={item.id || i} className="item-row">
+            <div key={item.id || i} className="item-row" onClick={() => onItemTap({ ...item, type: collectionName })}>
               <div className="item-row-main">
                 <strong>{item.name}</strong>
                 {item.description && <span className="item-row-description">{item.description}</span>}
@@ -477,6 +510,182 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
           ))}
         </div>
       )}
+
+      {lightboxIndex !== null && (
+        <MediaLightbox
+          items={lightboxItems}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          phone={mechanicPhone}
+          showOrder={isGrid}
+        />
+      )}
+    </div>
+  );
+}
+
+export function ItemSheet({ item, mechanicName, mechanicPhone, onClose, onSelectShop }) {
+  const isService = item.type === 'service';
+  const bg = isService ? '#EDE9FE' : '#F9F1C2';
+  const accent = isService ? '#9747FF' : '#FF9500';
+  const name = item.name || item.title;
+  const whatsappHref = `https://wa.me/${(mechanicPhone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'd like to order: ${name}${item.price ? ` (GH₵${item.price})` : ''}`)}`;
+
+  return (
+    <div className="item-sheet-overlay" onClick={onClose}>
+      <div className="item-sheet" onClick={(e) => e.stopPropagation()}>
+        <button className="item-sheet-close nav-pill nav-pill--light nav-pill--sm" onClick={onClose} aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
+        </button>
+
+        <div className="item-sheet-image" style={{ background: bg }}>
+          {item.imageUrl ? (
+            <img src={item.imageUrl} alt={name} />
+          ) : (
+            <div className="item-sheet-placeholder" style={{ background: hashToColor(name || '') }} />
+          )}
+        </div>
+
+        <div className="item-sheet-body">
+          <div className="item-sheet-shop">
+            <div className="item-sheet-shop-avatar">{mechanicName?.charAt(0).toUpperCase()}</div>
+            {onSelectShop ? (
+              <button className="item-sheet-shop-link" onClick={() => { onClose(); onSelectShop(); }}>{mechanicName}</button>
+            ) : (
+              <span className="item-sheet-shop-name">{mechanicName}</span>
+            )}
+          </div>
+          <h3 className="item-sheet-name">{name}</h3>
+          {item.price && <p className="item-sheet-price">{isService ? `₵${item.price}+` : `₵${item.price}`}</p>}
+          {item.description && (
+            <p className="item-sheet-desc">{item.description}</p>
+          )}
+        </div>
+
+        <div className="item-sheet-footer">
+          <a className="item-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+            <WhatsappLogo size={20} weight="fill" />
+            Place Order Via WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductSheet({ product, mechanicName, mechanicPhone, onClose }) {
+  const whatsappHref = `https://wa.me/${(mechanicPhone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'd like to order: ${product.name || product.title}${product.price ? ` (GH₵${product.price})` : ''}`)}`;
+
+  return (
+    <div className="product-sheet-overlay" onClick={onClose}>
+      <div className="product-sheet" onClick={(e) => e.stopPropagation()}>
+        <button className="product-sheet-close" onClick={onClose} aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
+        </button>
+
+        <div className="product-sheet-image" style={{ background: product.imageUrl ? undefined : hashToColor(product.name || '') }}>
+          {product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name} />
+          ) : (
+            <div className="product-sheet-placeholder" />
+          )}
+        </div>
+
+        <div className="product-sheet-body">
+          <div className="product-sheet-shop">
+            <div className="product-sheet-shop-avatar">{mechanicName?.charAt(0).toUpperCase()}</div>
+            <span className="product-sheet-shop-name">{mechanicName}</span>
+          </div>
+          <h3 className="product-sheet-name">{product.name || product.title}</h3>
+          {product.price && <p className="product-sheet-price">₵{product.price}</p>}
+          {product.description && (
+            <>
+              <span className="product-sheet-desc-label">Description</span>
+              <p className="product-sheet-desc">{product.description}</p>
+            </>
+          )}
+        </div>
+
+        <div className="product-sheet-footer">
+          <a className="product-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+            <WhatsappLogo size={20} weight="fill" />
+            Place Order Via WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Full-screen swipeable viewer shared by Products, Services, and Media tabs.
+// `items` is the full collection so swiping moves through all of them, not
+// just the one that was tapped. `showOrder` (products) adds a WhatsApp
+// order link built from the mechanic's phone number.
+function MediaLightbox({ items, startIndex, onClose, phone, showOrder }) {
+  const [index, setIndex] = useState(startIndex);
+  const touchStartXRef = useRef(null);
+
+  useEffect(() => { setIndex(startIndex); }, [startIndex]);
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') setIndex(i => (i - 1 + items.length) % items.length);
+      if (e.key === 'ArrowRight') setIndex(i => (i + 1) % items.length);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [items.length, onClose]);
+
+  if (!items.length) return null;
+  const item = items[index];
+
+  const goPrev = () => setIndex(i => (i - 1 + items.length) % items.length);
+  const goNext = () => setIndex(i => (i + 1) % items.length);
+
+  const handleTouchStart = (e) => { touchStartXRef.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartXRef.current;
+    touchStartXRef.current = null;
+    if (Math.abs(dx) < 40) return;
+    if (dx > 0) goPrev(); else goNext();
+  };
+
+  const whatsappHref = showOrder && phone
+    ? `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'd like to order: ${item.title}${item.price ? ` (GH₵${item.price})` : ''}`)}`
+    : null;
+
+  return (
+    <div className="media-lightbox-overlay" onClick={onClose}>
+      <div className="media-lightbox-card" onClick={(e) => e.stopPropagation()}>
+        <button className="media-lightbox-close nav-pill nav-pill--sm" onClick={onClose} aria-label="Close"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg></button>
+        <div className="media-lightbox-media" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          {item.video ? (
+            <video key={item.video} src={item.video} poster={item.image} controls playsInline />
+          ) : item.image ? (
+            <img src={item.image} alt={item.title || ''} />
+          ) : (
+            <div className="media-lightbox-placeholder" style={{ background: item.color || '#e5e5e5' }} />
+          )}
+          {items.length > 1 && (
+            <>
+              <button className="media-lightbox-nav media-lightbox-nav--prev nav-pill" onClick={goPrev} aria-label="Previous"><CaretLeft size={20} weight="bold" /></button>
+              <button className="media-lightbox-nav media-lightbox-nav--next nav-pill" onClick={goNext} aria-label="Next"><CaretRight size={20} weight="bold" /></button>
+              <div className="media-lightbox-dots">
+                {items.map((_, i) => (<span key={i} className={`media-lightbox-dot ${i === index ? 'active' : ''}`} />))}
+              </div>
+            </>
+          )}
+          {(item.title || item.price || item.description) && (
+            <div className="media-lightbox-info">
+              {item.title && <h3 className="media-lightbox-title">{item.title}</h3>}
+              {item.price && <p className="media-lightbox-price">GH₵{item.price}</p>}
+              {item.description && <p className="media-lightbox-desc">{item.description}</p>}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -494,9 +703,9 @@ function hashToColor(str) {
   return PRODUCT_PLACEHOLDER_COLORS[Math.abs(hash) % PRODUCT_PLACEHOLDER_COLORS.length];
 }
 
-function ProductCard({ item }) {
+function ProductCard({ item, onClick }) {
   return (
-    <div className="product-card">
+    <div className="product-card" onClick={onClick}>
       <div
         className="product-card-image"
         style={{ background: item.imageUrl ? undefined : hashToColor(item.name || '') }}
@@ -511,12 +720,13 @@ function ProductCard({ item }) {
   );
 }
 
-function MediaTab({ mechanicId, user, fallbackMedia }) {
+function MediaTab({ mechanicId, user, fallbackMedia, extraMedia }) {
   const [media, setMedia] = useState(fallbackMedia || []);
   const [showForm, setShowForm] = useState(false);
   const [url, setUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
     if (!db || !mechanicId) return;
@@ -546,8 +756,20 @@ function MediaTab({ mechanicId, user, fallbackMedia }) {
     }
   };
 
-  const categories = ['All', ...new Set(media.map(m => m.category).filter(Boolean))];
-  const visibleMedia = activeCategory === 'All' ? media : media.filter(m => m.category === activeCategory);
+  // Merge product images as extra media tiles so they show in the media grid.
+  const productMedia = (extraMedia || []).map((p, i) => ({
+    id: `product-${i}`,
+    url: p.imageUrl,
+    type: 'image',
+    category: 'Products',
+    label: p.name,
+    price: p.price,
+  }));
+  const allMedia = [...media, ...productMedia];
+
+  const categories = ['All', ...new Set(allMedia.map(m => m.category).filter(Boolean))];
+  const visibleMedia = activeCategory === 'All' ? allMedia : allMedia.filter(m => m.category === activeCategory);
+  const mediaWithUrls = visibleMedia.filter(m => m.url);
 
   return (
     <div className="tab-content">
@@ -567,7 +789,7 @@ function MediaTab({ mechanicId, user, fallbackMedia }) {
         </form>
       )}
 
-      {media.length === 0 && !showForm && <p className="empty-tab-text">No media uploaded yet.</p>}
+      {allMedia.length === 0 && !showForm && <p className="empty-tab-text">No media uploaded yet.</p>}
 
       {media.length > 0 && categories.length > 1 && (
         <div className="media-filter-tabs">
@@ -584,16 +806,48 @@ function MediaTab({ mechanicId, user, fallbackMedia }) {
       )}
 
       <div className="media-grid">
-        {visibleMedia.map((m, i) => (
-          <div key={m.id || i} className="media-tile" style={!m.url ? { background: m.color || '#eee' } : undefined}>
-            {m.url ? (
-              <img src={m.url} alt={m.label || 'Media'} onError={(e) => e.target.style.display = 'none'} />
-            ) : (
-              <span className="media-tile-label">{m.label}</span>
-            )}
-          </div>
-        ))}
+        {visibleMedia.map((m, i) => {
+          // Index within the url-only list (what the lightbox actually
+          // swipes through) — differs from `i` whenever a color-only
+          // placeholder tile sits before this one.
+          const lightboxPos = mediaWithUrls.indexOf(m);
+          return (
+            <div
+              key={m.id || i}
+              className="media-tile"
+              style={!m.url ? { background: m.color || '#eee' } : undefined}
+              onClick={() => m.url && setLightboxIndex(lightboxPos)}
+            >
+              {m.url ? (
+                m.type === 'video' ? (
+                  <video src={m.url} muted playsInline preload="metadata" />
+                ) : (
+                  <img src={m.url} alt={m.label || 'Media'} onError={(e) => e.target.style.display = 'none'} />
+                )
+              ) : (
+                <span className="media-tile-label">{m.label}</span>
+              )}
+              {m.url && m.type === 'video' && (
+                <span className="media-tile-play-badge" aria-hidden="true">
+                  <CaretRight size={14} weight="fill" />
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {lightboxIndex !== null && (
+        <MediaLightbox
+          items={mediaWithUrls.map((m) => ({
+            image: m.type === 'video' ? undefined : m.url,
+            video: m.type === 'video' ? m.url : undefined,
+            title: m.label,
+          }))}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </div>
   );
 }

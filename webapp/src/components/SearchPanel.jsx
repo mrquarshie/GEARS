@@ -46,7 +46,7 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, searchR
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const inputFocusedRef = useRef(false);
 
-  const placeholderPhrases = getPlaceholderPhrases(viewMode);
+  const placeholderPhrases = useMemo(() => getPlaceholderPhrases(viewMode), [viewMode]);
   const placeholderText = useTypewriterPlaceholder(placeholderPhrases);
 
   // Autofocus the input as soon as the overlay mounts, regardless of how it was opened.

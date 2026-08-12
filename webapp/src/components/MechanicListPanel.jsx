@@ -14,6 +14,7 @@ import {
 } from './icons';
 import { getPlaceholderPhrases } from '../searchPlaceholders';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriterPlaceholder';
+import { ItemSheet } from './MechanicDetailPanel';
 
 // Expanding drive-time windows used by the "Use my location" search: start tight
 // (5-10 min) and widen in 10-minute steps up to an hour until a window has a match.
@@ -146,6 +147,12 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilterTab, setActiveFilterTab] = useState('Services');
+  const [selectedFilters, setSelectedFilters] = useState({
+    services: [],
+    availability: [],
+    distance: null,
+    rating: null,
+  });
   const [currentSort, setCurrentSort] = useState('Near You');
   const [isScanning, setIsScanning] = useState(false);
   const [nearMeRange, setNearMeRange] = useState(null);
@@ -154,6 +161,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   // Mirrors the detail panel's collapsed peek bar: shrinks the whole list
   // sheet down to a small tracking bar so the route on the map is visible.
   const [directionPeek, setDirectionPeek] = useState(false);
+  const [productSheet, setProductSheet] = useState(null); // { item, mechanicId, mechanicName, mechanicPhone }
   const [verificationSheet, setVerificationSheet] = useState(null);
 
   // --- Swipeable Bottom Sheet State ---
@@ -164,6 +172,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   const sortRef = useRef(null);
   const filterRef = useRef(null);
+  const filterPopupRef = useRef(null);
   const searchWrapperRef = useRef(null);
   const panelRef = useRef(null);
   const scanStartRef = useRef(0);
@@ -216,7 +225,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   const sortOptions = ['Near You', 'Top Rated', 'Most Popular', 'Open Now'];
 
-  const placeholderPhrases = getPlaceholderPhrases(viewMode);
+  const placeholderPhrases = useMemo(() => getPlaceholderPhrases(viewMode), [viewMode]);
   const placeholderText = useTypewriterPlaceholder(placeholderPhrases);
 
   // Once mechanics have distance data (location was obtained), wait out whatever's
@@ -249,6 +258,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   useEffect(() => {
     setSheetState('minimized');
     setDragOffset(0);
+    setSelectedFilters({ services: [], availability: [], distance: null, rating: null });
   }, [viewMode]);
 
   // Let the map show a radar-scanning animation on the user's location dot while active.
@@ -280,15 +290,59 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     if (onUseMyLocation) onUseMyLocation();
   };
 
-  const displayedMechanics = nearMeRange
-    ? mechanics.filter(m => m.timeInMinutes != null && m.timeInMinutes <= nearMeRange.max)
-    : viewMode === 'saved' ? bookmarkedMechanics
+  const displayedMechanics = useMemo(() => {
+    let list = nearMeRange
+      ? mechanics.filter(m => m.timeInMinutes != null && m.timeInMinutes <= nearMeRange.max)
+      : viewMode === 'saved' ? bookmarkedMechanics
       : viewMode === 'history' ? bookmarkedMechanics
-        : mechanics;
+      : mechanics;
+
+    const { services, availability, distance, rating } = selectedFilters;
+
+    if (services.length > 0) {
+      list = list.filter(m =>
+        services.some(s => (m.services || []).some(ms => (typeof ms === 'string' ? ms : ms.name)?.toLowerCase().includes(s.toLowerCase())) ||
+          (m.specialty || '').toLowerCase().includes(s.toLowerCase()))
+      );
+    }
+
+    if (availability.length > 0) {
+      list = list.filter(m => {
+        return availability.some(a => {
+          if (a === 'Open Now') return m.open === true;
+          if (a === '24/7') return m.hours?.toLowerCase().includes('24');
+          return true;
+        });
+      });
+    }
+
+    if (distance) {
+      list = list.filter(m => {
+        if (m.timeInMinutes == null) return false;
+        if (distance === '1 km') return m.timeInMinutes <= 2;
+        if (distance === '3 km') return m.timeInMinutes <= 6;
+        if (distance === '5 km') return m.timeInMinutes <= 10;
+        return true; // 10 km+
+      });
+    }
+
+    if (rating) {
+      list = list.filter(m => {
+        const r = m.rating === 'New' ? 0 : Number(m.rating);
+        if (rating === '4.0+') return r >= 4;
+        if (rating === '4.5+') return r >= 4.5;
+        return true; // Any
+      });
+    }
+
+    return list;
+  }, [mechanics, nearMeRange, viewMode, bookmarkedMechanics, selectedFilters]);
 
   const sortedMechanics = useMemo(() => {
     return [...displayedMechanics].sort((a, b) => getVerificationTier(a) - getVerificationTier(b));
   }, [displayedMechanics]);
+
+  const activeFilterCount = selectedFilters.services.length + selectedFilters.availability.length + (selectedFilters.distance ? 1 : 0) + (selectedFilters.rating ? 1 : 0);
 
   const carouselCardData = useMemo(() => {
     const sets = {
@@ -356,7 +410,10 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (filterRef.current && !filterRef.current.contains(event.target)) setIsFilterOpen(false);
+      if (filterRef.current && !filterRef.current.contains(event.target) &&
+          filterPopupRef.current && !filterPopupRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
+      }
       if (sortRef.current && !sortRef.current.contains(event.target)) setIsSortOpen(false);
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target)) setShowSuggestions(false);
     }
@@ -624,62 +681,127 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                   )}
 
                   <div className="filter-container" ref={filterRef}>
-                    <button type="button" className="filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                    <button type="button" className={`filter-btn ${activeFilterCount > 0 ? 'filter-btn--active' : ''}`} onClick={() => setIsFilterOpen(!isFilterOpen)}>
                       <FilterIcon size={18} />
+                      {activeFilterCount > 0 && <span className="filter-btn-badge">{activeFilterCount}</span>}
                     </button>
                     {isFilterOpen && (() => {
                       const filterPopup = (
-                        <div className="filter-popup">
+                        <div className="filter-popup" ref={filterPopupRef}>
                           <div className="mobile-drag-handle"></div>
                           <div className="filter-header">
                             <h2>Filters</h2>
-                            <button type="button" className="clear-all-btn">Clear all</button>
+                            <button
+                              type="button"
+                              className="clear-all-btn"
+                              onClick={() => setSelectedFilters({ services: [], availability: [], distance: null, rating: null })}
+                            >
+                              Clear all
+                            </button>
                           </div>
                           <div className="filter-tabs">
-                            <div className={`filter-tab ${activeFilterTab === 'Services' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Services')}>Services <span className="tab-badge">2</span></div>
+                            <div className={`filter-tab ${activeFilterTab === 'Services' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Services')}>
+                              Services {selectedFilters.services.length > 0 && <span className="tab-badge">{selectedFilters.services.length}</span>}
+                            </div>
                             <div className={`filter-tab ${activeFilterTab === 'Availability' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Availability')}>Availability</div>
-                            <div className={`filter-tab ${activeFilterTab === 'Distance' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Distance')}>Distance</div>
-                            <div className={`filter-tab ${activeFilterTab === 'Rating' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Rating')}>Rating</div>
+                            <div className={`filter-tab ${activeFilterTab === 'Distance' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Distance')}>
+                              Distance {selectedFilters.distance && <span className="tab-badge">1</span>}
+                            </div>
+                            <div className={`filter-tab ${activeFilterTab === 'Rating' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Rating')}>
+                              Rating {selectedFilters.rating && <span className="tab-badge">1</span>}
+                            </div>
                           </div>
 
                           {activeFilterTab === 'Services' && (
                             <div className="filter-body">
-                              <button type="button" className="filter-pill active">General Repair</button>
-                              <button type="button" className="filter-pill">Breaks</button>
-                              <button type="button" className="filter-pill">Electric Fault</button>
-                              <button type="button" className="filter-pill">Lights</button>
-                              <button type="button" className="filter-pill active">Engine</button>
-                              <button type="button" className="filter-pill">Spraying</button>
-                              <button type="button" className="filter-pill">Upgrade</button>
-                              <button type="button" className="filter-pill">Diagnostics</button>
+                              {['General Repair', 'Brakes', 'Electric Fault', 'Lights', 'Engine', 'Spraying', 'Upgrade', 'Diagnostics'].map(s => {
+                                const active = selectedFilters.services.includes(s);
+                                return (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    className={`filter-pill ${active ? 'active' : ''}`}
+                                    onClick={() => setSelectedFilters(prev => ({
+                                      ...prev,
+                                      services: active ? prev.services.filter(x => x !== s) : [...prev.services, s],
+                                    }))}
+                                  >
+                                    {s}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
 
                           {activeFilterTab === 'Availability' && (
                             <div className="filter-body">
-                              <button type="button" className="filter-pill active">Weekdays</button>
-                              <button type="button" className="filter-pill">24/7</button>
-                              <button type="button" className="filter-pill">Week Days Only</button>
-                              <button type="button" className="filter-pill">Weekends Only</button>
-                              <button type="button" className="filter-pill active">Engine</button>
-                              <button type="button" className="filter-pill">Spraying</button>
+                              {['Open Now', '24/7', 'Week Days', 'Weekends'].map(a => {
+                                const active = selectedFilters.availability.includes(a);
+                                return (
+                                  <button
+                                    key={a}
+                                    type="button"
+                                    className={`filter-pill ${active ? 'active' : ''}`}
+                                    onClick={() => setSelectedFilters(prev => ({
+                                      ...prev,
+                                      availability: active ? prev.availability.filter(x => x !== a) : [...prev.availability, a],
+                                    }))}
+                                  >
+                                    {a}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
 
                           {activeFilterTab === 'Distance' && (
                             <div className="filter-body">
-                              <button type="button" className="filter-pill alt">1 km</button>
-                              <button type="button" className="filter-pill alt active">3 km</button>
-                              <button type="button" className="filter-pill alt">5 km</button>
-                              <button type="button" className="filter-pill alt">10 km+</button>
+                              {[
+                                { label: '1 km', key: '1 km' },
+                                { label: '3 km', key: '3 km' },
+                                { label: '5 km', key: '5 km' },
+                                { label: '10 km+', key: '10 km+' },
+                              ].map(d => {
+                                const active = selectedFilters.distance === d.key;
+                                return (
+                                  <button
+                                    key={d.key}
+                                    type="button"
+                                    className={`filter-pill alt ${active ? 'active' : ''}`}
+                                    onClick={() => setSelectedFilters(prev => ({
+                                      ...prev,
+                                      distance: active ? null : d.key,
+                                    }))}
+                                  >
+                                    {d.label}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
 
                           {activeFilterTab === 'Rating' && (
                             <div className="filter-body">
-                              <button type="button" className="filter-pill alt">Any</button>
-                              <button type="button" className="filter-pill alt">4.0+</button>
-                              <button type="button" className="filter-pill alt active">4.5+</button>
+                              {[
+                                { label: 'Any', key: null },
+                                { label: '4.0+', key: '4.0+' },
+                                { label: '4.5+', key: '4.5+' },
+                              ].map(r => {
+                                const active = selectedFilters.rating === r.key;
+                                return (
+                                  <button
+                                    key={r.label}
+                                    type="button"
+                                    className={`filter-pill alt ${active ? 'active' : ''}`}
+                                    onClick={() => setSelectedFilters(prev => ({
+                                      ...prev,
+                                      rating: active ? null : r.key,
+                                    }))}
+                                  >
+                                    {r.label}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
                           <div className="filter-footer">
@@ -793,7 +915,14 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             <h3 className="popular-products-title">Popular Products</h3>
             <div className="popular-products-scroll">
               {popularProducts.map((p, i) => (
-                <div key={i} className="popular-product-card">
+                <div key={i} className="popular-product-card" onClick={() => {
+                  setProductSheet({
+                    item: { ...p, type: 'product', name: p.name, price: p.price, imageUrl: p.imageUrl },
+                    mechanicName: p.mechanicName,
+                    mechanicId: p.mechanicId,
+                    mechanicPhone: mechanics.find(m => m.id === p.mechanicId)?.phone,
+                  });
+                }}>
                   <div className="popular-product-image" style={{ background: hashToColor(p.name || '') }}>
                     {p.imageUrl && <img src={p.imageUrl} alt={p.name} />}
                     <button className="popular-product-bookmark" onClick={(e) => e.stopPropagation()}>
@@ -1058,6 +1187,19 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         </div>
       </div>
       {verificationPortal}
+
+      {productSheet && (
+        <ItemSheet
+          item={productSheet.item}
+          mechanicName={productSheet.mechanicName}
+          mechanicPhone={productSheet.mechanicPhone}
+          onClose={() => setProductSheet(null)}
+          onSelectShop={() => {
+            const m = mechanics.find(m => m.id === productSheet.mechanicId);
+            if (m) onSelect(m);
+          }}
+        />
+      )}
     </div>
   );
 }
