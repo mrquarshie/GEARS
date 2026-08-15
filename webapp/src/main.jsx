@@ -39,6 +39,7 @@ import MechanicListPanel from './components/MechanicListPanel';
 import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
+import BusinessDashboard from './components/BusinessDashboard';
 
 import authImgCar from './components/AuthImages/Car.png';
 import authImgSteer from './components/AuthImages/Steer.png';
@@ -247,6 +248,7 @@ function GoogleGLogo({ size = 18 }) {
 const AUTH_REASON_COPY = {
   bookmark: 'Sign up to bookmark a mechanic shop or retailer.',
   rate: 'Sign up to rate and review.',
+  business: 'Sign up to list and manage your business.',
 };
 
 function AuthModal({ close, onSuccess, reason }) {
@@ -437,6 +439,7 @@ function App() {
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
   const [recentInteractions, setRecentInteractions] = useState(loadRecentInteractions);
+  const [businessDashboardOpen, setBusinessDashboardOpen] = useState(false);
   const searchRef = useRef(null);
 
   // Records the single most recent explicit action per mechanic (call,
@@ -841,6 +844,24 @@ function App() {
 
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  const myBusiness = user ? allMechanics.find((m) => m.createdBy === user.uid) : null;
+
+  const handleOpenBusiness = () => {
+    setMobileSidebarOpen(false);
+    setBusinessDashboardOpen(true);
+  };
+
+  if (businessDashboardOpen) {
+    return (
+      <BusinessDashboard
+        user={user}
+        mechanic={myBusiness}
+        onExit={() => setBusinessDashboardOpen(false)}
+        show={show}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       <Helmet>
@@ -857,6 +878,7 @@ function App() {
         setViewMode={setViewMode}
         openAuth={() => setModal('auth')}
         onSignOut={() => { signOut(auth); setUser(null); }}
+        onOpenBusiness={handleOpenBusiness}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
         isSearchPanelOpen={isSearchPanelOpen}

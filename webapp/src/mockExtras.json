@@ -251,5 +251,48 @@
     "ratingCount": 0,
     "ratingSum": 0,
     "open": false
+  },
+  {
+    "name": "Accra Motor Works",
+    "lat": 5.6180,
+    "lng": -0.2280,
+    "phone": "0244123013",
+    "area": "Achimota, Accra",
+    "locationDetail": "Achimota, Accra (near the retail centre)",
+    "specialty": "General repairs",
+    "rating": "4.7",
+    "ratingCount": 89,
+    "ratingSum": 418,
+    "open": true,
+    "verified": true,
+    "about": "Full-service garage handling engine, electrical and bodywork for all makes. Same-day service on most jobs.",
+    "hours": "Mon-Sat · 7:30 AM – 6:30 PM",
+    "specialties": ["Engine Repair", "Auto-Electrical", "Bodywork", "Tyre Service"],
+    "products": [
+      { "name": "Michelin Tyre 185/65R15", "price": "780.00" },
+      { "name": "Engine Oil 5W-30 (4L)", "price": "220.00" },
+      { "name": "Car Battery 12V 60Ah", "price": "650.00" },
+      { "name": "Brake Pad Set (Universal)", "price": "310.00" },
+      { "name": "Cabin Air Filter", "price": "85.00" }
+    ],
+    "services": [
+      { "name": "Full Service & Oil Change", "description": "Oil, filters, fluid top-up, inspection", "price": "180+" },
+      { "name": "Tyre Fitting & Balancing", "description": "New tyre fitting, wheel balancing", "price": "50+" },
+      { "name": "Bodywork & Panel Beating", "description": "Dent removal, resprays", "price": "300+" },
+      { "name": "Battery Replacement", "description": "Testing and same-day replacement", "price": "70+" },
+      { "name": "Engine Diagnostics", "description": "Fault code read-out and full inspection", "price": "100+" }
+    ],
+    "media": [
+      { "url": "", "category": "Workshop", "label": "Main workshop bay", "color": "#f5e6c8" },
+      { "url": "", "category": "Workshop", "label": "Tools & lift", "color": "#dbe4f0" },
+      { "url": "", "category": "Jobs", "label": "Panel beating job", "color": "#f0d6d6" },
+      { "url": "", "category": "Jobs", "label": "Engine rebuild", "color": "#cfe8d8" },
+      { "url": "", "category": "Jobs", "label": "Tyre change", "color": "#e0d6ea" },
+      { "url": "", "category": "Certs", "label": "ASE certification", "color": "#ece2c8" }
+    ],
+    "reviews": [
+      { "userName": "Nana O.", "value": 5, "comment": "Fixed my alternator same day and the price was fair.", "date": "2026-07-14" },
+      { "userName": "Efua S.", "value": 4, "comment": "Good bodywork, took an extra day but worth the wait.", "date": "2026-06-22" }
+    ]
   }
 ]

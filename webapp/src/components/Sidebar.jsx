@@ -4,6 +4,7 @@ import {
   UserPlus,
   SignIn,
   SignOut,
+  Storefront,
 } from '@phosphor-icons/react';
 import {
   HomeIcon,
@@ -15,7 +16,7 @@ import {
   NotificationIcon,
 } from './icons';
 
-export default function Sidebar({ user, authReady, viewMode, setViewMode, openAuth, onSignOut, isOpen, setIsOpen, isSearchPanelOpen, onCloseSearch, onCloseDetail }) {
+export default function Sidebar({ user, authReady, viewMode, setViewMode, openAuth, onSignOut, onOpenBusiness, isOpen, setIsOpen, isSearchPanelOpen, onCloseSearch, onCloseDetail }) {
   // Get initials from display name or email
   const getInitial = () => {
     if (!user) return null;
@@ -117,6 +118,14 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
 
         {/* Bottom: auth section */}
         <div className="sidebar-bottom">
+          <button
+            className="nav-btn business-nav-btn"
+            title="Become a Business"
+            onClick={() => { onOpenBusiness(); setIsOpen(false); }}
+          >
+            <Storefront size={20} />
+            <span className="nav-text">Become a Business</span>
+          </button>
           {!authReady ? (
             <div style={{ width: 44, height: 44 }} />
           ) : user ? (
