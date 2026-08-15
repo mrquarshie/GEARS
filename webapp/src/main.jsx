@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
-import osmMechanicsData from './osm_mechanics.json';
 import mockExtrasData from './mockExtras.json';
 import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -582,7 +581,7 @@ function App() {
       // No Firebase configured (e.g. local dev without .env) — use local mock
       // data instead so the app is still usable/testable. Remove this once
       // VITE_FIREBASE_* is set up locally.
-      const mockData = [...osmMechanicsData, ...mockExtrasData].map((m, i) => ({ id: `mock-${i}`, ...m }));
+      const mockData = mockExtrasData.map((m, i) => ({ id: `mock-${i}`, ...m }));
       setAllMechanics(mockData);
       setLoading(false);
       setAuthReady(true);
