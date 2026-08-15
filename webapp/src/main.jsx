@@ -307,7 +307,6 @@ function AuthModal({ close, onSuccess, reason }) {
             </span>
             <span className="google-auth-divider"></span>
             <p style={{width:'100%'}}>{loading ? 'Please wait…' : 'Continue with Google'}</p>
-     
           </button>
 
           <p className="auth-terms">By using Gears, you agree to our Terms of Service<br />and Privacy Policy.</p>
@@ -1029,7 +1028,7 @@ function App() {
       )}
       
       {/* Floating Add Button for authorized admins only */}
-      {user && (user.email === 'aciestech21@gmail.com' || user.email === 'skyemmanuel42@gmail.com') && (
+      {user && (user.email === 'aciestech21@gmail.com' || user.email === 'skyemmanuel42@gmail.com' || user.email === 'princeessandoh316@gmail.com') && (
         <button 
           className="floating-add-btn" 
           onClick={() => setModal('add')}
