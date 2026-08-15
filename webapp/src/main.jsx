@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import osmMechanicsData from './osm_mechanics.json';
+import mockExtrasData from './mockExtras.json';
+import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { List, MapTrifold, NavigationArrow, Gear, X, Plus } from '@phosphor-icons/react';
+import { List, NavigationArrow, Gear, X, Plus } from '@phosphor-icons/react';
 import {
   addDoc,
   collection,
@@ -27,9 +29,6 @@ import {
   getRedirectResult,
   onAuthStateChanged,
   signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile
 } from 'firebase/auth';
 import { auth, db, firebaseReady } from './firebase';
 import './styles.css';
@@ -39,6 +38,13 @@ import MapLayout from './components/MapLayout';
 import MechanicListPanel from './components/MechanicListPanel';
 import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
+import NotificationsPanel from './components/NotificationsPanel';
+import BusinessDashboard from './components/BusinessDashboard';
+
+import authImgCar from './components/AuthImages/Car.png';
+import authImgSteer from './components/AuthImages/Steer.png';
+import authImgEngine from './components/AuthImages/Engine.png';
+import authImgBattery from './components/AuthImages/Car battery.png';
 
 // ---------------------------------------------------------------------------
 // Utility: interactive + readonly star rating
@@ -79,6 +85,7 @@ function RateModal({ mechanic, user, close, onRated, show, openAuth }) {
 
   const tagsList = ["Quality Service", "On Time", "Affordable", "Safe", "Excellent Job", "Good Conversation"];
   const starLabels = { 1: 'Terrible', 2: 'Bad', 3: 'Satisfied', 4: 'Good', 5: 'Excellent' };
+
 
   useEffect(() => {
     if (!db || !user || !mechanic.id) { setLoadingExisting(false); return; }
@@ -225,40 +232,37 @@ function RateModal({ mechanic, user, close, onRated, show, openAuth }) {
 // ---------------------------------------------------------------------------
 // Auth Modal
 // ---------------------------------------------------------------------------
-function AuthModal({ close, onSuccess }) {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+function GoogleGLogo({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/>
+      <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+    </svg>
+  );
+}
+
+// Headline shown per sign-in reason, so the prompt explains why the user was
+// stopped instead of a generic message that doesn't match what they tapped.
+const AUTH_REASON_COPY = {
+  bookmark: 'Sign up to bookmark a mechanic shop or retailer.',
+  rate: 'Sign up to rate and review.',
+  business: 'Sign up to list and manage your business.',
+};
+
+function AuthModal({ close, onSuccess, reason }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const headline = AUTH_REASON_COPY[reason] || 'Find trusted mechanics, anywhere in Ghana.';
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const loginWithGoogle = async () => {
     if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
     setLoading(true);
     setErrorMsg('');
     try {
-      if (isSignUp) {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: name });
-        onSuccess(cred.user);
-      } else {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        onSuccess(cred.user);
-      }
-    } catch (err) {
-      setErrorMsg(err.message.replace('Firebase: ', ''));
-      setLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
-    if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
-    try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      setLoading(true);
       if (result.user) onSuccess(result.user);
     } catch (err) {
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-cancelled-by-user') {
@@ -279,90 +283,33 @@ function AuthModal({ close, onSuccess }) {
     <div className="overlay" role="dialog" aria-modal="true">
       <div className="auth-modal-content">
         <button type="button" className="auth-close" onClick={close} aria-label="Close">
-          <X size={20} />
+          <X size={18} />
         </button>
-        
-        <div className="auth-gear-wrapper">
-          <Gear size={48} className="auth-logo-spin" weight="bold" />
+
+        <div className="auth-header-graphics">
+          <img className="auth-deco auth-deco-big" src={authImgCar} alt="" />
+          <img className="auth-deco auth-deco-top-center" src={authImgSteer} alt="" />
+          <img className="auth-deco auth-deco-top-right" src={authImgEngine} alt="" />
+          <img className="auth-deco auth-deco-bottom-left" src={authImgBattery} alt="" />
+          <div className="auth-logo-box">
+            <Gear size={26} color="var(--lime)" weight="fill" className="logo-gear-spin" />
+          </div>
         </div>
-        
-        <h2 className="auth-title">
-          {isSignUp ? 'Create an account' : 'Sign in to continue'}
-        </h2>
-        <p className="auth-subtitle">
-          {isSignUp ? 'Sign up to add or rate mechanics.' : 'Sign in to add or rate mechanics.'}
-        </p>
 
-        {errorMsg && <div style={{color: 'var(--red)', fontSize: '0.9rem', marginBottom: '16px'}}>{errorMsg}</div>}
+        <div className="auth-body">
+          <h2>{headline}</h2>
 
-        <form onSubmit={submit} style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
-          {isSignUp && (
-            <div className="auth-input-group">
-              <label className="auth-input-label">Full name</label>
-              <input 
-                type="text" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required={isSignUp}
-                className="auth-input-field"
-              />
-            </div>
-          )}
-          
-          <div className="auth-input-group">
-            <label className="auth-input-label">Email address</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required
-              className="auth-input-field"
-            />
-          </div>
-          
-          <div className="auth-input-group">
-            <label className="auth-input-label">Password</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-              minLength={6}
-              className="auth-input-field"
-            />
-          </div>
-          
-          <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? 'Please wait…' : (isSignUp ? 'Sign up' : 'Sign in')}
+          {errorMsg && <div style={{ color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>{errorMsg}</div>}
+
+          <button type="button" className="google-auth-btn" onClick={loginWithGoogle} disabled={loading}>
+            <span className="google-icon-wrapper">
+              <GoogleGLogo size={18} />
+            </span>
+            <span className="google-auth-divider"></span>
+            <p style={{width:'100%'}}>{loading ? 'Please wait…' : 'Continue with Google'}</p>
           </button>
-        </form>
 
-        <button 
-          type="button" 
-          className="auth-google-btn" 
-          onClick={loginWithGoogle}
-          disabled={loading}
-        >
-          <div className="auth-google-icon-wrapper">
-            <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-          </div>
-          <div className="auth-google-separator"></div>
-          <span className="auth-google-text">Continue with Google</span>
-        </button>
-        
-        <div style={{textAlign: 'center'}}>
-          <button 
-            type="button" 
-            onClick={() => setIsSignUp(!isSignUp)} 
-            style={{background: 'none', border: 'none', color: 'var(--forest)', fontWeight: 700, fontSize: '14px', cursor: 'pointer', padding: 0}}
-          >
-            {isSignUp ? 'Already have an account? Sign in' : 'New here? Create an account'}
-          </button>
+          <p className="auth-terms">By using Gears, you agree to our Terms of Service<br />and Privacy Policy.</p>
         </div>
       </div>
     </div>
@@ -487,8 +434,43 @@ function App() {
   const [viewMode, setViewMode] = useState('all');
   const [userLocation, setUserLocation] = useState(null);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
+  const [isLocatingScan, setIsLocatingScan] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const [routeTarget, setRouteTarget] = useState(null);
+  const [recentInteractions, setRecentInteractions] = useState(loadRecentInteractions);
+  const [businessDashboardOpen, setBusinessDashboardOpen] = useState(false);
   const searchRef = useRef(null);
+
+  // Records the single most recent explicit action per mechanic (call,
+  // bookmark, direction, rate) so cards can show "Called 2 min ago" etc.
+  const recordInteraction = (mechanicId, action) => {
+    setRecentInteractions((prev) => {
+      const next = { ...prev, [mechanicId]: { action, timestamp: Date.now() } };
+      saveRecentInteractions(next);
+      return next;
+    });
+  };
+
+  const handleShowDirection = (mechanic) => {
+    if (!mechanic) { setRouteTarget(null); return; }
+    if (mechanic.lat == null || mechanic.lng == null) return;
+    setRouteTarget({ lat: mechanic.lat, lng: mechanic.lng });
+  };
+
+  const handleSelectMechanic = (mechanic) => {
+    setSelectedMechanic(mechanic);
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth > 768;
+    if (isDesktop && mechanic) {
+      handleShowDirection(mechanic);
+    } else {
+      setRouteTarget(null);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedMechanic(null);
+    setRouteTarget(null);
+  };
 
   useEffect(() => {
     if (isDarkMode) document.body.classList.add('dark-mode');
@@ -522,6 +504,55 @@ function App() {
     }
   }, []);
 
+  // Keep fixed mobile sheets/modals sized to the *real* visible viewport, so the
+  // on-screen keyboard doesn't squish or reflow them like a browser tab — it should
+  // just overlay, the way a native app's keyboard does. Also track how tall the
+  // keyboard itself currently is (0 when it's down) as --keyboard-height, so a
+  // scrollable list that sits under it can pad its bottom by that much — letting
+  // rows that would otherwise be trapped behind the keyboard scroll up into view,
+  // without the sheet itself resizing/squishing.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const setVh = () => {
+      const height = viewport ? viewport.height : window.innerHeight;
+      document.documentElement.style.setProperty('--vh', `${height * 0.01}px`);
+      const keyboardHeight = viewport ? Math.max(0, window.innerHeight - viewport.height) : 0;
+      document.documentElement.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
+    };
+    setVh();
+    const target = viewport || window;
+    target.addEventListener('resize', setVh);
+    target.addEventListener('scroll', setVh);
+    return () => {
+      target.removeEventListener('resize', setVh);
+      target.removeEventListener('scroll', setVh);
+    };
+  }, []);
+
+  // Counter the *visual* viewport pan Safari/Chrome apply when a focused input
+  // sits inside a `position:fixed` sheet (to "scroll" it above the keyboard).
+  // That pan is a property of visualViewport.offsetLeft/Top, not a document
+  // scroll — window.scrollTo(0,0) never touches it, which is why fixed sheets
+  // could still visibly drift (including horizontally) while typing. Shifting
+  // the whole app root by the exact inverse offset cancels the drift outright,
+  // everywhere in the app, instead of chasing it sheet by sheet.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const root = document.getElementById('root');
+    if (!viewport || !root) return;
+    const compensate = () => {
+      root.style.transform = `translate(${-viewport.offsetLeft}px, ${-viewport.offsetTop}px)`;
+    };
+    compensate();
+    viewport.addEventListener('resize', compensate);
+    viewport.addEventListener('scroll', compensate);
+    return () => {
+      viewport.removeEventListener('resize', compensate);
+      viewport.removeEventListener('scroll', compensate);
+      root.style.transform = '';
+    };
+  }, []);
+
   useEffect(() => {
     if (!user || !db) {
       setSavedMechanics(JSON.parse(localStorage.getItem('savedMechanics') || '[]'));
@@ -547,7 +578,16 @@ function App() {
   }, [user]);
 
   useEffect(() => {
-    if (!firebaseReady) { setLoading(false); setAuthReady(true); return; }
+    if (!firebaseReady) {
+      // No Firebase configured (e.g. local dev without .env) — use local mock
+      // data instead so the app is still usable/testable. Remove this once
+      // VITE_FIREBASE_* is set up locally.
+      const mockData = [...osmMechanicsData, ...mockExtrasData].map((m, i) => ({ id: `mock-${i}`, ...m }));
+      setAllMechanics(mockData);
+      setLoading(false);
+      setAuthReady(true);
+      return;
+    }
 
     let unsubscribe = () => {};
 
@@ -594,10 +634,17 @@ function App() {
       let timeInMinutes = null;
       if (userLocation && m.lat && m.lng) {
         rawDist = calculateDistance(userLocation.lat, userLocation.lng, m.lat, m.lng);
-        distStr = rawDist.toFixed(1) + 'Km';
         timeInMinutes = (rawDist / 30) * 60;
+        const rounded = Math.max(5, Math.round(timeInMinutes / 5) * 5);
+        if (rounded >= 60) {
+          const hrs = Math.floor(rounded / 60);
+          const mins = rounded % 60;
+          distStr = mins > 0 ? `${hrs} hr ${mins} min drive away` : `${hrs} hr drive away`;
+        } else {
+          distStr = rounded + ' min drive away';
+        }
       }
-      return { ...m, distance: distStr, _rawDist: rawDist, timeInMinutes };
+      return { ...m, distance: distStr, _rawDist: timeInMinutes ?? Infinity, timeInMinutes };
     });
 
     if (viewMode === 'saved') {
@@ -606,6 +653,8 @@ function App() {
       list = list.filter(m => m.specialty === 'Car Detailing');
     } else if (viewMode === 'fuel') {
       list = list.filter(m => m.specialty === 'Fuel Station');
+    } else if (viewMode === 'shop') {
+      list = list.filter(m => ['Shop', 'Parts Shop', 'Auto Parts'].includes(m.specialty));
     }
     
     // Sort by distance if location available
@@ -617,20 +666,96 @@ function App() {
     const term = searchedArea.toLowerCase();
     return list.filter(
       (m) =>
-        m.area?.toLowerCase().includes(term) ||
         m.name?.toLowerCase().includes(term) ||
-        m.specialty?.toLowerCase().includes(term),
+        m.area?.toLowerCase().includes(term) ||
+        m.specialty?.toLowerCase().includes(term) ||
+        m.locationDetail?.toLowerCase().includes(term) ||
+        m.about?.toLowerCase().includes(term) ||
+        m.phone?.toLowerCase().includes(term) ||
+        (m.specialties || []).some(s => s.toLowerCase().includes(term)) ||
+        (m.services || []).some(s => (typeof s === 'string' ? s : s.name)?.toLowerCase().includes(term)) ||
+        (m.products || []).some(p => p.name?.toLowerCase().includes(term)) ||
+        (m.fuelPrices || []).some(f => f.type?.toLowerCase().includes(term)) ||
+        (m.facilities || []).some(f => f.toLowerCase?.().includes(term)),
     );
   }, [allMechanics, searchedArea, viewMode, savedMechanics, userLocation]);
 
   const show = (message) => { setNotice(message); setTimeout(() => setNotice(''), 3500); };
 
+  // Which category page (viewMode) a mechanic belongs to.
+  const categoryForMechanic = (m) => {
+    if (m.specialty === 'Car Detailing') return 'detailers';
+    if (m.specialty === 'Fuel Station') return 'fuel';
+    if (['Shop', 'Parts Shop', 'Auto Parts', 'Car Parts'].includes(m.specialty)) return 'shop';
+    return 'all';
+  };
+
+  // Does `term` match anything (name/specialty/services/etc — NOT area/location,
+  // those are handled separately as a location search) within `category`?
+  const categoryHasMatch = (term, category) =>
+    allMechanics.some((m) => {
+      if (categoryForMechanic(m) !== category) return false;
+      return (
+        m.name?.toLowerCase().includes(term) ||
+        m.specialty?.toLowerCase().includes(term) ||
+        m.about?.toLowerCase().includes(term) ||
+        m.phone?.toLowerCase().includes(term) ||
+        (m.specialties || []).some((s) => s.toLowerCase().includes(term)) ||
+        (m.services || []).some((s) => (typeof s === 'string' ? s : s.name)?.toLowerCase().includes(term)) ||
+        (m.products || []).some((p) => p.name?.toLowerCase().includes(term)) ||
+        (m.fuelPrices || []).some((f) => f.type?.toLowerCase().includes(term)) ||
+        (m.facilities || []).some((f) => f.toLowerCase?.().includes(term))
+      );
+    });
+
+  // Applies a search term and, if it isn't a location search, jumps to
+  // whichever category page actually has matches — so searching a detailer's
+  // name from the mechanics home page (or a mechanic's name from the
+  // detailers page, etc.) lands you on the results instead of "0 found".
+  // Location searches ("Accra") never redirect — they filter within
+  // whichever page the user is already on.
+  const handleSmartSearch = (term) => {
+    setSearchedArea(term);
+    if (!term) return;
+
+    const t = term.toLowerCase();
+    const isLocationMatch = allMechanics.some(
+      (m) => m.area?.toLowerCase().includes(t) || m.locationDetail?.toLowerCase().includes(t),
+    );
+    if (isLocationMatch) return;
+
+    const currentCategory = ['detailers', 'fuel', 'shop'].includes(viewMode) ? viewMode : 'all';
+    if (categoryHasMatch(t, currentCategory)) return;
+
+    const target = ['detailers', 'fuel', 'shop', 'all'].find(
+      (c) => c !== currentCategory && categoryHasMatch(t, c),
+    );
+    if (target) setViewMode(target);
+  };
+
   const toggleSave = async (mechanic) => {
+    if (!mechanic) return;
+    const isSaved = savedMechanics.includes(mechanic.id);
+
+    // Play a short beep on save/unsave
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = isSaved ? 600 : 900;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (_) { /* ignore audio errors */ }
+
     if (!user) {
-      setModal('auth');
+      setModal({ type: 'auth', reason: 'bookmark' });
       return;
     }
-    const isSaved = savedMechanics.includes(mechanic.id);
     const userRef = doc(db, 'users', user.uid);
     try {
       let newSaves;
@@ -659,6 +784,8 @@ function App() {
       setSavedMechanics(newSaves);
       localStorage.setItem('savedMechanics', JSON.stringify(newSaves));
     }
+
+    if (!isSaved) recordInteraction(mechanic.id, 'bookmark');
   };
 
   const submitMechanic = async (listing, existingData) => {
@@ -711,9 +838,28 @@ function App() {
     setAllMechanics((prev) =>
       prev.map((m) => m.id === mechanicId ? { ...m, rating: newRating } : m),
     );
+    recordInteraction(mechanicId, 'rate');
   };
 
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const myBusiness = user ? allMechanics.find((m) => m.createdBy === user.uid) : null;
+
+  const handleOpenBusiness = () => {
+    setMobileSidebarOpen(false);
+    setBusinessDashboardOpen(true);
+  };
+
+  if (businessDashboardOpen) {
+    return (
+      <BusinessDashboard
+        user={user}
+        mechanic={myBusiness}
+        onExit={() => setBusinessDashboardOpen(false)}
+        show={show}
+      />
+    );
+  }
 
   return (
     <div className="app-container">
@@ -724,20 +870,24 @@ function App() {
       
       {notice && <div className="notice" style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, background: '#155e42', color: 'white', padding: '10px 20px', borderRadius: '8px' }}>{notice}</div>}
       
-      <Sidebar 
-        user={user} 
-        authReady={authReady} 
-        viewMode={viewMode} 
-        setViewMode={setViewMode} 
-        openAuth={() => setModal('auth')} 
-        onSignOut={() => { signOut(auth); setUser(null); }} 
+      <Sidebar
+        user={user}
+        authReady={authReady}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        openAuth={() => setModal('auth')}
+        onSignOut={() => { signOut(auth); setUser(null); }}
+        onOpenBusiness={handleOpenBusiness}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
+        isSearchPanelOpen={isSearchPanelOpen}
         onSearchClick={() => {
           setMobileSidebarOpen(false);
           setIsSearchPanelOpen(prev => !prev);
           if (searchRef.current) searchRef.current.focus();
         }}
+        onCloseSearch={() => setIsSearchPanelOpen(false)}
+        onCloseDetail={handleCloseDetail}
       />
       
       <div className="main-content">
@@ -747,34 +897,55 @@ function App() {
             <List size={20} />
           </button>
           <div className="mobile-map-actions">
-            <button className="map-action-btn" aria-label="Map Layers">
-              <MapTrifold size={20} />
-            </button>
             <button className="map-action-btn" aria-label="Locate Me" onClick={() => setMapPanTrigger(Date.now())}>
               <NavigationArrow size={20} />
             </button>
           </div>
         </div>
 
-        <MapLayout 
-          mechanics={mechanics} 
-          selectedMechanic={selectedMechanic} 
-          onSelectMechanic={setSelectedMechanic}
+        <MapLayout
+          mechanics={mechanics}
+          selectedMechanic={selectedMechanic}
+          onSelectMechanic={handleSelectMechanic}
           userLocation={userLocation}
           mapPanTrigger={mapPanTrigger}
+          routeTarget={routeTarget}
+          isLocatingScan={isLocatingScan}
         />
-        
-        {!isSearchPanelOpen && (
-          <MechanicListPanel 
-            mechanics={mechanics} 
-            searchedArea={searchedArea} 
-            onSearch={setSearchedArea} 
-            onSelect={setSelectedMechanic} 
-            user={user} 
+
+        {!isSearchPanelOpen && viewMode !== 'notifications' && (
+          <MechanicListPanel
+            mechanics={mechanics}
+            searchedArea={searchedArea}
+            onSearch={handleSmartSearch}
+            onSelect={handleSelectMechanic}
+            user={user}
             savedMechanics={savedMechanics}
             onToggleSave={toggleSave}
             viewMode={viewMode}
             searchRef={searchRef}
+            onOpenSearch={() => setIsSearchPanelOpen(true)}
+            onDirection={handleShowDirection}
+            recentInteractions={recentInteractions}
+            onRecordInteraction={recordInteraction}
+            hideOnDesktop={!!selectedMechanic}
+              onUseMyLocation={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+                      setMapPanTrigger(Date.now());
+                    },
+                    (err) => console.warn("Location error:", err),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                  );
+                } else {
+                  setMapPanTrigger(Date.now());
+                }
+              }}
+            onScanStateChange={setIsLocatingScan}
+            onNavigateHome={() => setViewMode('all')}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
           />
         )}
 
@@ -782,36 +953,48 @@ function App() {
           <SearchPanel
             mechanics={mechanics}
             searchedArea={searchedArea}
-            onSearch={setSearchedArea}
-            onSelect={setSelectedMechanic}
+            onSearch={handleSmartSearch}
+            onSelect={handleSelectMechanic}
             user={user}
             savedMechanics={savedMechanics}
             onToggleSave={toggleSave}
+            viewMode={viewMode}
             searchRef={searchRef}
             onClose={() => setIsSearchPanelOpen(false)}
           />
         )}
-        
-        <MechanicDetailPanel 
-           mechanic={selectedMechanic} 
-           onClose={() => setSelectedMechanic(null)} 
-           user={user} 
+
+        {viewMode === 'notifications' && (
+          <NotificationsPanel
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+            onSelectMechanic={handleSelectMechanic}
+            mechanics={mechanics}
+          />
+        )}
+
+        <MechanicDetailPanel
+           mechanic={selectedMechanic}
+           onClose={handleCloseDetail}
+           user={user}
            onEdit={(m) => setModal({ type: 'edit', mechanic: m })}
            onDelete={deleteMechanic}
            onRate={(m) => setModal({ type: 'rate', mechanic: m })}
            savedMechanics={savedMechanics}
            onToggleSave={toggleSave}
+           onDirection={handleShowDirection}
+           onRecordInteraction={recordInteraction}
         />
       </div>
 
       {notice && <div className="toast" role="status">{notice}</div>}
 
       {/* Auth modal */}
-      {modal === 'auth' && (
+      {(modal === 'auth' || modal?.type === 'auth') && (
         <AuthModal
           close={() => setModal(null)}
           onSuccess={(u) => { setUser(u); setModal(null); }}
           show={show}
+          reason={modal?.reason}
         />
       )}
       {modal?.type === 'auth-for-rate' && (
@@ -819,6 +1002,7 @@ function App() {
           close={() => setModal(null)}
           onSuccess={(u) => { setUser(u); setModal({ type: 'rate', mechanic: modal.mechanic }); }}
           show={show}
+          reason="rate"
         />
       )}
 

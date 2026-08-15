@@ -1,0 +1,28 @@
+.gears-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  color: rgba(0, 0, 0, 0.6);
+  transition: color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+.gears-icon:not(.gears-icon--filled) [opacity="0.2"] {
+  opacity: 0;
+}
+
+.gears-icon--hover,
+.gears-icon:hover {
+  opacity: 0.8;
+}
+
+.gears-icon--active,
+.gears-icon--clicked,
+.gears-icon:active {
+  transform: scale(0.92);
+}
+
+.gears-icon--filled,
+.gears-icon--active,
+.gears-icon--clicked {
+  color: var(--forest, currentColor);
+}

@@ -1,22 +1,58 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { MagnifyingGlass, Faders, BookmarkSimple, Star, ShareNetwork, MapPin, Phone, Heart } from '@phosphor-icons/react';
-import { collectionGroup, getDocs, query, limit } from 'firebase/firestore';
-import { db } from '../firebase';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, X, Wrench, ClockCounterClockwise, ArrowRight } from '@phosphor-icons/react';
+import { LocationIcon, FillingStationIcon, CarDetailingIcon } from './icons';
+import { getPlaceholderPhrases } from '../searchPlaceholders';
+import { useTypewriterPlaceholder } from '../hooks/useTypewriterPlaceholder';
 
-const MOCK_DETAILERS = [
-  { id: 1, name: 'Aura Detailers', area: 'Asafo, Kumasi', rating: 4.6, open: true },
-  { id: 2, name: 'Sparkle Auto Care', area: 'Osu, Accra', rating: 4.8, open: true }
-];
+const RECENT_SEARCHES_KEY = 'gearsRecentSearches';
+const MAX_RECENT_SEARCHES = 5;
 
-export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, searchRef, onClose }) {
+function loadRecentSearches() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearches(list) {
+  try {
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(list));
+  } catch {
+    // localStorage unavailable — recent searches just won't persist
+  }
+}
+
+// Small icon per suggestion, matching what the row is actually pointing to.
+function SuggestionRowIcon({ row, mechanicsByName }) {
+  if (row.type === 'Area' || row.type === 'Location') {
+    return <LocationIcon size={20} state="filled" />;
+  }
+  if (row.type === 'Fuel') {
+    return <FillingStationIcon size={20} state="filled" />;
+  }
+  if (row.type === 'Name') {
+    const specialty = mechanicsByName.get(row.value)?.specialty;
+    if (specialty === 'Fuel Station') return <FillingStationIcon size={20} state="filled" />;
+    if (specialty === 'Car Detailing') return <CarDetailingIcon size={20} state="filled" />;
+  }
+  return <Wrench size={20} />;
+}
+
+export default function SearchPanel({ mechanics, searchedArea, onSearch, searchRef, onClose, viewMode }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [activeFilterTab, setActiveFilterTab] = useState('Services');
-  const [activeMainTab, setActiveMainTab] = useState('All Services');
-  
-  const filterRef = useRef(null);
-  const searchWrapperRef = useRef(null);
+  const [recentSearches, setRecentSearches] = useState(loadRecentSearches);
+
+  const placeholderPhrases = useMemo(() => getPlaceholderPhrases(viewMode), [viewMode]);
+  const placeholderText = useTypewriterPlaceholder(placeholderPhrases);
+
+  // Autofocus the input as soon as the overlay mounts, regardless of how it was opened.
+  useEffect(() => {
+    searchRef?.current?.focus();
+  }, [searchRef]);
+
+  const mechanicsByName = useMemo(() => new Map(mechanics.map(m => [m.name, m])), [mechanics]);
 
   const suggestions = useMemo(() => {
     if (!searchTerm) return [];
@@ -24,248 +60,126 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, onSelec
     const uniqueMatches = new Map();
     mechanics.forEach(m => {
       if (m.name?.toLowerCase().includes(term)) uniqueMatches.set(m.name, { type: 'Name', value: m.name });
-      else if (m.area?.toLowerCase().includes(term)) uniqueMatches.set(m.area, { type: 'Area', value: m.area });
-      else if (m.services?.some(s => s.toLowerCase().includes(term))) {
-        const match = m.services.find(s => s.toLowerCase().includes(term));
-        if (match) uniqueMatches.set(match, { type: 'Service', value: match });
-      }
+      if (m.area?.toLowerCase().includes(term)) uniqueMatches.set(m.area, { type: 'Area', value: m.area });
+      if (m.specialty?.toLowerCase().includes(term)) uniqueMatches.set(m.specialty, { type: 'Category', value: m.specialty });
+      if (m.locationDetail?.toLowerCase().includes(term)) uniqueMatches.set(m.locationDetail, { type: 'Location', value: m.locationDetail });
+      (m.specialties || []).forEach(s => { if (s.toLowerCase().includes(term)) uniqueMatches.set(s, { type: 'Speciality', value: s }); });
+      (m.services || []).forEach(s => {
+        const serviceName = typeof s === 'string' ? s : s.name;
+        if (serviceName?.toLowerCase().includes(term)) uniqueMatches.set(serviceName, { type: 'Service', value: serviceName });
+      });
+      (m.fuelPrices || []).forEach(f => { if (f.type?.toLowerCase().includes(term)) uniqueMatches.set(f.type, { type: 'Fuel', value: f.type }); });
     });
-    return Array.from(uniqueMatches.values()).slice(0, 5);
+    return Array.from(uniqueMatches.values()).slice(0, 8);
   }, [searchTerm, mechanics]);
 
-  const [popularProducts, setPopularProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
+  // Default (no query yet) rows: a mix of top-rated businesses, areas and
+  // categories pulled from real data, echoing the "popular searches" pattern.
+  const popularSuggestions = useMemo(() => {
+    const rows = [];
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (filterRef.current && !filterRef.current.contains(event.target)) setIsFilterOpen(false);
-      if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target)) setShowSuggestions(false);
+    const byRating = [...mechanics].sort((a, b) => {
+      const aRating = a.rating === 'New' ? 0 : Number(a.rating) || 0;
+      const bRating = b.rating === 'New' ? 0 : Number(b.rating) || 0;
+      return bRating - aRating;
+    });
+    const namesSeen = new Set();
+    for (const m of byRating) {
+      if (namesSeen.size >= 2) break;
+      if (m.name && !namesSeen.has(m.name)) { namesSeen.add(m.name); rows.push({ type: 'Name', value: m.name }); }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const q = query(collectionGroup(db, 'products'), limit(10));
-        const snap = await getDocs(q);
-        const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setPopularProducts(fetched);
-      } catch (e) {
-        console.error("Failed to fetch products", e);
-      } finally {
-        setLoadingProducts(false);
-      }
+    const areasSeen = new Set();
+    for (const m of mechanics) {
+      if (areasSeen.size >= 2) break;
+      if (m.area && !areasSeen.has(m.area)) { areasSeen.add(m.area); rows.push({ type: 'Area', value: m.area }); }
     }
-    fetchProducts();
-  }, []);
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    setShowSuggestions(false);
-    onSearch(searchTerm);
+    const categoriesSeen = new Set();
+    for (const m of mechanics) {
+      if (categoriesSeen.size >= 2) break;
+      if (m.specialty && !categoriesSeen.has(m.specialty)) { categoriesSeen.add(m.specialty); rows.push({ type: 'Category', value: m.specialty }); }
+    }
+
+    return rows;
+  }, [mechanics]);
+
+  const rowsToShow = searchTerm ? suggestions : popularSuggestions;
+
+  const runSearch = (value) => {
+    if (!value) return;
+    setRecentSearches(prev => {
+      const next = [value, ...prev.filter(v => v !== value)].slice(0, MAX_RECENT_SEARCHES);
+      saveRecentSearches(next);
+      return next;
+    });
+    onSearch(value);
     onClose();
   };
 
-  const topMechanics = useMemo(() => {
-    return [...mechanics].sort((a, b) => {
-      const aRating = a.rating === 'New' ? 0 : Number(a.rating);
-      const bRating = b.rating === 'New' ? 0 : Number(b.rating);
-      if (bRating !== aRating) return bRating - aRating;
-      const aCount = a.ratingCount || 0;
-      const bCount = b.ratingCount || 0;
-      return bCount - aCount;
-    }).slice(0, 4);
-  }, [mechanics]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    runSearch(searchTerm.trim());
+  };
 
   return (
     <div className="search-panel-overlay slide-in">
-      <div className="list-header">
-        <h1>Search</h1>
-        <p className="search-subtitle">Discover mechanics, detailers, car parts or people</p>
-        
-        <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
-          <div className="search-input-box">
-            <MagnifyingGlass size={18} className="search-icon" weight="bold" />
-            <input 
-              ref={searchRef}
-              type="text" 
-              placeholder="Search Location" 
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => {
-                if (searchTerm) setShowSuggestions(true);
-              }}
-            />
-          </div>
-          
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="search-suggestions">
-              {suggestions.map((s, i) => (
-                <div 
-                  key={i} 
-                  className="suggestion-item" 
-                  onClick={() => {
-                    setSearchTerm(s.value);
-                    setShowSuggestions(false);
-                    onSearch(s.value);
-                    onClose();
-                  }}
-                >
-                  <MagnifyingGlass size={14} className="suggestion-icon" />
-                  <span className="suggestion-text">{s.value}</span>
-                  <span className="suggestion-type">{s.type}</span>
-                </div>
-              ))}
-            </div>
+      <div className="search-focused-header">
+        <form className="search-focused-input-box" onSubmit={handleSubmit}>
+          <button type="button" className="search-focused-back" onClick={onClose} aria-label="Back">
+            <ArrowLeft size={20} />
+          </button>
+          <input
+            ref={searchRef}
+            type="text"
+            placeholder=""
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {!searchTerm && (
+            <span className="search-focused-placeholder-animated">
+              <span className="search-placeholder-prefix">Search </span>
+              <span className="search-placeholder-suffix">{placeholderText}<span className="placeholder-cursor">|</span></span>
+            </span>
           )}
+          {searchTerm && (
+          
+              <svg onClick={() => setSearchTerm('')} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5.33464 15.8334L4.16797 14.6667L8.83464 10.0001L4.16797 5.33341L5.33464 4.16675L10.0013 8.83341L14.668 4.16675L15.8346 5.33341L11.168 10.0001L15.8346 14.6667L14.668 15.8334L10.0013 11.1667L5.33464 15.8334Z" fill="black" fill-opacity="0.6" />
+              </svg>
 
-          <div className="filter-container" ref={filterRef}>
-            <button type="button" className="filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-              <Faders size={18} />
-            </button>
-            {isFilterOpen && (
-              <div className="filter-popup">
-                <div className="filter-header">
-                  <h2>Filters</h2>
-                  <button type="button" className="clear-all-btn">Clear all</button>
-                </div>
-                <div className="filter-tabs">
-                  <div className={`filter-tab ${activeFilterTab === 'Services' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Services')}>Services <span className="tab-badge">2</span></div>
-                  <div className={`filter-tab ${activeFilterTab === 'Availability' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Availability')}>Availability</div>
-                  <div className={`filter-tab ${activeFilterTab === 'Distance' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Distance')}>Distance</div>
-                  <div className={`filter-tab ${activeFilterTab === 'Rating' ? 'active' : ''}`} onClick={() => setActiveFilterTab('Rating')}>Rating</div>
-                </div>
-                
-                {activeFilterTab === 'Services' && (
-                  <div className="filter-body">
-                    <button type="button" className="filter-pill active">General Repair</button>
-                    <button type="button" className="filter-pill">Breaks</button>
-                    <button type="button" className="filter-pill">Electric Fault</button>
-                    <button type="button" className="filter-pill">Lights</button>
-                    <button type="button" className="filter-pill active">Engine</button>
-                    <button type="button" className="filter-pill">Spraying</button>
-                    <button type="button" className="filter-pill">Upgrade</button>
-                    <button type="button" className="filter-pill">Diagnostics</button>
-                  </div>
-                )}
-                {/* Other filter tabs can be added similarly */}
-                <div className="filter-footer">
-                  <button type="button" className="filter-apply-btn" onClick={() => setIsFilterOpen(false)}>Apply</button>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </form>
-
-        <div className="search-main-tabs">
-          {['All Services', 'Products', 'Detailers', 'Shops'].map(tab => (
-            <div 
-              key={tab} 
-              className={`search-main-tab ${activeMainTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveMainTab(tab)}
-            >
-              {tab}
-            </div>
-          ))}
-        </div>
       </div>
 
-      <div className="search-content-scroll">
-        <section className="search-section">
-          <h3>Top Mechanics</h3>
-          <div className="horizontal-scroll">
-            {topMechanics.map(m => (
-              <div key={m.id} className="search-mechanic-card" onClick={() => { onSelect(m); onClose(); }}>
-                <div className="sm-card-top">
-                  <div className="sm-avatar">
-                    <span className="avatar-letter">{m.name.charAt(0).toUpperCase()}</span>
-                  </div>
-                  <div className="sm-rating-badge">
-                    {m.rating !== 'New' ? Number(m.rating).toFixed(1) : 'New'} <Star size={10} weight="fill" />
-                  </div>
-                  <div className="sm-status-badge">Open</div>
-                </div>
-                <h4>{m.name}</h4>
-                <p>{m.area}</p>
-                <div className="sm-specialty">⚙ {m.specialty || 'General Repairs'}</div>
-                <div className="sm-actions">
-                  <button 
-                    className={`icon-btn ${savedMechanics.includes(m.id) ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
-                  >
-                    <BookmarkSimple size={14} weight={savedMechanics.includes(m.id) ? "fill" : "regular"} />
-                  </button>
-                  <button className="icon-btn"><Star size={14} /></button>
-                  <button className="icon-btn"><ShareNetwork size={14} /></button>
-                  <button className="icon-btn"><MapPin size={14} /></button>
-                  <button className="icon-btn"><Phone size={14} /></button>
-                </div>
+      <div className="search-focused-scroll">
+        {!searchTerm && recentSearches.length > 0 && (
+          <div>
+            <h3 className="search-section-label">Recent</h3>
+            <div className="search-recent-chips">
+              {recentSearches.map((term) => (
+                <button key={term} type="button" className="search-recent-chip" onClick={() => runSearch(term)}>
+                  <ClockCounterClockwise size={14} />
+                  {term}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {rowsToShow.length > 0 && (
+          <div className="search-suggestion-list">
+            {rowsToShow.map((row, i) => (
+              <div key={`${row.type}-${row.value}-${i}`} className="search-suggestion-row" onClick={() => runSearch(row.value)}>
+                <span className="search-suggestion-row-icon">
+                  <SuggestionRowIcon row={row} mechanicsByName={mechanicsByName} />
+                </span>
+                <span className="search-suggestion-row-text">{row.value}</span>
+                <ArrowRight size={18} className="search-suggestion-row-caret" />
               </div>
             ))}
           </div>
-        </section>
-
-        <section className="search-section">
-          <h3>Popular Products</h3>
-          <div className="horizontal-scroll">
-            {loadingProducts ? (
-              <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Loading products...</p>
-            ) : popularProducts.length === 0 ? (
-              <p style={{ color: 'var(--muted)', fontSize: '14px' }}>no products posted yet</p>
-            ) : (
-              popularProducts.map(p => (
-                <div key={p.id} className="search-product-card">
-                  <div className="product-img-wrapper" style={{ background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {p.img ? (
-                      <img src={p.img} alt={p.name} />
-                    ) : (
-                      <span style={{ color: '#9ca3af', fontSize: '12px' }}>No Image</span>
-                    )}
-                    <button className="favorite-btn"><Heart size={16} /></button>
-                  </div>
-                  <div className="product-info">
-                    <h4>{p.name}</h4>
-                    <div className="product-meta">
-                      <span className="price">GH₵ {p.price || 'N/A'}</span>
-                      <span className="tag">⚡ Same Day</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-
-        <section className="search-section">
-          <h3>Trending Detailers</h3>
-          <div className="horizontal-scroll">
-            {MOCK_DETAILERS.map(d => (
-              <div key={d.id} className="search-mechanic-card">
-                <div className="sm-card-top">
-                  <div className="sm-avatar" style={{backgroundColor: '#e5e7eb', color: '#000'}}>
-                    <span className="avatar-letter">{d.name.charAt(0).toUpperCase()}</span>
-                  </div>
-                  <div className="sm-rating-badge">{d.rating.toFixed(1)} <Star size={10} weight="fill" /></div>
-                  <div className="sm-status-badge">Open</div>
-                </div>
-                <h4>{d.name}</h4>
-                <p>{d.area}</p>
-                <div className="sm-actions" style={{marginTop: '16px'}}>
-                  <button className="icon-btn"><BookmarkSimple size={14} /></button>
-                  <button className="icon-btn"><Star size={14} /></button>
-                  <button className="icon-btn"><ShareNetwork size={14} /></button>
-                  <button className="icon-btn"><MapPin size={14} /></button>
-                  <button className="icon-btn"><Phone size={14} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        )}
       </div>
     </div>
   );
