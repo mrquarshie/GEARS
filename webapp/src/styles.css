@@ -1256,7 +1256,7 @@ body {
 
 .verification-sheet-desc {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
   color: rgba(0, 0, 0, 0.5);
   text-align: center;
@@ -1282,6 +1282,40 @@ body {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Business-onboarding success card — reuses the verification-sheet shell
+   (icon/card/footer/button) but with its own larger, higher-emphasis type,
+   since this is a one-time celebratory screen, not a small info tooltip. */
+.biz-success-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biz-success-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+  text-align: center;
+}
+
+.biz-success-desc {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+  text-align: center;
+  line-height: 1.5;
+  padding-inline: 16px;
+}
+
+.biz-success-desc strong {
+  color: #000;
+  font-weight: 600;
 }
 
 .card-area {
@@ -2259,6 +2293,471 @@ body {
   cursor: pointer;
 }
 
+.business-flow {
+  width: min(390px, calc(100vw - 28px));
+  height: min(844px, calc(var(--vh, 1vh) * 94));
+  background: #fbfbfa;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 36px;
+  box-shadow: 0 24px 60px rgba(23, 33, 28, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .business-flow {
+    /* Pinned directly to the viewport instead of being a centered grid child
+       of .overlay — when the keyboard opens, this page's height (driven by
+       the reactive --vh) shrinks to the keyboard-free area, but .overlay's
+       own box doesn't shrink the same way. As a centered grid child, the
+       now-shorter page would get vertically centered inside the taller
+       .overlay, opening a gap above it that shows the blurred backdrop
+       through. Fixing this to the top edge removes it from that centering
+       algorithm entirely, so it always fills from the real top of the
+       screen with no gap, regardless of any height mismatch. */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: calc(var(--vh, 1vh) * 100);
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+.business-flow-header {
+  height: 70px;
+  padding: max(16px, env(safe-area-inset-top)) 15px 13px;
+  display: grid;
+  grid-template-columns: 42px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  /* background-color: red;  */
+}
+
+.business-flow-header h2 {
+  margin: 0;
+  text-align: center;
+  color: #000;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.business-back-btn,
+.business-close-btn,
+.business-search-btn {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid #fff;
+  background: #fafafa;
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px 2px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.30);
+}
+
+.business-close-btn {
+  visibility: hidden;
+}
+
+.business-flow-header--search-active {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.business-flow-header--search-active .business-location-search-pill {
+  flex: 1;
+  min-width: 0;
+}
+
+.business-flow-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 15px calc(18px + var(--keyboard-height, 0px));
+}
+
+.business-type-list,
+.business-fields,
+.business-specialties-step {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.business-type-card {
+  width: 100%;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 24px 1fr 16px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  background: #fff;
+  text-align: left;
+  color: #000;
+  opacity: 0.8;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.business-type-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(21, 94, 66, 0.35);
+}
+
+.business-type-card.selected {
+  border-color: #319f43;
+  background: #fff;
+}
+
+.business-type-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.business-type-copy {
+  min-width: 0;
+}
+
+.business-type-copy strong,
+.business-type-copy small {
+  display: block;
+}
+
+.business-type-copy strong {
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.business-type-copy small {
+  margin-top: 4px;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 400;
+}
+
+.business-type-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #aeb5b1;
+  position: relative;
+}
+
+.business-type-card.selected .business-type-radio {
+  border-color: #145e42;
+}
+
+.business-type-card.selected .business-type-radio::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  background: #145e42;
+}
+
+.business-fields label {
+  display: block;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.business-fields label span {
+  float: right;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 500;
+}
+
+.business-fields input,
+.business-fields select,
+.business-fields textarea,
+.business-location-search input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  color: #17211c;
+  border-radius: 8px;
+  font: inherit;
+  /* iOS Safari auto-zooms the whole page on focus for any field under 16px —
+     16px here is what keeps focusing a field from zooming/disturbing the page. */
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.business-fields input::placeholder,
+.business-fields textarea::placeholder,
+.business-location-search input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.business-fields input,
+.business-fields select,
+.business-location-search input {
+  height: 44px;
+  padding: 0 12px;
+}
+
+.business-fields textarea {
+  min-height: 104px;
+  resize: none;
+  padding: 12px;
+}
+
+.business-fields input:focus,
+.business-fields select:focus,
+.business-fields textarea:focus,
+.business-location-search input:focus {
+  border-color: rgba(21, 94, 66, 0.55);
+  box-shadow: 0 0 0 3px rgba(21, 94, 66, 0.1);
+}
+
+.business-location-topbar {
+  padding: max(16px, env(safe-area-inset-top)) 15px 14px;
+  background: #fbfbfa;
+  box-shadow: 0 4px 4px -4px rgba(12, 12, 13, 0.05), 0 16px 32px -4px rgba(12, 12, 13, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  position: relative;
+  /* Leaflet's internal panes (tiles/markers/popups) carry their own
+     z-index up to ~700 and aren't isolated into their own stacking
+     context, so they can paint over a low z-index here — this needs to
+     clear all of them to stay above the map. */
+  z-index: 1000;
+}
+
+.business-location-topbar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.business-location-search-pill {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 24px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 4px rgba(12, 12, 13, 0.05), 0 1px 4px rgba(12, 12, 13, 0.1);
+}
+
+.business-location-search-pill svg {
+  flex-shrink: 0;
+}
+
+.business-location-search-pill input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  color: #17211c;
+}
+
+.business-location-search-pill input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.business-location-clear-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.business-location-hint {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* Floats over the map like a traditional search-suggestions dropdown,
+   instead of pushing the topbar taller — capped to roughly 4-5 rows,
+   scaling down on short viewports (e.g. keyboard eating half the screen). */
+.business-location-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 32px rgba(12, 12, 13, 0.18), 0 2px 8px rgba(12, 12, 13, 0.08);
+  display: flex;
+  flex-direction: column;
+  max-height: min(240px, 40vh);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: 5;
+}
+
+.business-location-suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #17211c;
+  cursor: pointer;
+}
+
+.business-location-suggestion:first-child {
+  border-top: none;
+}
+
+.business-location-suggestion:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.business-specialties-step p {
+  margin: 0px 4px 12px;
+  color: #69716d;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.business-flow-body--map {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+.business-map-shell {
+  min-height: 260px;
+  flex: 1;
+  overflow: hidden;
+  background: #eef0ec;
+}
+
+.business-flow-body--map .business-map-shell {
+  border-radius: 0;
+  border: none;
+}
+
+.business-selected-location {
+  padding: 16px 15px 4px;
+  flex-shrink: 0;
+  background: #fbfbfa;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.business-selected-location small {
+  display: block;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.business-selected-location strong {
+  display: block;
+  margin-top: 4px;
+  color: #17211c;
+  font-size: 15px;
+  font-weight: 600;
+
+}
+
+.business-specialties-step {
+  padding-top: 0px;
+  
+}
+
+.business-specialty-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.business-specialty-chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1px solid #d8ddd9;
+  background: #fff;
+  color: #3f4843;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.business-specialty-chip.selected {
+  background: #f0fff5;
+  border-color: var(--forest);
+  color: var(--forest);
+}
+
+.business-continue-btn {
+  width: calc(100% - 30px);
+  height: 52px;
+  margin: 0 15px 24px;
+  border: none;
+  border-radius: 26px;
+  background: #145e42;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 22px rgba(69, 76, 224, 0.22);
+  flex-shrink: 0;
+}
+
+.business-continue-btn:disabled {
+  opacity: 0.68;
+  cursor: wait;
+}
+
+.business-continue-btn--incomplete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .floating-add-btn {
   position: fixed;
   bottom: 24px;
@@ -3008,6 +3507,77 @@ body {
     inset 2px 4px 20px rgba(255, 255, 255, 0.6);
 }
 
+.auth-modal-content--business {
+  width: min(390px, calc(100vw - 28px));
+  height: min(844px, calc(var(--vh, 1vh) * 94));
+  max-width: none;
+  max-height: none;
+  border-radius: 36px;
+  background: #fafafa;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.auth-modal-content--business .auth-close {
+  top: 56px;
+  right: 16px;
+}
+
+.auth-modal-content--business .auth-deco-big {
+  width: 39%;
+  top: 60px;
+  left: -3%;
+}
+
+.auth-modal-content--business .auth-deco-top-center {
+  width: 34%;
+  top: 52px;
+  left: 61%;
+}
+
+.auth-modal-content--business .auth-deco-top-right {
+  width: 25%;
+  top: 128px;
+  left: 83%;
+}
+
+.auth-modal-content--business .auth-deco-bottom-left {
+  width: 24%;
+  top: 145px;
+  left: -6%;
+}
+
+.auth-modal-content--business .auth-logo-box {
+  top: 210px;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  transform: translateX(-50%);
+}
+
+.auth-modal-content--business .auth-body {
+  padding: 302px 32px 32px;
+}
+
+.auth-modal-content--business .auth-body h2 {
+  max-width: 310px;
+  font-size: 28px;
+  line-height: 1.18;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+
+.auth-modal-content--business .google-auth-btn {
+  width: 100%;
+  max-width: 330px;
+  height: 52px;
+  border-radius: 26px;
+  font-size: 15px;
+  font-weight: 600;
+  background: #145e42;
+}
+
 .auth-close {
   position: absolute;
   top: 16px;
@@ -3221,6 +3791,35 @@ body {
   .auth-close {
     top: 20px;
     right: 20px;
+  }
+
+  .auth-modal-content--business {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+  }
+
+  .auth-modal-content--business .auth-header-graphics {
+    inset: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--vh, 1vh) * 32);
+  }
+
+  .auth-modal-content--business .auth-close {
+    top: 20px;
+    right: 20px;
+  }
+
+  .auth-modal-content--business .auth-logo-box {
+    top: calc(var(--vh, 1vh) * 32 - 28px);
+  }
+
+  .auth-modal-content--business .auth-body {
+    padding: calc(var(--vh, 1vh) * 32 + 32px) 24px 32px;
   }
 }
 
@@ -4697,6 +5296,8 @@ body {
 }
 
 .biz-header h1 {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 18px;
   font-weight: 800;
@@ -4704,6 +5305,44 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.biz-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.biz-header-icon-btn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+
+.biz-avatar {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.biz-avatar-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4a241;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 /* Business dashboard hamburger menu — matches the customer view's mobile
@@ -4969,6 +5608,119 @@ body {
   font-size: 14px;
   padding: 24px 0;
   text-align: center;
+}
+
+.biz-catalog-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 8px 32px;
+  text-align: center;
+}
+
+.biz-catalog-empty-stack {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 170px;
+}
+
+.biz-catalog-empty-card {
+  position: absolute;
+  width: 148px;
+  height: 143px;
+  border-radius: 24px;
+  border: 1px solid #fff;
+  box-shadow: 0 4px 4px -4px rgba(12, 12, 13, 0.05), 0 16px 32px -4px rgba(12, 12, 13, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Position/rotation/color are set inline per-item and rotate every 5s
+     (see BizCatalogTab) — transitioning them here is what makes that read
+     as the 3 cards animating into their new spots instead of jump-cutting. */
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1), top 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.6s ease;
+}
+
+.biz-catalog-empty-card img {
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+}
+
+.biz-catalog-empty-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.biz-catalog-empty-caption strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.2em;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.biz-catalog-empty-caret {
+  width: 1px;
+  height: 13px;
+  margin-left: 2px;
+  background: var(--ink);
+  animation: bizCatalogCaretBlink 0.8s step-end infinite;
+}
+
+@keyframes bizCatalogCaretBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.biz-catalog-empty-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.biz-catalog-empty-price-bar {
+  width: 30px;
+  height: 11px;
+  border-radius: 24px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.biz-catalog-empty-heading {
+  margin: 0;
+  max-width: 300px;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.biz-catalog-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 16px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.biz-catalog-empty-btn svg {
+  flex-shrink: 0;
 }
 
 .biz-primary-btn {

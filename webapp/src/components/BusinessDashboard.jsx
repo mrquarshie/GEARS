@@ -16,8 +16,57 @@ import {
   BookmarkSimple,
   ListPlus,
   Gear,
+  QrCode,
 } from '@phosphor-icons/react';
 import { db } from '../firebase';
+import bizIllustrationBattery from './AuthImages/Car battery.png';
+import bizIllustrationEngine from './AuthImages/Engine.png';
+import bizIllustrationSteer from './AuthImages/Steer.png';
+
+function BizAvatar({ user }) {
+  const initial = user?.displayName?.trim()?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
+  if (user?.photoURL) {
+    return <img src={user.photoURL} alt="" className="biz-avatar" referrerPolicy="no-referrer" />;
+  }
+  return <div className="biz-avatar biz-avatar-letter">{initial}</div>;
+}
+
+// Catalog empty-state illustration — 3 cards that rotate through 3 fixed
+// slots every 5s (each item keeps its own color/name as it moves, rather
+// than the slot owning the color, so it reads as "3 real items shuffling"
+// instead of a card's background just cycling independently of its content).
+const CATALOG_EMPTY_ITEMS = [
+  { name: 'Engine', image: bizIllustrationEngine, bg: '#e6ffee' },
+  { name: 'Car Battery', image: bizIllustrationBattery, bg: '#fdedff' },
+  { name: 'Steer', image: bizIllustrationSteer, bg: '#ffeecc' },
+];
+
+// [left, right, center] slot geometry in px, sized for the stack's 340px
+// max-width / 148px card width (matches the design's original layout).
+const CATALOG_EMPTY_SLOTS = [
+  { left: 0, top: 28, rotate: -11, z: 1 },
+  { left: 96, top: 4, rotate: 0, z: 2 },
+  { left: 192, top: 28, rotate: 12, z: 1 },
+];
+// relative distance from the featured (center) item -> which slot it sits in
+const CATALOG_EMPTY_SLOT_FOR_RELATIVE = [1, 0, 2];
+
+// Types `text` out one character at a time instead of swapping it in
+// instantly — used for the empty-state caption as it cycles product names.
+function useTypewriter(text, speed = 45) {
+  const [typed, setTyped] = useState('');
+  useEffect(() => {
+    let i = 0;
+    setTyped('');
+    const id = setInterval(() => {
+      i += 1;
+      setTyped(text.slice(0, i));
+      if (i >= text.length) clearInterval(id);
+    }, speed);
+    return () => clearInterval(id);
+  }, [text, speed]);
+  return typed;
+}
 
 // Plays a short, mechanical "clack" (gear/ratchet-like) via the Web Audio API.
 function playTapSound() {
@@ -111,6 +160,12 @@ export default function BusinessDashboard({ user, mechanic, onExit, show }) {
           <List size={22} />
         </button>
         <h1>{PAGE_TITLES[activeTab] || 'Your Business'}</h1>
+        <div className="biz-header-actions">
+          <button className="biz-header-icon-btn" aria-label="QR code">
+            <QrCode size={18} />
+          </button>
+          <BizAvatar user={user} />
+        </div>
       </header>
 
       {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
@@ -257,6 +312,16 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
+  const [emptyStateStep, setEmptyStateStep] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setEmptyStateStep((s) => s + 1), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const emptyStateCenterIndex = emptyStateStep % 3;
+  const emptyStateCaption = emptyStateStep === 0 ? 'Your First Product' : CATALOG_EMPTY_ITEMS[emptyStateCenterIndex].name;
+  const typedEmptyStateCaption = useTypewriter(emptyStateCaption);
 
   useEffect(() => {
     if (pendingAdd === 'product' || pendingAdd === 'service') {
@@ -328,12 +393,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
   return (
     <div className="biz-catalog-tab">
-      <div className="biz-catalog-header">
-        <h3>Products & Services</h3>
-        <button className="biz-add-btn" onClick={() => setShowForm((v) => !v)}>
-          <Plus size={16} weight="bold" /> Add
-        </button>
-      </div>
+    
 
       {showForm && (
         <form className="biz-catalog-form" onSubmit={handleAdd}>
@@ -351,7 +411,46 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
       )}
 
       {items.length === 0 && !showForm && (
-        <p className="biz-empty-text">Nothing in your catalog yet. Add a product or service to get started.</p>
+        <div className="biz-catalog-empty">
+          <div className="biz-catalog-empty-stack">
+            {CATALOG_EMPTY_ITEMS.map((item, i) => {
+              const relative = (i - emptyStateCenterIndex + 3) % 3;
+              const slot = CATALOG_EMPTY_SLOTS[CATALOG_EMPTY_SLOT_FOR_RELATIVE[relative]];
+              return (
+                <div
+                  key={item.name}
+                  className="biz-catalog-empty-card"
+                  style={{
+                    left: slot.left,
+                    top: slot.top,
+                    transform: `rotate(${slot.rotate}deg)`,
+                    zIndex: slot.z,
+                    background: item.bg,
+                  }}
+                >
+                  <img src={item.image} alt="" />
+                </div>
+              );
+            })}
+          </div>
+          <div className="biz-catalog-empty-caption">
+            <strong>
+              {typedEmptyStateCaption}
+              <span className="biz-catalog-empty-caret" />
+            </strong>
+            <span className="biz-catalog-empty-price">
+              <span>₵</span>
+              <span className="biz-catalog-empty-price-bar" />
+            </span>
+          </div>
+          <p className="biz-catalog-empty-heading">
+            List your products and services to show up in more customer searches.
+          </p>
+          <button type="button" className="biz-catalog-empty-btn" onClick={() => { setKind('products'); setShowForm(true); }}>
+            <Plus size={24} weight="bold" />
+            Add Your First Product
+          </button>
+        </div>
       )}
 
       <div className="biz-catalog-list">
