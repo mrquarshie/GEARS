@@ -88,7 +88,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction, initialItemQuery, onInitialItemHandled }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -97,6 +97,24 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
     setActiveTab('Overview');
     setCollapsed(false);
   }, [mechanic?.id]);
+
+  // Deep-link support: a shared WhatsApp order message links back to
+  // `?mechanic=<id>&item=<name>&type=<product|service|package>`. Once that
+  // mechanic is selected, jump straight to the right tab and item sheet.
+  // Declared after the tab-reset effect above so it wins when both fire on
+  // the same mechanic-selection render.
+  useEffect(() => {
+    if (!mechanic || !initialItemQuery) return;
+    const { name, type } = initialItemQuery;
+    const collectionKey = type === 'service' ? 'services' : type === 'package' ? 'packages' : 'products';
+    const tabKey = type === 'service' ? 'Services' : type === 'package' ? 'Packages' : 'Products';
+    const match = (mechanic[collectionKey] || []).find(it => (it.name || it.title) === name);
+    if (match) {
+      setActiveTab(tabKey);
+      setDetailSheetItem({ ...match, type });
+    }
+    onInitialItemHandled?.();
+  }, [mechanic, initialItemQuery, onInitialItemHandled]);
 
   if (!mechanic) return null;
 
@@ -259,6 +277,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
             item={detailSheetItem}
             mechanicName={mechanic.name}
             mechanicPhone={mechanic.phone}
+            mechanicId={mechanic.id}
             onClose={() => setDetailSheetItem(null)}
           />
         )}
@@ -514,12 +533,24 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   );
 }
 
-export function ItemSheet({ item, mechanicName, mechanicPhone, onClose, onSelectShop }) {
+const ORDER_WHATSAPP_NUMBER = '0559488201';
+
+export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, onClose, onSelectShop }) {
   const isService = item.type === 'service';
   const bg = isService ? '#EDE9FE' : '#F9F1C2';
   const accent = isService ? '#9747FF' : '#FF9500';
   const name = item.name || item.title;
-  const whatsappHref = `https://wa.me/${(mechanicPhone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'd like to order: ${name}${item.price ? ` (GH₵${item.price})` : ''}`)}`;
+  const whatsappDigits = ORDER_WHATSAPP_NUMBER.replace(/^0/, '233');
+  const shopClause = mechanicName ? ` from ${mechanicName}` : '';
+  const priceClause = item.price ? ` (${isService ? 'from ' : ''}GH₵${item.price})` : '';
+  const itemUrl = mechanicId && typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}?mechanic=${encodeURIComponent(mechanicId)}&item=${encodeURIComponent(name)}&type=${item.type || 'product'}`
+    : null;
+  const linkClause = itemUrl ? `\n\n${itemUrl}` : '';
+  const whatsappMessage = isService
+    ? `Hi! I'd like to request the "${name}" service${priceClause}${shopClause}. Could you let me know availability and pricing?${linkClause}`
+    : `Hi! I'd like to order "${name}"${priceClause}${shopClause}. Is it available?${linkClause}`;
+  const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <div className="item-sheet-overlay" onClick={onClose}>
@@ -555,7 +586,7 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, onClose, onSelect
         <div className="item-sheet-footer">
           <a className="item-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
             <WhatsappLogo size={20} weight="fill" />
-            Place Order Via WhatsApp
+            {isService ? 'Request Service' : 'Place Order Via WhatsApp'}
           </a>
         </div>
       </div>

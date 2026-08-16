@@ -2963,10 +2963,24 @@ body {
   border-radius: 24px;
   width: 90%;
   max-width: 440px;
-  padding: 32px 24px;
+  padding: 32px 0 0;
   position: relative;
   text-align: center;
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(var(--vh, 1vh) * 90);
+}
+
+/* Only this inner region scrolls — the drag handle, close button and title
+   stay put like a native sheet, instead of the whole modal (or page) moving. */
+.rate-modal-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
+  padding: 0 24px calc(32px + var(--keyboard-height, 0px));
 }
 
 .rate-modal-close {
@@ -4173,6 +4187,14 @@ body {
   /* Rate Modal Mobile Override */
   .rate-modal-overlay {
     align-items: flex-end;
+    /* Height driven by the reactive --vh instead of bottom:0 against the
+       layout viewport — same fix as .business-flow above. Without this,
+       opening the keyboard shrinks the *visual* viewport but not this
+       fixed box, so the bottom-anchored sheet keeps aligning to the real
+       (keyboard-covered) bottom of the page and ends up hidden behind the
+       keyboard instead of sitting above it. */
+    bottom: auto;
+    height: calc(var(--vh, 1vh) * 100);
   }
 
   .rate-modal-content {

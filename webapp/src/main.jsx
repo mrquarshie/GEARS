@@ -171,58 +171,61 @@ function RateModal({ mechanic, user, close, onRated, show, openAuth }) {
       <div className="rate-modal-content" onClick={e => e.stopPropagation()}>
         <div className="mobile-drag-handle"></div>
         <button type="button" className="rate-modal-close" onClick={close} aria-label="Close">×</button>
-        <h2 className="rate-modal-title">Rate {mechanic.name}</h2>
-        
-        {loadingExisting ? (
-          <div style={{ padding: '40px 0', color: 'var(--muted)' }}>Loading...</div>
-        ) : (
-          <>
-            <div className="rate-stars-container">
-              <div>
-                {[1, 2, 3, 4, 5].map((n) => (
+
+        <div className="rate-modal-scroll">
+          <h2 className="rate-modal-title">Rate {mechanic.name}</h2>
+
+          {loadingExisting ? (
+            <div style={{ padding: '40px 0', color: 'var(--muted)' }}>Loading...</div>
+          ) : (
+            <>
+              <div className="rate-stars-container">
+                <div>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`rate-star-btn ${activeStar >= n ? 'lit' : ''}`}
+                      onClick={() => setSelected(n)}
+                      onMouseEnter={() => setHovered(n)}
+                      onMouseLeave={() => setHovered(0)}
+                      aria-label={`${n} star${n !== 1 ? 's' : ''}`}
+                    >
+                      {activeStar >= n ? '★' : '☆'}
+                    </button>
+                  ))}
+                </div>
+                <div className="rate-stars-label">
+                  {activeStar > 0 ? starLabels[activeStar] : 'Select a rating'}
+                </div>
+              </div>
+
+              <div className="rate-tags-container">
+                {tagsList.map(t => (
                   <button
-                    key={n}
-                    type="button"
-                    className={`rate-star-btn ${activeStar >= n ? 'lit' : ''}`}
-                    onClick={() => setSelected(n)}
-                    onMouseEnter={() => setHovered(n)}
-                    onMouseLeave={() => setHovered(0)}
-                    aria-label={`${n} star${n !== 1 ? 's' : ''}`}
+                    key={t}
+                    className={`rate-tag ${selectedTags.includes(t) ? 'active' : ''}`}
+                    onClick={() => toggleTag(t)}
                   >
-                    {activeStar >= n ? '★' : '☆'}
+                    {t}
                   </button>
                 ))}
               </div>
-              <div className="rate-stars-label">
-                {activeStar > 0 ? starLabels[activeStar] : 'Select a rating'}
-              </div>
-            </div>
 
-            <div className="rate-tags-container">
-              {tagsList.map(t => (
-                <button 
-                  key={t}
-                  className={`rate-tag ${selectedTags.includes(t) ? 'active' : ''}`}
-                  onClick={() => toggleTag(t)}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+              <label className="rate-comment-label">Leave A Comment</label>
+              <textarea
+                className="rate-textarea"
+                placeholder="Your Comment"
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+              />
 
-            <label className="rate-comment-label">Leave A Comment</label>
-            <textarea 
-              className="rate-textarea" 
-              placeholder="Your Comment"
-              value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-            />
-
-            <button className="rate-submit-btn" disabled={submitting || !selected} onClick={submit}>
-              {submitting ? 'Saving...' : 'Submit'}
-            </button>
-          </>
-        )}
+              <button className="rate-submit-btn" disabled={submitting || !selected} onClick={submit}>
+                {submitting ? 'Saving...' : 'Submit'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1035,6 +1038,8 @@ function App() {
     return next;
   });
   const searchRef = useRef(null);
+  const [pendingItemQuery, setPendingItemQuery] = useState(null);
+  const deepLinkHandledRef = useRef(false);
 
   // Records the single most recent explicit action per mechanic (call,
   // bookmark, direction, rate) so cards can show "Called 2 min ago" etc.
@@ -1066,6 +1071,25 @@ function App() {
     setSelectedMechanic(null);
     setRouteTarget(null);
   };
+
+  // Deep-link support: WhatsApp order messages carry a link back to
+  // `?mechanic=<id>&item=<name>&type=<product|service|package>` so the
+  // shop can tap through and see exactly what was requested.
+  useEffect(() => {
+    if (deepLinkHandledRef.current || !allMechanics.length) return;
+    const params = new URLSearchParams(window.location.search);
+    const mechanicId = params.get('mechanic');
+    const itemName = params.get('item');
+    if (mechanicId && itemName) {
+      const target = allMechanics.find(m => m.id === mechanicId);
+      if (target) {
+        handleSelectMechanic(target);
+        setPendingItemQuery({ name: itemName, type: params.get('type') || 'product' });
+      }
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    deepLinkHandledRef.current = true;
+  }, [allMechanics]);
 
   useEffect(() => {
     if (isDarkMode) document.body.classList.add('dark-mode');
@@ -1608,6 +1632,8 @@ function App() {
            onToggleSave={toggleSave}
            onDirection={handleShowDirection}
            onRecordInteraction={recordInteraction}
+           initialItemQuery={pendingItemQuery}
+           onInitialItemHandled={() => setPendingItemQuery(null)}
         />
       </div>
 

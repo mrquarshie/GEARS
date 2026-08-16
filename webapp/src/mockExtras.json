@@ -132,9 +132,9 @@
     "hours": "Mon-Sat · 7:00 AM – 7:00 PM",
     "specialties": ["New Parts", "Used Parts", "Import Orders"],
     "products": [
-      { "name": "Brake Pad Set (Toyota)", "price": "280.00" },
-      { "name": "Alternator (Honda Civic)", "price": "950.00" },
-      { "name": "Radiator (Nissan)", "price": "620.00" }
+      { "name": "Brake Pad Set (Toyota)", "price": "280.00", "imageUrl": "/mock-media/brake-pad.jpg" },
+      { "name": "Alternator (Honda Civic)", "price": "950.00", "imageUrl": "/mock-media/alternator.jpg" },
+      { "name": "Radiator (Nissan)", "price": "620.00", "imageUrl": "/mock-media/radiator.jpg" }
     ]
   },
   {
@@ -151,8 +151,8 @@
     "hours": "Mon-Sat · 7:00 AM – 7:00 PM",
     "specialties": ["New Parts", "Used Parts", "Bulk Orders"],
     "products": [
-      { "name": "Shock Absorber Pair", "price": "540.00" },
-      { "name": "Timing Belt Kit", "price": "410.00" }
+      { "name": "Shock Absorber Pair", "price": "540.00", "imageUrl": "/mock-media/shock-absorber.jpg" },
+      { "name": "Timing Belt Kit", "price": "410.00", "imageUrl": "/mock-media/timing-belt-kit.jpg" }
     ]
   },
   {
@@ -272,7 +272,7 @@
       { "name": "Michelin Tyre 185/65R15", "price": "780.00" },
       { "name": "Engine Oil 5W-30 (4L)", "price": "220.00" },
       { "name": "Car Battery 12V 60Ah", "price": "650.00" },
-      { "name": "Brake Pad Set (Universal)", "price": "310.00" },
+      { "name": "Brake Pad Set (Universal)", "price": "310.00", "imageUrl": "/mock-media/brake-pad.jpg" },
       { "name": "Cabin Air Filter", "price": "85.00" }
     ],
     "services": [

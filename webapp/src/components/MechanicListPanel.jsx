@@ -1266,6 +1266,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
           item={productSheet.item}
           mechanicName={productSheet.mechanicName}
           mechanicPhone={productSheet.mechanicPhone}
+          mechanicId={productSheet.mechanicId}
           onClose={() => setProductSheet(null)}
           onSelectShop={() => {
             const m = mechanics.find(m => m.id === productSheet.mechanicId);
