@@ -1080,11 +1080,11 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const mechanicId = params.get('mechanic');
     const itemName = params.get('item');
-    if (mechanicId && itemName) {
+    if (mechanicId) {
       const target = allMechanics.find(m => m.id === mechanicId);
       if (target) {
         handleSelectMechanic(target);
-        setPendingItemQuery({ name: itemName, type: params.get('type') || 'product' });
+        if (itemName) setPendingItemQuery({ name: itemName, type: params.get('type') || 'product' });
       }
       window.history.replaceState({}, '', window.location.pathname);
     }
@@ -1577,6 +1577,7 @@ function App() {
             onDirection={handleShowDirection}
             recentInteractions={recentInteractions}
             onRecordInteraction={recordInteraction}
+            onNotice={show}
             hideOnDesktop={!!selectedMechanic}
               onUseMyLocation={() => {
                 if (navigator.geolocation) {
@@ -1632,6 +1633,7 @@ function App() {
            onToggleSave={toggleSave}
            onDirection={handleShowDirection}
            onRecordInteraction={recordInteraction}
+           onNotice={show}
            initialItemQuery={pendingItemQuery}
            onInitialItemHandled={() => setPendingItemQuery(null)}
         />

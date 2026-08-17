@@ -17,6 +17,7 @@ import { useTypewriterPlaceholder } from '../hooks/useTypewriterPlaceholder';
 import { useTypewriterLoop } from '../hooks/useTypewriterLoop';
 import { ItemSheet } from './MechanicDetailPanel';
 import { getRecentInteraction, formatRelativeTime } from '../recentInteractions';
+import { shareMechanic } from '../utils/share';
 
 // Expanding drive-time windows used by the "Use my location" search: start tight
 // (5-10 min) and widen in 10-minute steps up to an hour until a window has a match.
@@ -199,7 +200,7 @@ function UnverifiedIcon({ size = 20 }) {
 // least this long so the loading/radar sequence is actually visible.
 const MIN_SCAN_MS = 3500;
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -1228,7 +1229,12 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                               <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
                             </button>
                             <button className="card-bottom-icon"><RateIcon size={16} /></button>
-                            <button className="card-bottom-icon"><ShareIcon size={16} /></button>
+                            <button
+                              className="card-bottom-icon"
+                              onClick={(e) => { e.stopPropagation(); onRecordInteraction?.(m.id, 'share'); shareMechanic(m, { onNotice }); }}
+                            >
+                              <ShareIcon size={16} />
+                            </button>
                             <div className="card-bottom-divider"></div>
                           </div>
                           <button

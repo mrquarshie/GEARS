@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo } from '@phosphor-icons/react';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
+import { shareMechanic, getShareImagePath, getShareUrl } from '../utils/share';
 import {
   BookmarkIcon,
   CallIcon,
@@ -88,7 +89,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction, initialItemQuery, onInitialItemHandled }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -123,6 +124,11 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
     onRecordInteraction?.(mechanic.id, 'direction');
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
     if (isMobile) setCollapsed(true);
+  };
+
+  const handleShareClick = () => {
+    onRecordInteraction?.(mechanic.id, 'share');
+    shareMechanic(mechanic, { onNotice });
   };
 
   const handleCallClick = () => {
@@ -187,6 +193,10 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         <Helmet>
           <title>{mechanic.name} - Mechanic in {mechanic.area} | Gears</title>
           <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. Call ${mechanic.phone}.`} />
+          <meta property="og:title" content={`${mechanic.name} | Gears`} />
+          <meta property="og:description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}.`} />
+          <meta property="og:image" content={`${window.location.origin}${getShareImagePath(mechanic)}`} />
+          <meta property="og:url" content={getShareUrl(mechanic)} />
           <script type="application/ld+json">
             {JSON.stringify(schemaMarkup)}
           </script>
@@ -254,7 +264,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
             <button className="bottom-icon-btn" onClick={() => onRate(mechanic)} aria-label="Rate">
               <RateIcon size={20} />
             </button>
-            <button className="bottom-icon-btn" aria-label="Share">
+            <button className="bottom-icon-btn" onClick={handleShareClick} aria-label="Share">
               <ShareIcon size={20} />
             </button>
             {/* <div className="detail-bottom-divider"></div> */}
