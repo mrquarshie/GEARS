@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -81,6 +81,39 @@ export function buildCategoryMarkerIcon(category, name, selected = false) {
     iconAnchor: [95, 48],
     popupAnchor: [0, -50],
   });
+}
+
+// Draggable/clickable pin using the same category marker as the real map —
+// shared by the onboarding wizard's location step and the business
+// dashboard's Map tab, so picking and later adjusting a location is the
+// same component and the same visual pin in both places.
+export function LocationPicker({ lat, lng, setLat, setLng, category, label, onInteract }) {
+  useMapEvents({
+    click(e) {
+      setLat(e.latlng.lat);
+      setLng(e.latlng.lng);
+      onInteract?.();
+    },
+  });
+  const icon = useMemo(
+    () => buildCategoryMarkerIcon(getMechanicCategory(category), label),
+    [category, label],
+  );
+  return lat && lng ? (
+    <Marker
+      position={[lat, lng]}
+      icon={icon}
+      draggable
+      eventHandlers={{
+        dragend: (e) => {
+          const pos = e.target.getLatLng();
+          setLat(pos.lat);
+          setLng(pos.lng);
+          onInteract?.();
+        },
+      }}
+    />
+  ) : null;
 }
 
 // Memoized cache for marker icons — avoids recreating L.divIcon on every render
@@ -198,9 +231,9 @@ const UserLocationScanningIcon = L.divIcon({
 
 // We use a single CARTO Voyager tile layer (with labels) instead of two separate
 // layers (nolabels + only_labels), halving the tile requests.
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const TILE_SUBDOMAINS = 'abcd';
-const TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+export const TILE_SUBDOMAINS = 'abcd';
+export const TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 export default function MapLayout({ mechanics, selectedMechanic, onSelectMechanic, userLocation, mapPanTrigger, routeTarget, isLocatingScan }) {
   const defaultCenter = [DEFAULT_LATITUDE, DEFAULT_LONGITUDE];

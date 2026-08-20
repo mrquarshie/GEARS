@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import mockExtrasData from './mockExtras.json';
 import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import { List, NavigationArrow, Gear, X, Plus, SealCheck, MagnifyingGlass } from '@phosphor-icons/react';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { List, NavigationArrow, Gear, X, SealCheck, MagnifyingGlass } from '@phosphor-icons/react';
 import {
   addDoc,
   collection,
@@ -24,6 +24,8 @@ import {
 import {
   signInWithPopup,
   signInWithRedirect,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   getRedirectResult,
   onAuthStateChanged,
@@ -33,12 +35,13 @@ import { auth, db, firebaseReady } from './firebase';
 import './styles.css';
 
 import Sidebar from './components/Sidebar';
-import MapLayout, { getMechanicCategory, buildCategoryMarkerIcon } from './components/MapLayout';
+import MapLayout, { TILE_URL as BIZ_TILE_URL, TILE_SUBDOMAINS as BIZ_TILE_SUBDOMAINS, TILE_ATTRIBUTION as BIZ_TILE_ATTRIBUTION, LocationPicker } from './components/MapLayout';
 import MechanicListPanel from './components/MechanicListPanel';
 import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
 import BusinessDashboard from './components/BusinessDashboard';
+import { CarDetailingIcon } from './components/icons';
 
 import authImgCar from './components/AuthImages/Car.png';
 import authImgSteer from './components/AuthImages/Steer.png';
@@ -256,13 +259,12 @@ const AUTH_REASON_COPY = {
 function AuthModal({ close, onSuccess, reason }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const headline = AUTH_REASON_COPY[reason] || 'Find trusted mechanics, anywhere in Ghana.';
+  const isBusiness = reason === 'business';
 
   const loginWithGoogle = async () => {
-    if (reason === 'business') {
-      onSuccess(null);
-      return;
-    }
     if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
     setLoading(true);
     setErrorMsg('');
@@ -285,9 +287,48 @@ function AuthModal({ close, onSuccess, reason }) {
     }
   };
 
+  // Businesses sign in with email + password instead of Google, so an admin
+  // can provision a placeholder account ahead of a pitch and hand real
+  // credentials to the business later. One form covers both directions: if
+  // the email already has an account, the password signs them in; if not,
+  // it creates one.
+  const submitBusinessAuth = async (e) => {
+    e.preventDefault();
+    if (!email || !password) return setErrorMsg('Enter an email and password.');
+    if (!firebaseReady) {
+      // No Firebase configured (local frontend work, no .env) — fall
+      // through to the same anonymous/local flow the rest of the app uses
+      // instead of blocking on it, same as the mock-data fallback.
+      onSuccess(null);
+      return;
+    }
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      onSuccess(result.user);
+    } catch {
+      try {
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        onSuccess(result.user);
+      } catch (createErr) {
+        if (createErr.code === 'auth/email-already-in-use') {
+          setErrorMsg('Incorrect password for that email.');
+        } else if (createErr.code === 'auth/weak-password') {
+          setErrorMsg('Password should be at least 6 characters.');
+        } else if (createErr.code === 'auth/invalid-email') {
+          setErrorMsg('That email address looks invalid.');
+        } else {
+          setErrorMsg(createErr.message.replace('Firebase: ', ''));
+        }
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="overlay" role="dialog" aria-modal="true">
-      <div className={`auth-modal-content ${reason === 'business' ? 'auth-modal-content--business' : ''}`}>
+      <div className={`auth-modal-content ${isBusiness ? 'auth-modal-content--business' : ''}`}>
         <button type="button" className="auth-close" onClick={close} aria-label="Close">
           <X size={18} />
         </button>
@@ -307,13 +348,59 @@ function AuthModal({ close, onSuccess, reason }) {
 
           {errorMsg && <div style={{ color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>{errorMsg}</div>}
 
-          <button type="button" className="google-auth-btn" onClick={loginWithGoogle} disabled={loading}>
-            <span className="google-icon-wrapper">
-              <GoogleGLogo size={18} />
-            </span>
-            <span className="google-auth-divider"></span>
-            <p style={{width:'100%'}}>{reason === 'business' ? 'Continue with Google' : loading ? 'Please wait…' : 'Continue with Google'}</p>
-          </button>
+          {isBusiness ? (
+            <form
+              className="auth-email-form business-fields"
+              onSubmit={submitBusinessAuth}
+              onFocus={(e) => {
+                // Same "scroll the focused field into view" pattern the
+                // onboarding wizard already uses (MechanicModal's
+                // .business-fields onFocus) — the app already cancels the
+                // OS's own keyboard-pan behavior (see the visualViewport
+                // effects in App), so a plain page-shove would fight that;
+                // this scrolls just the one field into the space the
+                // shrunk (--vh-driven) modal still has.
+                if (!e.target.matches('input')) return;
+                const field = e.target;
+                setTimeout(() => {
+                  field.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 300);
+              }}
+            >
+              <label>Email
+                <input
+                  type="email"
+                  placeholder="you@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  autoComplete="email"
+                />
+              </label>
+              <label>Password
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  autoComplete="current-password"
+                />
+              </label>
+              <button type="submit" className="google-auth-btn" disabled={loading}>
+                <p style={{ width: '100%' }}>{loading ? 'Please wait…' : 'Continue'}</p>
+              </button>
+              <p className="auth-email-hint">New to Gears? This creates your account. Already listed? It signs you in.</p>
+            </form>
+          ) : (
+            <button type="button" className="google-auth-btn" onClick={loginWithGoogle} disabled={loading}>
+              <span className="google-icon-wrapper">
+                <GoogleGLogo size={18} />
+              </span>
+              <span className="google-auth-divider"></span>
+              <p style={{width:'100%'}}>{loading ? 'Please wait…' : 'Continue with Google'}</p>
+            </button>
+          )}
 
           <p className="auth-terms">By using Gears, you agree to our Terms of Service<br />and Privacy Policy.</p>
         </div>
@@ -325,11 +412,6 @@ function AuthModal({ close, onSuccess, reason }) {
 // ---------------------------------------------------------------------------
 // Add / Edit Mechanic Modal
 // ---------------------------------------------------------------------------
-// Same CARTO Voyager tiles the main map uses, so this picker matches the
-// rest of the app instead of looking like a different, generic map.
-const BIZ_TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const BIZ_TILE_SUBDOMAINS = 'abcd';
-const BIZ_TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 // Nominatim's display_name is a full mailing-address string (e.g. "Accra
 // International Airport, Airport Bypass, Airport Residential Area, Accra
@@ -351,37 +433,6 @@ function formatShortLocation(address, fallbackDisplayName) {
   const region = (address.state || address.region || address.county || '').replace(/\s+Region$/i, '');
   if (area && region && area !== region) return `${area}, ${region}`;
   return area || region || fallbackDisplayName || '';
-}
-
-function LocationPicker({ lat, lng, setLat, setLng, category, label, onInteract }) {
-  useMapEvents({
-    click(e) {
-      setLat(e.latlng.lat);
-      setLng(e.latlng.lng);
-      onInteract?.();
-    },
-  });
-  // Same category pin (colored glyph avatar + name) every other marker on
-  // the real map uses — not a bespoke picker-only style.
-  const icon = useMemo(
-    () => buildCategoryMarkerIcon(getMechanicCategory(category), label),
-    [category, label],
-  );
-  return lat && lng ? (
-    <Marker
-      position={[lat, lng]}
-      icon={icon}
-      draggable
-      eventHandlers={{
-        dragend: (e) => {
-          const pos = e.target.getLatLng();
-          setLat(pos.lat);
-          setLng(pos.lng);
-          onInteract?.();
-        },
-      }}
-    />
-  ) : null;
 }
 
 // Flies the map to [lat, lng] whenever `trigger` changes (e.g. after picking
@@ -486,19 +537,6 @@ function BizTypeShopIcon() {
   );
 }
 
-function BizTypeDetailerIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path fillRule="evenodd" clipRule="evenodd" d="M17.9671 13.8001H6.03906L7.17516 10.8856C7.35069 10.4354 7.65803 10.0487 8.05696 9.77601C8.4559 9.50335 8.92785 9.35745 9.41106 9.35742H14.5951C15.0783 9.35745 15.5502 9.50335 15.9492 9.77601C16.3481 10.0487 16.6554 10.4354 16.831 10.8856L17.9671 13.8001Z" fill="#56CCF2" />
-      <path fillRule="evenodd" clipRule="evenodd" d="M5.10156 19.1621V20.8112C5.10156 20.9703 5.16478 21.123 5.2773 21.2355C5.38982 21.348 5.54243 21.4112 5.70156 21.4112H7.50156C7.66069 21.4112 7.8133 21.348 7.92583 21.2355C8.03835 21.123 8.10156 20.9703 8.10156 20.8112V19.1999H5.40156C5.29776 19.1995 5.19776 19.1869 5.10156 19.1621ZM15.9016 19.1999V20.8112C15.9016 20.9703 15.9648 21.123 16.0773 21.2355C16.1898 21.348 16.3424 21.4112 16.5016 21.4112H18.3016C18.4607 21.4112 18.6133 21.348 18.7258 21.2355C18.8383 21.123 18.9016 20.9703 18.9016 20.8112V19.1621C18.8054 19.1869 18.7054 19.1995 18.6016 19.1999H15.9016Z" fill="black" fillOpacity="0.4" />
-      <path d="M4.20312 16.2003C4.20312 15.5638 4.45598 14.9533 4.90607 14.5032C5.35616 14.0531 5.96661 13.8003 6.60313 13.8003H17.4031C18.0396 13.8003 18.6501 14.0531 19.1002 14.5032C19.5503 14.9533 19.8031 15.5638 19.8031 16.2003V18.0003C19.8031 18.3186 19.6767 18.6238 19.4517 18.8488C19.2266 19.0739 18.9214 19.2003 18.6031 19.2003H5.40313C5.08487 19.2003 4.77964 19.0739 4.5546 18.8488C4.32955 18.6238 4.20313 18.3186 4.20312 18.0003V16.2003Z" fill="black" fillOpacity="0.5" />
-      <path d="M8.10469 16.6114C8.10469 16.1144 7.70174 15.7114 7.20469 15.7114C6.70763 15.7114 6.30469 16.1144 6.30469 16.6114C6.30469 17.1085 6.70763 17.5114 7.20469 17.5114C7.70174 17.5114 8.10469 17.1085 8.10469 16.6114Z" fill="#F2C94C" />
-      <path d="M15.9031 16.6114C15.9031 16.1144 16.3061 15.7114 16.8031 15.7114C17.3002 15.7114 17.7031 16.1144 17.7031 16.6114C17.7031 17.1085 17.3002 17.5114 16.8031 17.5114C16.3061 17.5114 15.9031 17.1085 15.9031 16.6114Z" fill="#F2C94C" />
-      <path d="M6.38352 2.89271C6.4029 2.84988 6.43422 2.81355 6.47373 2.78806C6.51324 2.76258 6.55925 2.74902 6.60627 2.74902C6.65328 2.74902 6.6993 2.76258 6.7388 2.78806C6.77831 2.81355 6.80963 2.84988 6.82902 2.89271L6.97152 3.20861C7.08152 3.45161 7.20852 3.68541 7.35252 3.91001L7.75872 4.54421C7.8562 4.6964 7.91918 4.86807 7.94324 5.04719C7.96731 5.22631 7.95186 5.40853 7.898 5.58104C7.84414 5.75355 7.75316 5.91218 7.63145 6.04579C7.50975 6.17939 7.36027 6.28473 7.19352 6.35441L7.13892 6.37751C6.97016 6.44814 6.78905 6.48452 6.60612 6.48452C6.42318 6.48452 6.24207 6.44814 6.07332 6.37751L6.01872 6.35471C5.85192 6.28504 5.7024 6.17969 5.58066 6.04606C5.45893 5.91244 5.36793 5.75377 5.31406 5.58122C5.2602 5.40867 5.24477 5.22641 5.26886 5.04726C5.29295 4.86811 5.35598 4.69641 5.45352 4.54421L5.86002 3.91001C6.00402 3.68521 6.13092 3.45141 6.24072 3.20861L6.38352 2.89271ZM11.7835 2.89271C11.8029 2.84997 11.8343 2.81372 11.8737 2.78829C11.9132 2.76287 11.9592 2.74935 12.0061 2.74935C12.0531 2.74935 12.099 2.76287 12.1385 2.78829C12.178 2.81372 12.2093 2.84997 12.2287 2.89271L12.3715 3.20861C12.4815 3.45161 12.6085 3.68541 12.7525 3.91001L13.1587 4.54421C13.2562 4.6964 13.3192 4.86807 13.3432 5.04719C13.3673 5.22631 13.3519 5.40853 13.298 5.58104C13.2441 5.75355 13.1532 5.91218 13.0315 6.04579C12.9097 6.17939 12.7603 6.28473 12.5935 6.35441L12.5389 6.37751C12.3702 6.44814 12.1891 6.48452 12.0061 6.48452C11.8232 6.48452 11.6421 6.44814 11.4733 6.37751L11.4187 6.35471C11.2519 6.28504 11.1024 6.17969 10.9807 6.04606C10.8589 5.91244 10.7679 5.75377 10.7141 5.58122C10.6602 5.40867 10.6448 5.22641 10.6689 5.04726C10.6929 4.86811 10.756 4.69641 10.8535 4.54421L11.26 3.91001C11.404 3.68521 11.5309 3.45141 11.6407 3.20861L11.7835 2.89271ZM17.1835 2.89271C17.2029 2.84997 17.2343 2.81372 17.2737 2.78829C17.3132 2.76287 17.3592 2.74935 17.4061 2.74935C17.4531 2.74935 17.499 2.76287 17.5385 2.78829C17.578 2.81372 17.6093 2.84997 17.6287 2.89271L17.7715 3.20861C17.8815 3.45161 18.0085 3.68541 18.1525 3.91001L18.5587 4.54421C18.6562 4.6964 18.7192 4.86807 18.7432 5.04719C18.7673 5.22631 18.7519 5.40853 18.698 5.58104C18.6441 5.75355 18.5532 5.91218 18.4315 6.04579C18.3097 6.17939 18.1603 6.28473 17.9935 6.35441L17.9389 6.37751C17.7702 6.44814 17.5891 6.48452 17.4061 6.48452C17.2232 6.48452 17.0421 6.44814 16.8733 6.37751L16.8187 6.35471C16.6519 6.28504 16.5024 6.17969 16.3807 6.04606C16.2589 5.91244 16.1679 5.75377 16.1141 5.58122C16.0602 5.40867 16.0448 5.22641 16.0689 5.04726C16.093 4.86811 16.156 4.69641 16.2535 4.54421L16.66 3.91001C16.804 3.68521 16.9309 3.45141 17.0407 3.20861L17.1835 2.89271Z" fill="#2F80ED" />
-    </svg>
-  );
-}
-
 function BizTypeFuelIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -538,7 +576,10 @@ function BizClearIcon() {
 
 function BusinessTypeIcon({ type }) {
   if (type.icon === 'shop') return <BizTypeShopIcon />;
-  if (type.icon === 'detailer') return <BizTypeDetailerIcon />;
+  // Same icon as everywhere else in the app that represents "detailer"
+  // (Sidebar nav, search suggestions, business dashboard) — one shared
+  // component instead of a second copy of the same paths just for this step.
+  if (type.icon === 'detailer') return <CarDetailingIcon size={24} />;
   if (type.icon === 'fuel') return <BizTypeFuelIcon />;
   return <BizTypeGearIcon />;
 }
@@ -1030,6 +1071,10 @@ function App() {
   const [routeTarget, setRouteTarget] = useState(null);
   const [recentInteractions, setRecentInteractions] = useState(loadRecentInteractions);
   const [businessDashboardOpen, setBusinessDashboardOpen] = useState(false);
+  // Which of the signed-in owner's businesses is currently being managed —
+  // relevant once one login manages more than one (e.g. an admin pitching
+  // several businesses from the same account). Defaults to the first.
+  const [activeBusinessId, setActiveBusinessId] = useState(null);
   const [localBusinessOwnerId] = useState(() => {
     const existing = localStorage.getItem('gearsLocalBusinessOwnerId');
     if (existing) return existing;
@@ -1465,6 +1510,20 @@ function App() {
     }
   };
 
+  // Business dashboard's Map tab now uses the same draggable LocationPicker
+  // the onboarding wizard does, so dragging the pin there needs to persist
+  // too — update local state immediately (the pin shouldn't snap back) and
+  // write through to Firestore in the background.
+  const handleUpdateBusinessLocation = async (mechanicId, lat, lng) => {
+    setAllMechanics((prev) => prev.map((m) => m.id === mechanicId ? { ...m, lat, lng } : m));
+    if (!db || mechanicId.startsWith('local-business-')) return;
+    try {
+      await updateDoc(doc(db, 'mechanics', mechanicId), { lat, lng });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const deleteMechanic = async (mechanic) => {
     if (!confirm(`Are you sure you want to delete ${mechanic.name}?`)) return;
     if (!db) return;
@@ -1488,7 +1547,12 @@ function App() {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const businessOwnerId = user?.uid || localBusinessOwnerId;
-  const myBusiness = allMechanics.find((m) => m.createdBy === businessOwnerId) || null;
+  // Bypassing real multi-account auth for now — this just filters whatever
+  // already carries the current owner id. The backend piece (letting one
+  // login legitimately manage several business docs) is separate follow-up
+  // work; this only builds the switcher UI on top of it.
+  const myBusinesses = allMechanics.filter((m) => m.createdBy === businessOwnerId);
+  const myBusiness = myBusinesses.find((m) => m.id === activeBusinessId) || myBusinesses[0] || null;
 
   const handleOpenBusiness = () => {
     setMobileSidebarOpen(false);
@@ -1504,6 +1568,9 @@ function App() {
       <BusinessDashboard
         user={user}
         mechanic={myBusiness}
+        businesses={myBusinesses}
+        onSwitchBusiness={setActiveBusinessId}
+        onUpdateLocation={handleUpdateBusinessLocation}
         onExit={() => setBusinessDashboardOpen(false)}
         show={show}
       />
@@ -1647,7 +1714,20 @@ function App() {
           close={() => setModal(null)}
           onSuccess={(u) => {
             if (u) setUser(u);
-            setModal(modal?.reason === 'business' ? 'add' : null);
+            if (modal?.reason === 'business') {
+              // Returning business account (e.g. one an admin already set up
+              // and handed off) — skip the onboarding wizard and go straight
+              // to their dashboard instead of the "add business" flow.
+              const existingBusiness = u && allMechanics.find((m) => m.createdBy === u.uid);
+              if (existingBusiness) {
+                setModal(null);
+                setBusinessDashboardOpen(true);
+              } else {
+                setModal('add');
+              }
+            } else {
+              setModal(null);
+            }
           }}
           show={show}
           reason={modal?.reason}
@@ -1682,17 +1762,6 @@ function App() {
           show={show}
           openAuth={() => setModal({ type: 'auth-for-rate', mechanic: modal.mechanic })}
         />
-      )}
-      
-      {/* Floating Add Button for authorized admins only */}
-      {user && (user.email === 'aciestech21@gmail.com' || user.email === 'skyemmanuel42@gmail.com' || user.email === 'princeessandoh316@gmail.com') && (
-        <button 
-          className="floating-add-btn" 
-          onClick={() => setModal('add')}
-        >
-          <Plus size={24} weight="bold" className="add-icon" />
-          <span className="btn-text">Add Mechanic</span>
-        </button>
       )}
     </div>
   );

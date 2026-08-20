@@ -2758,29 +2758,6 @@ body {
   cursor: not-allowed;
 }
 
-.floating-add-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--forest);
-  color: var(--lime);
-  border: none;
-  padding: 16px 24px;
-  border-radius: 30px;
-  font-weight: 800;
-  font-size: 16px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(21, 94, 66, 0.4);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 50;
-  transition: transform 0.2s;
-}
-.floating-add-btn:hover {
-  transform: scale(1.05);
-}
-
 .toast {
   position: fixed;
   bottom: 30px;
@@ -2926,19 +2903,6 @@ body {
     color: var(--muted);
   }
 
-  .floating-add-btn {
-    bottom: calc(52vh + 20px);
-    right: 20px;
-    padding: 0;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    justify-content: center;
-  }
-  
-  .floating-add-btn .add-text {
-    display: none;
-  }
 }
 
 /* RATE MODAL UPDATES */
@@ -3173,29 +3137,21 @@ body {
 .service-cards {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
 .service-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  min-height: 64px;
-  background: #fafafa;
-  border-radius: 16px;
-  outline: 1px solid rgba(0, 0, 0, 0.05);
-  outline-offset: -1px;
+  flex-direction: column;
+  gap: 10px;
   cursor: pointer;
 }
 
 .service-card-image {
   position: relative;
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 100%;
+  height: 192px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -3215,9 +3171,19 @@ body {
   color: #fff;
 }
 
+.service-card-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .service-card-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .service-card-name {
@@ -3228,7 +3194,7 @@ body {
 }
 
 .service-card-desc {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 12px;
   color: rgba(0, 0, 0, 0.5);
   font-weight: 400;
@@ -3527,7 +3493,7 @@ body {
   max-width: none;
   max-height: none;
   border-radius: 36px;
-  background: #fafafa;
+  background: linear-gradient(180deg, #fef9c3 0%, #fafafa 100%);
   outline: 1px solid rgba(0, 0, 0, 0.1);
   outline-offset: -1px;
 }
@@ -3672,6 +3638,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-y: auto;
 }
 
 .auth-body h2 {
@@ -3734,6 +3701,35 @@ body {
   color: rgba(0, 0, 0, 0.4);
   line-height: 1.5;
   margin: auto 0 0;
+}
+
+.auth-email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 20px;
+}
+
+/* Inputs themselves are styled by .business-fields (shared with the
+   onboarding wizard — same component, same look). This just corrects the
+   text-align:center the auth body sets on everything, and gives the button
+   a bit of breathing room above the labeled fields. */
+.auth-email-form label {
+  text-align: left;
+}
+
+.auth-email-form .google-auth-btn {
+  margin-bottom: 0;
+  margin-top: 4px;
+}
+
+.auth-email-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 2px 4px 0;
 }
 
 /* --- Sidebar user avatar --- */
@@ -5373,7 +5369,7 @@ body {
   position: fixed;
   top: max(70px, calc(env(safe-area-inset-top) + 54px));
   left: 16px;
-  width: 220px;
+  width: 264px;
   border-radius: 16px;
   z-index: 10001;
   background: white;
@@ -5402,6 +5398,305 @@ body {
   padding: 0;
   opacity: 1;
   pointer-events: auto;
+}
+
+.biz-avatar-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  border-radius: 50%;
+}
+
+/* Account switcher — only rendered when the signed-in owner manages more
+   than one business (see main.jsx's businessOwnerId filter). */
+.biz-menu-section-label {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.biz-account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.biz-account-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.biz-account-row:hover {
+  background: #f4f4f2;
+}
+
+.biz-account-row.active {
+  background: #eaf5ef;
+}
+
+.biz-account-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+}
+
+.biz-account-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.biz-account-row-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.biz-account-row-type {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.biz-account-row-check {
+  color: var(--forest);
+  flex-shrink: 0;
+}
+
+.biz-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px 8px;
+}
+
+/* ---------------------------------------------------------------
+   Desktop business portal — same DOM, same data, reflowed into a
+   sidebar + topbar layout. The mobile hamburger/header and bottom
+   tab bar hide at this width; the sidebar switcher opens the exact
+   same .biz-menu popup the mobile avatar/hamburger do.
+   --------------------------------------------------------------- */
+.biz-sidebar,
+.biz-topbar,
+.biz-greeting {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .biz-dashboard {
+    flex-direction: row;
+  }
+
+  /* Extra .biz-dashboard specificity here isn't decorative — the base
+     (non-media) .biz-header/.biz-bottom-bar/.biz-content rules further
+     down the file also set `display`/`padding` explicitly, and being
+     later in source they'd otherwise win the cascade at equal specificity. */
+  .biz-dashboard .biz-header,
+  .biz-dashboard .biz-bottom-bar {
+    display: none;
+  }
+
+  .biz-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    flex-shrink: 0;
+    padding: 20px 14px;
+    border-right: 1px solid var(--border);
+    gap: 22px;
+  }
+
+  .biz-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+
+  .biz-sidebar-brand-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--forest);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .biz-sidebar-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .biz-sidebar-switcher:hover {
+    background: #fafafa;
+  }
+
+  .biz-sidebar-switcher-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .biz-sidebar-switcher-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .biz-sidebar-switcher-type {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .biz-sidebar-switcher-caret {
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .biz-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .biz-sidebar-nav .biz-tab-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 8px;
+  }
+
+  .biz-sidebar-nav .biz-tab-btn span {
+    font-size: 13.5px;
+  }
+
+  .biz-sidebar-nav .biz-tab-btn.active {
+    outline: none;
+    box-shadow: none;
+    color: var(--forest);
+  }
+
+  .biz-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .biz-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .biz-topbar-crumb {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .biz-topbar-search {
+    flex: 1;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .biz-topbar-search span:first-of-type {
+    flex: 1;
+  }
+
+  .biz-topbar-search-kbd {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .biz-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .biz-dashboard .biz-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px;
+  }
+
+  .biz-greeting {
+    display: block;
+    margin: 0 0 20px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .biz-menu {
+    top: 84px;
+    left: 14px;
+    width: 226px;
+  }
 }
 
 .biz-content {
@@ -5905,12 +6200,39 @@ body {
   color: var(--forest);
 }
 
-.biz-catalog-form input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  font-size: 14px;
+/* Inputs themselves come from .business-fields (same component as the
+   onboarding wizard and business auth form) — this just adds the header
+   row and lets the textarea breathe a little less than the wizard's does. */
+.biz-catalog-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.biz-catalog-form-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.biz-catalog-form-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #f4f4f2;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.biz-catalog-form.business-fields textarea {
+  min-height: 72px;
 }
 
 .biz-catalog-form-actions {
@@ -5926,6 +6248,109 @@ body {
   font-weight: 600;
   cursor: pointer;
   padding: 8px 12px;
+}
+
+/* Add-item preview — "Details Page" reuses the real .item-sheet-* classes
+   (same look a customer gets from the real detail sheet), "Listing Page"
+   reuses the real .service-card-* classes (same look the catalog list
+   renders) — so what's previewed here is what actually ships, not a
+   separate approximation of it. */
+.biz-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 100020;
+  background: var(--cream);
+  display: flex;
+  flex-direction: column;
+}
+
+.biz-preview-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 16px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: white;
+}
+
+.biz-preview-back {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f4f4f2;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.biz-preview-tabs {
+  display: flex;
+  gap: 20px;
+}
+
+.biz-preview-tabs button {
+  background: none;
+  border: none;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.biz-preview-tabs button.active {
+  color: var(--ink);
+  border-bottom-color: var(--forest);
+}
+
+.biz-preview-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 88px;
+}
+
+.biz-preview-item-sheet-body {
+  padding: 16px 20px;
+}
+
+.biz-preview-listing-card {
+  max-width: 360px;
+  margin: 24px auto 0;
+  padding: 0 20px;
+}
+
+.biz-preview-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: #FAFAFA;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.biz-preview-publish-btn {
+  width: 100%;
+  padding: 16px;
+  background: black;
+  border: none;
+  border-radius: 24px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.biz-preview-publish-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .biz-catalog-list {
@@ -6005,10 +6430,16 @@ body {
 
 /* Map tab */
 .biz-map-tab h3 {
-  margin: 0 0 12px;
+  margin: 0 0 4px;
   font-size: 16px;
   font-weight: 700;
   color: var(--ink);
+}
+
+.biz-map-hint {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--muted);
 }
 
 .biz-map-frame {
@@ -6025,16 +6456,52 @@ body {
 }
 
 /* Media tab */
+/* Filter pills above the grid — "All" plus one per MEDIA_CATEGORIES entry. */
+.biz-media-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.biz-media-filters button {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--forest);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.biz-media-filters button.active {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: white;
+}
+
 .biz-media-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.biz-media-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.biz-media-item-label {
+  font-size: 12.5px;
+  color: var(--muted);
 }
 
 .biz-media-cell {
   position: relative;
-  aspect-ratio: 1;
-  border-radius: 12px;
+  aspect-ratio: 1.1;
+  border-radius: 16px;
   overflow: hidden;
   background: #f3f4f6;
 }

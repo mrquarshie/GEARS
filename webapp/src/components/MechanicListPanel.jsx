@@ -69,8 +69,16 @@ function InteractionBadge({ action, timestamp }) {
 }
 
 // Types out each specialty one after the other, holding 7s each — the same
-// typewriter animation used by the search placeholder.
+// typewriter animation used by the search placeholder. With only one
+// specialty there's nothing to cycle through, so it's shown statically.
 function SpecialtyTypewriter({ specialties }) {
+  if (specialties.length <= 1) {
+    return <span className="specialty-typewriter-text">{specialties[0] || ''}</span>;
+  }
+  return <AnimatedSpecialtyTypewriter specialties={specialties} />;
+}
+
+function AnimatedSpecialtyTypewriter({ specialties }) {
   const text = useTypewriterLoop(specialties, { holdMs: 7000 });
   return (
     <span className="specialty-typewriter">

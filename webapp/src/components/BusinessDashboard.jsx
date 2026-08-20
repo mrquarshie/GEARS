@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query } from 'firebase/firestore';
+import { LocationPicker, TILE_URL, TILE_SUBDOMAINS, TILE_ATTRIBUTION } from './MapLayout';
 import {
   List,
   ArrowsLeftRight,
@@ -17,18 +18,51 @@ import {
   ListPlus,
   Gear,
   QrCode,
+  Wrench,
+  Check,
+  CaretDown,
+  CaretLeft,
+  ClockCounterClockwise,
+  Bell,
+  SquaresFour,
 } from '@phosphor-icons/react';
+import { FillingStationIcon, CarDetailingIcon, ShopIcon } from './icons';
 import { db } from '../firebase';
 import bizIllustrationBattery from './AuthImages/Car battery.png';
 import bizIllustrationEngine from './AuthImages/Engine.png';
 import bizIllustrationSteer from './AuthImages/Steer.png';
 
-function BizAvatar({ user }) {
+function BizAvatar({ user, onClick }) {
   const initial = user?.displayName?.trim()?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
-  if (user?.photoURL) {
-    return <img src={user.photoURL} alt="" className="biz-avatar" referrerPolicy="no-referrer" />;
-  }
-  return <div className="biz-avatar biz-avatar-letter">{initial}</div>;
+  const content = user?.photoURL
+    ? <img src={user.photoURL} alt="" className="biz-avatar" referrerPolicy="no-referrer" />
+    : <div className="biz-avatar biz-avatar-letter">{initial}</div>;
+  if (!onClick) return content;
+  return <button type="button" className="biz-avatar-btn" onClick={onClick} aria-label="Account">{content}</button>;
+}
+
+// Same square-with-initial treatment used for mechanic cards elsewhere
+// (.card-avatar), reused here so a business reads the same way in its own
+// switcher as it does in the customer-facing list.
+function BizAccountAvatar({ name }) {
+  return <div className="card-avatar biz-account-avatar">{name?.charAt(0)?.toUpperCase() || '?'}</div>;
+}
+
+// Businesses aren't tagged with a `businessType` enum on save — the rest of
+// the app (search suggestions, list icons) already keys off the `specialty`
+// string instead, so this mirrors that instead of inventing a new field.
+function businessTypeLabel(specialty) {
+  if (specialty === 'Fuel Station') return 'Fuel Station';
+  if (specialty === 'Car Detailing') return 'Detailer';
+  if (specialty === 'Auto Parts') return 'Auto Shop';
+  return 'Mechanic';
+}
+
+function BizAccountTypeIcon({ specialty }) {
+  if (specialty === 'Fuel Station') return <FillingStationIcon size={14} />;
+  if (specialty === 'Car Detailing') return <CarDetailingIcon size={14} />;
+  if (specialty === 'Auto Parts') return <ShopIcon size={14} />;
+  return <Wrench size={14} />;
 }
 
 // Catalog empty-state illustration — 3 cards that rotate through 3 fixed
@@ -139,7 +173,24 @@ function BizMediaIcon() {
   );
 }
 
-export default function BusinessDashboard({ user, mechanic, onExit, show }) {
+// Shared by the mobile bottom tab bar and the desktop sidebar nav — same
+// four destinations, same click handling, just laid out differently per
+// breakpoint (row of pill buttons vs. a vertical list).
+const TAB_ITEMS = [
+  { key: 'home', label: 'Home', Icon: BizHomeIcon },
+  { key: 'catalog', label: 'Catalog', Icon: BizCatalogIcon },
+  { key: 'map', label: 'Map', Icon: BizMapIcon },
+  { key: 'media', label: 'Media', Icon: BizMediaIcon },
+];
+
+function timeGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, show }) {
   const [activeTab, setActiveTab] = useState('home');
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
@@ -153,74 +204,133 @@ export default function BusinessDashboard({ user, mechanic, onExit, show }) {
 
   const PAGE_TITLES = { home: 'Overview', catalog: 'Catalog', map: 'Map', media: 'Media' };
 
+  const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+
   return (
     <div className="biz-dashboard">
-      <header className="biz-header">
-        <button className="biz-back-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
-          <List size={22} />
+      {/* Desktop-only: mobile uses the hamburger + bottom tab bar below instead. */}
+      <aside className="biz-sidebar">
+        <div className="biz-sidebar-brand">
+          <span className="biz-sidebar-brand-icon"><Gear size={16} color="var(--lime)" weight="fill" /></span>
+          <span>Gears</span>
+        </div>
+
+        <button className="biz-sidebar-switcher" onClick={() => setMenuOpen(true)}>
+          <BizAccountAvatar name={mechanic?.name} />
+          <span className="biz-sidebar-switcher-text">
+            <span className="biz-sidebar-switcher-name">{mechanic?.name}</span>
+            <span className="biz-sidebar-switcher-type">
+              <BizAccountTypeIcon specialty={mechanic?.specialty} />
+              {businessTypeLabel(mechanic?.specialty)}
+            </span>
+          </span>
+          <CaretDown size={13} className="biz-sidebar-switcher-caret" />
         </button>
-        <h1>{PAGE_TITLES[activeTab] || 'Your Business'}</h1>
-        <div className="biz-header-actions">
-          <button className="biz-header-icon-btn" aria-label="QR code">
-            <QrCode size={18} />
-          </button>
-          <BizAvatar user={user} />
-        </div>
-      </header>
 
-      {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
-      {menuOpen && (
-        <div className="biz-menu">
-          <button
-            className="nav-btn"
-            onClick={() => { setMenuOpen(false); onExit(); }}
-          >
-            <ArrowsLeftRight size={20} />
-            <span className="nav-text">Switch to Customer View</span>
-          </button>
-        </div>
-      )}
-
-      <div className="biz-content">
-        {activeTab === 'home' && <BizHomeTab mechanic={mechanic} />}
-        {activeTab === 'catalog' && <BizCatalogTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} />}
-        {activeTab === 'map' && <BizMapTab mechanic={mechanic} />}
-        {activeTab === 'media' && <BizMediaTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} />}
-      </div>
-
-      <div className={`biz-bottom-bar ${showAddSheet ? 'add-open' : ''}`}>
-        <nav className="biz-tab-nav">
-          <button
-            className={`biz-tab-btn ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => { setShowAddSheet(false); setActiveTab('home'); }}
-          >
-            <BizHomeIcon />
-            <span>Home</span>
-          </button>
-          <button
-            className={`biz-tab-btn ${activeTab === 'catalog' ? 'active' : ''}`}
-            onClick={() => { setShowAddSheet(false); setActiveTab('catalog'); }}
-          >
-            <BizCatalogIcon />
-            <span>Catalog</span>
-          </button>
-          <button
-            className={`biz-tab-btn ${activeTab === 'map' ? 'active' : ''}`}
-            onClick={() => { setShowAddSheet(false); setActiveTab('map'); }}
-          >
-            <BizMapIcon />
-            <span>Map</span>
-          </button>
-          <button
-            className={`biz-tab-btn ${activeTab === 'media' ? 'active' : ''}`}
-            onClick={() => { setShowAddSheet(false); setActiveTab('media'); }}
-          >
-            <BizMediaIcon />
-            <span>Media</span>
-          </button>
+        <nav className="biz-sidebar-nav">
+          {TAB_ITEMS.map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              className={`biz-tab-btn ${activeTab === key ? 'active' : ''}`}
+              onClick={() => { setShowAddSheet(false); setActiveTab(key); }}
+            >
+              <Icon />
+              <span>{label}</span>
+            </button>
+          ))}
         </nav>
+      </aside>
 
-        <div className={`biz-add-sheet ${showAddSheet ? 'open' : ''}`} aria-hidden={!showAddSheet}>
+      <div className="biz-main">
+        <header className="biz-header">
+          <button className="biz-back-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
+            <List size={22} />
+          </button>
+          <h1>{PAGE_TITLES[activeTab] || 'Your Business'}</h1>
+          <div className="biz-header-actions">
+            <button className="biz-header-icon-btn" aria-label="QR code">
+              <QrCode size={18} />
+            </button>
+            <BizAvatar user={user} onClick={() => setMenuOpen(true)} />
+          </div>
+        </header>
+
+        {/* Desktop-only equivalent of the mobile header above. */}
+        <div className="biz-topbar">
+          <span className="biz-topbar-crumb">{PAGE_TITLES[activeTab] || 'Home'}</span>
+          <div className="biz-topbar-search">
+            <MagnifyingGlass size={15} />
+            <span>Search</span>
+            <span className="biz-topbar-search-kbd">⌘K</span>
+          </div>
+          <div className="biz-topbar-actions">
+            <button className="biz-header-icon-btn" aria-label="History"><ClockCounterClockwise size={17} /></button>
+            <button className="biz-header-icon-btn" aria-label="Notifications"><Bell size={17} /></button>
+            <button className="biz-header-icon-btn" aria-label="Apps"><SquaresFour size={17} /></button>
+          </div>
+        </div>
+
+        {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
+        {menuOpen && (
+          <div className="biz-menu">
+            {businesses && businesses.length > 1 && (
+              <>
+                <div className="biz-menu-section-label">Accounts</div>
+                <div className="biz-account-list">
+                  {businesses.map((b) => (
+                    <button
+                      key={b.id}
+                      className={`biz-account-row ${b.id === mechanic?.id ? 'active' : ''}`}
+                      onClick={() => { setMenuOpen(false); onSwitchBusiness?.(b.id); }}
+                    >
+                      <BizAccountAvatar name={b.name} />
+                      <span className="biz-account-row-text">
+                        <span className="biz-account-row-name">{b.name}</span>
+                        <span className="biz-account-row-type">
+                          <BizAccountTypeIcon specialty={b.specialty} />
+                          {businessTypeLabel(b.specialty)}
+                        </span>
+                      </span>
+                      {b.id === mechanic?.id && <Check size={16} weight="bold" className="biz-account-row-check" />}
+                    </button>
+                  ))}
+                </div>
+                <div className="biz-menu-divider"></div>
+              </>
+            )}
+            <button
+              className="nav-btn"
+              onClick={() => { setMenuOpen(false); onExit(); }}
+            >
+              <ArrowsLeftRight size={20} />
+              <span className="nav-text">Switch to Customer View</span>
+            </button>
+          </div>
+        )}
+
+        <div className="biz-content">
+          {activeTab === 'home' && <h2 className="biz-greeting">{timeGreeting()}, {firstName}</h2>}
+          {activeTab === 'home' && <BizHomeTab mechanic={mechanic} />}
+          {activeTab === 'catalog' && <BizCatalogTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} />}
+          {activeTab === 'map' && <BizMapTab mechanic={mechanic} onUpdateLocation={onUpdateLocation} show={show} />}
+          {activeTab === 'media' && <BizMediaTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} />}
+        </div>
+
+        <div className={`biz-bottom-bar ${showAddSheet ? 'add-open' : ''}`}>
+          <nav className="biz-tab-nav">
+            {TAB_ITEMS.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                className={`biz-tab-btn ${activeTab === key ? 'active' : ''}`}
+                onClick={() => { setShowAddSheet(false); setActiveTab(key); }}
+              >
+                <Icon />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className={`biz-add-sheet ${showAddSheet ? 'open' : ''}`} aria-hidden={!showAddSheet}>
           <button className="biz-add-option" onClick={() => handleAddOption('product')} tabIndex={showAddSheet ? 0 : -1}>
             <ListPlus size={20} className="biz-add-option-icon" />
             <div className="biz-add-option-text">
@@ -253,11 +363,12 @@ export default function BusinessDashboard({ user, mechanic, onExit, show }) {
         </button>
       </div>
 
-      <div
-        className={`biz-add-sheet-overlay ${showAddSheet ? 'open' : ''}`}
-        onClick={() => setShowAddSheet(false)}
-        aria-hidden={!showAddSheet}
-      ></div>
+        <div
+          className={`biz-add-sheet-overlay ${showAddSheet ? 'open' : ''}`}
+          onClick={() => setShowAddSheet(false)}
+          aria-hidden={!showAddSheet}
+        ></div>
+      </div>
     </div>
   );
 }
@@ -310,7 +421,11 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   const [showForm, setShowForm] = useState(false);
   const [kind, setKind] = useState('products');
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [previewing, setPreviewing] = useState(false);
+  const [previewTab, setPreviewTab] = useState('details'); // 'details' | 'listing'
   const [saving, setSaving] = useState(false);
   const [emptyStateStep, setEmptyStateStep] = useState(0);
 
@@ -344,22 +459,38 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
   const items = [...products, ...services];
 
-  const handleAdd = async (e) => {
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setPrice('');
+    setPhotoUrl('');
+    setPreviewing(false);
+    setPreviewTab('details');
+    setShowForm(false);
+  };
+
+  const handlePreview = (e) => {
     e.preventDefault();
-    if (!name.trim() || !db || !mechanic?.id) return;
+    if (!name.trim()) return;
+    setPreviewTab('details');
+    setPreviewing(true);
+  };
+
+  const handlePublish = async () => {
+    if (!db || !mechanic?.id) return;
     setSaving(true);
     try {
       await addDoc(collection(db, `mechanics/${mechanic.id}/${kind}`), {
         name: name.trim(),
+        description: description.trim(),
         price: price.trim(),
+        ...(photoUrl.trim() ? { imageUrl: photoUrl.trim() } : {}),
         inStock: true,
         addedBy: user.uid,
         createdAt: new Date().toISOString(),
       });
-      setName('');
-      setPrice('');
-      setShowForm(false);
-      show?.(`${kind === 'products' ? 'Product' : 'Service'} added!`);
+      resetForm();
+      show?.(`${kind === 'products' ? 'Product' : 'Service'} published!`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -393,21 +524,94 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
   return (
     <div className="biz-catalog-tab">
-    
 
-      {showForm && (
-        <form className="biz-catalog-form" onSubmit={handleAdd}>
+      {showForm && !previewing && (
+        <form className="biz-catalog-form business-fields" onSubmit={handlePreview}>
+          <div className="biz-catalog-form-header">
+            <h4>Add New {kind === 'products' ? 'Product' : 'Service'}</h4>
+            <button type="button" className="biz-catalog-form-close" onClick={resetForm} aria-label="Close">
+              <X size={16} />
+            </button>
+          </div>
           <div className="biz-catalog-form-kind">
             <button type="button" className={kind === 'products' ? 'active' : ''} onClick={() => setKind('products')}>Product</button>
             <button type="button" className={kind === 'services' ? 'active' : ''} onClick={() => setKind('services')}>Service</button>
           </div>
-          <input required placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input placeholder="Price (Optional)" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <label>Title
+            <input required placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <label>Description
+            <textarea placeholder="Items, Pickup Details or Instructions" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </label>
+          <label>Price (₵)
+            <input placeholder="0.00" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </label>
+          <label>Photos
+            <input placeholder="Image URL" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} />
+          </label>
           <div className="biz-catalog-form-actions">
-            <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" className="biz-primary-btn small" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+            <button type="button" onClick={resetForm}>Cancel</button>
+            <button type="submit" className="biz-primary-btn small">Preview</button>
           </div>
         </form>
+      )}
+
+      {showForm && previewing && (
+        <div className="biz-preview">
+          <div className="biz-preview-topbar">
+            <button type="button" className="biz-preview-back" onClick={() => setPreviewing(false)} aria-label="Back to editing">
+              <CaretLeft size={18} />
+            </button>
+            <div className="biz-preview-tabs">
+              <button type="button" className={previewTab === 'details' ? 'active' : ''} onClick={() => setPreviewTab('details')}>Details Page</button>
+              <button type="button" className={previewTab === 'listing' ? 'active' : ''} onClick={() => setPreviewTab('listing')}>Listing Page</button>
+            </div>
+          </div>
+
+          <div className="biz-preview-body">
+            {previewTab === 'details' ? (
+              <>
+                <div className="item-sheet-image" style={{ background: photoUrl ? undefined : '#f5e6c8' }}>
+                  {photoUrl && <img src={photoUrl} alt={name} />}
+                </div>
+                <div className="item-sheet-body biz-preview-item-sheet-body">
+                  {mechanic?.name && (
+                    <div className="item-sheet-shop">
+                      <div className="item-sheet-shop-avatar">{mechanic.name.charAt(0).toUpperCase()}</div>
+                      <span className="item-sheet-shop-name">{mechanic.name}</span>
+                    </div>
+                  )}
+                  <h3 className="item-sheet-name">{name || 'Untitled'}</h3>
+                  {price && (
+                    <p className="item-sheet-price">
+                      ₵{kind === 'services' && !price.trim().endsWith('+') ? `${price}+` : price}
+                    </p>
+                  )}
+                  {description && <p className="item-sheet-desc">{description}</p>}
+                </div>
+              </>
+            ) : (
+              <div className="biz-preview-listing-card">
+                <div className="service-card-image" style={{ background: photoUrl ? undefined : '#f5e6c8' }}>
+                  {photoUrl && <img src={photoUrl} alt={name} />}
+                </div>
+                <div className="service-card-row">
+                  <div className="service-card-body">
+                    <h4 className="service-card-name">{name || 'Untitled'}</h4>
+                    {description && <p className="service-card-desc">{description}</p>}
+                  </div>
+                  {price && <span className="service-card-price">GH₵ {price}</span>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="biz-preview-footer">
+            <button type="button" className="biz-preview-publish-btn" onClick={handlePublish} disabled={saving}>
+              {saving ? 'Publishing…' : 'Publish'}
+            </button>
+          </div>
+        </div>
       )}
 
       {items.length === 0 && !showForm && (
@@ -482,22 +686,41 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   );
 }
 
-function BizMapTab({ mechanic }) {
-  if (!mechanic?.lat || !mechanic?.lng) {
+// Same map component the onboarding wizard uses to pick a location in the
+// first place (LocationPicker: draggable pin, category marker, CARTO tiles)
+// — so adjusting a listing's pin afterward looks and behaves identically to
+// setting it during onboarding, instead of a separate read-only preview.
+function BizMapTab({ mechanic, onUpdateLocation, show }) {
+  const [lat, setLat] = useState(mechanic?.lat ?? null);
+  const [lng, setLng] = useState(mechanic?.lng ?? null);
+  const skipNextPersist = useRef(true);
+
+  useEffect(() => {
+    setLat(mechanic?.lat ?? null);
+    setLng(mechanic?.lng ?? null);
+    skipNextPersist.current = true;
+  }, [mechanic?.id]);
+
+  useEffect(() => {
+    if (skipNextPersist.current) { skipNextPersist.current = false; return; }
+    if (lat == null || lng == null) return;
+    onUpdateLocation?.(mechanic.id, lat, lng);
+    show?.('Location updated');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lat, lng]);
+
+  if (lat == null || lng == null) {
     return <div className="biz-empty-text" style={{ padding: '24px' }}>No location set for this listing.</div>;
   }
+
   return (
     <div className="biz-map-tab">
       <h3>Your Location</h3>
+      <p className="biz-map-hint">Drag the pin to update where customers see you.</p>
       <div className="biz-map-frame">
-        <MapContainer
-          center={[mechanic.lat, mechanic.lng]}
-          zoom={15}
-          scrollWheelZoom={false}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          <Marker position={[mechanic.lat, mechanic.lng]} />
+        <MapContainer center={[lat, lng]} zoom={16} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+          <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} subdomains={TILE_SUBDOMAINS} maxNativeZoom={18} maxZoom={20} />
+          <LocationPicker lat={lat} lng={lng} setLat={setLat} setLng={setLng} category={mechanic.specialty} label={mechanic.name} />
         </MapContainer>
       </div>
       <p className="biz-map-address">{mechanic.area}</p>
@@ -505,10 +728,19 @@ function BizMapTab({ mechanic }) {
   );
 }
 
+const MEDIA_CATEGORIES = [
+  { key: 'general', label: 'General' },
+  { key: 'products', label: 'Products' },
+  { key: 'services', label: 'Services' },
+];
+
 function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   const [media, setMedia] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [url, setUrl] = useState('');
+  const [label, setLabel] = useState('');
+  const [category, setCategory] = useState('general');
+  const [activeFilter, setActiveFilter] = useState('all');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -533,10 +765,14 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
     try {
       await addDoc(collection(db, `mechanics/${mechanic.id}/media`), {
         imageUrl: url.trim(),
+        ...(label.trim() ? { label: label.trim() } : {}),
+        category,
         addedBy: user.uid,
         createdAt: new Date().toISOString(),
       });
       setUrl('');
+      setLabel('');
+      setCategory('general');
       setShowForm(false);
       show?.('Photo added!');
     } catch (err) {
@@ -562,6 +798,10 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
     );
   }
 
+  // Media added before categories existed has no `category` field — treat
+  // it as "General" rather than hiding it from every filter but "All".
+  const filteredMedia = activeFilter === 'all' ? media : media.filter((m) => (m.category || 'general') === activeFilter);
+
   return (
     <div className="biz-media-tab">
       <div className="biz-catalog-header">
@@ -572,8 +812,18 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
       </div>
 
       {showForm && (
-        <form className="biz-catalog-form" onSubmit={handleAdd}>
-          <input required placeholder="Image URL" value={url} onChange={(e) => setUrl(e.target.value)} />
+        <form className="biz-catalog-form business-fields" onSubmit={handleAdd}>
+          <label>Image URL
+            <input required placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+          </label>
+          <label>Caption (optional)
+            <input placeholder="e.g. Workshop front" value={label} onChange={(e) => setLabel(e.target.value)} />
+          </label>
+          <div className="biz-catalog-form-kind">
+            {MEDIA_CATEGORIES.map((c) => (
+              <button type="button" key={c.key} className={category === c.key ? 'active' : ''} onClick={() => setCategory(c.key)}>{c.label}</button>
+            ))}
+          </div>
           <div className="biz-catalog-form-actions">
             <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
             <button type="submit" className="biz-primary-btn small" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
@@ -581,17 +831,33 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
         </form>
       )}
 
+      {media.length > 0 && (
+        <div className="biz-media-filters">
+          <button className={activeFilter === 'all' ? 'active' : ''} onClick={() => setActiveFilter('all')}>All</button>
+          {MEDIA_CATEGORIES.map((c) => (
+            <button key={c.key} className={activeFilter === c.key ? 'active' : ''} onClick={() => setActiveFilter(c.key)}>{c.label}</button>
+          ))}
+        </div>
+      )}
+
       {media.length === 0 && !showForm && (
         <p className="biz-empty-text">No photos yet. Add some to showcase your business.</p>
       )}
 
+      {media.length > 0 && filteredMedia.length === 0 && (
+        <p className="biz-empty-text">Nothing in this category yet.</p>
+      )}
+
       <div className="biz-media-grid">
-        {media.map((item) => (
-          <div key={item.id} className="biz-media-cell">
-            <img src={item.imageUrl} alt="" />
-            <button className="biz-media-delete" onClick={() => handleDelete(item)} aria-label="Delete">
-              <X size={14} weight="bold" />
-            </button>
+        {filteredMedia.map((item) => (
+          <div key={item.id} className="biz-media-item">
+            <div className="biz-media-cell">
+              <img src={item.imageUrl} alt="" />
+              <button className="biz-media-delete" onClick={() => handleDelete(item)} aria-label="Delete">
+                <X size={14} weight="bold" />
+              </button>
+            </div>
+            {item.label && <span className="biz-media-item-label">{item.label}</span>}
           </div>
         ))}
       </div>
