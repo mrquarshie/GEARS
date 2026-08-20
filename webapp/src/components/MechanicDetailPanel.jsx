@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo } from '@phosphor-icons/react';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
+import { shareMechanic, getShareImagePath, getShareUrl } from '../utils/share';
 import {
   BookmarkIcon,
   CallIcon,
@@ -88,7 +89,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -98,6 +99,24 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
     setCollapsed(false);
   }, [mechanic?.id]);
 
+  // Deep-link support: a shared WhatsApp order message links back to
+  // `?mechanic=<id>&item=<name>&type=<product|service|package>`. Once that
+  // mechanic is selected, jump straight to the right tab and item sheet.
+  // Declared after the tab-reset effect above so it wins when both fire on
+  // the same mechanic-selection render.
+  useEffect(() => {
+    if (!mechanic || !initialItemQuery) return;
+    const { name, type } = initialItemQuery;
+    const collectionKey = type === 'service' ? 'services' : type === 'package' ? 'packages' : 'products';
+    const tabKey = type === 'service' ? 'Services' : type === 'package' ? 'Packages' : 'Products';
+    const match = (mechanic[collectionKey] || []).find(it => (it.name || it.title) === name);
+    if (match) {
+      setActiveTab(tabKey);
+      setDetailSheetItem({ ...match, type });
+    }
+    onInitialItemHandled?.();
+  }, [mechanic, initialItemQuery, onInitialItemHandled]);
+
   if (!mechanic) return null;
 
   const handleDirectionClick = () => {
@@ -105,6 +124,11 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
     onRecordInteraction?.(mechanic.id, 'direction');
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
     if (isMobile) setCollapsed(true);
+  };
+
+  const handleShareClick = () => {
+    onRecordInteraction?.(mechanic.id, 'share');
+    shareMechanic(mechanic, { onNotice });
   };
 
   const handleCallClick = () => {
@@ -169,6 +193,10 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         <Helmet>
           <title>{mechanic.name} - Mechanic in {mechanic.area} | Gears</title>
           <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. Call ${mechanic.phone}.`} />
+          <meta property="og:title" content={`${mechanic.name} | Gears`} />
+          <meta property="og:description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}.`} />
+          <meta property="og:image" content={`${window.location.origin}${getShareImagePath(mechanic)}`} />
+          <meta property="og:url" content={getShareUrl(mechanic)} />
           <script type="application/ld+json">
             {JSON.stringify(schemaMarkup)}
           </script>
@@ -216,8 +244,8 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
           <div className="detail-content">
             {activeTab === 'Overview' && <OverviewTab mechanic={mechanic} category={category} onRate={onRate} />}
             {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
-            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
-            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
+            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} />}
+            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} />}
             {activeTab === 'Fuel Prices' && <FuelPricesTab fuelPrices={mechanic.fuelPrices} />}
             {activeTab === 'Media' && <MediaTab mechanicId={mechanic.id} user={user} fallbackMedia={mechanic.media} extraMedia={(mechanic.products || []).filter(p => p.imageUrl)} />}
             {activeTab === 'Reviews' && <ReviewsTab mechanicId={mechanic.id} mechanic={mechanic} fallbackReviews={mechanic.reviews} />}
@@ -236,7 +264,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
             <button className="bottom-icon-btn" onClick={() => onRate(mechanic)} aria-label="Rate">
               <RateIcon size={20} />
             </button>
-            <button className="bottom-icon-btn" aria-label="Share">
+            <button className="bottom-icon-btn" onClick={handleShareClick} aria-label="Share">
               <ShareIcon size={20} />
             </button>
             {/* <div className="detail-bottom-divider"></div> */}
@@ -259,6 +287,8 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
             item={detailSheetItem}
             mechanicName={mechanic.name}
             mechanicPhone={mechanic.phone}
+            mechanicId={mechanic.id}
+            mechanicSpecialty={mechanic.specialty}
             onClose={() => setDetailSheetItem(null)}
           />
         )}
@@ -398,7 +428,32 @@ function ReviewsTab({ mechanicId, mechanic, fallbackReviews }) {
   );
 }
 
-function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, onItemTap }) {
+// Real detailing photos to fall back on for a detailer's services that
+// don't have their own photo yet — a flat color block doesn't sell a car
+// wash the way an actual result does. Deterministic per item name, same
+// pattern as the share-card image assignment in utils/share.js, so a given
+// service always shows the same placeholder instead of a different one on
+// every render.
+const DETAILER_PLACEHOLDER_IMAGES = [
+  '/share-media-attachments/detailer - 1.jpg',
+  '/share-media-attachments/detailer - 2.jpg',
+  '/share-media-attachments/detailer - 3.jpg',
+  '/share-media-attachments/detailer - 4.jpg',
+];
+
+function hashIndex(str, length) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % length;
+}
+
+function getDetailerPlaceholderImage(name) {
+  return DETAILER_PLACEHOLDER_IMAGES[hashIndex(name || '', DETAILER_PLACEHOLDER_IMAGES.length)];
+}
+
+function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap }) {
   const [items, setItems] = useState(fallbackItems || []);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -473,26 +528,32 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
         </div>
       ) : isCards ? (
         <div className="service-cards">
-          {items.map((item, i) => (
+          {items.map((item, i) => {
+            const resolvedImage = item.imageUrl || (specialty === 'Car Detailing' ? getDetailerPlaceholderImage(item.name) : null);
+            return (
             <div key={item.id || i} className="service-card" onClick={() => onItemTap({ ...item, type: 'service' })}>
               <div
                 className="service-card-image"
-                style={{ background: item.imageUrl ? undefined : hashToColor(item.name || '') }}
+                style={{ background: resolvedImage ? undefined : hashToColor(item.name || '') }}
               >
-                {item.imageUrl && <img src={item.imageUrl} alt={item.name} />}
+                {resolvedImage && <img src={resolvedImage} alt={item.name} />}
                 {item.videoUrl && (
                   <span className="service-card-play-badge" aria-hidden="true">
                     <CaretRight size={12} weight="fill" />
                   </span>
                 )}
               </div>
-              <div className="service-card-body">
-                <h4 className="service-card-name">{item.name}</h4>
-                {item.description && <p className="service-card-desc">{item.description}</p>}
+              <div className="service-card-row">
+                <div className="service-card-body">
+                  <h4 className="service-card-name">{item.name}</h4>
+                  {item.description && <p className="service-card-desc">{item.description}</p>}
+                  {item.duration && <p className="service-card-desc">{item.duration}</p>}
+                </div>
+                {item.price && <span className="service-card-price">GH₵ {servicePriceLabel(item.price)}</span>}
               </div>
-              {item.price && <span className="service-card-price">GH₵ {item.price}</span>}
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="item-list">
@@ -514,12 +575,33 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   );
 }
 
-export function ItemSheet({ item, mechanicName, mechanicPhone, onClose, onSelectShop }) {
+// Service prices are "starting from", shown with a trailing "+". The price
+// field is free text though, so a business owner may have already typed
+// their own "+" — only append one if it isn't there yet.
+function servicePriceLabel(price) {
+  const str = String(price);
+  return str.endsWith('+') ? str : `${str}+`;
+}
+
+const ORDER_WHATSAPP_NUMBER = '0559488201';
+
+export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mechanicSpecialty, onClose, onSelectShop }) {
   const isService = item.type === 'service';
   const bg = isService ? '#EDE9FE' : '#F9F1C2';
   const accent = isService ? '#9747FF' : '#FF9500';
   const name = item.name || item.title;
-  const whatsappHref = `https://wa.me/${(mechanicPhone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi, I'd like to order: ${name}${item.price ? ` (GH₵${item.price})` : ''}`)}`;
+  const resolvedImage = item.imageUrl || (isService && mechanicSpecialty === 'Car Detailing' ? getDetailerPlaceholderImage(name) : null);
+  const whatsappDigits = ORDER_WHATSAPP_NUMBER.replace(/^0/, '233');
+  const shopClause = mechanicName ? ` from ${mechanicName}` : '';
+  const priceClause = item.price ? ` (${isService ? 'from ' : ''}GH₵${item.price})` : '';
+  const itemUrl = mechanicId && typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}?mechanic=${encodeURIComponent(mechanicId)}&item=${encodeURIComponent(name)}&type=${item.type || 'product'}`
+    : null;
+  const linkClause = itemUrl ? `\n\n${itemUrl}` : '';
+  const whatsappMessage = isService
+    ? `Hi! I'd like to request the "${name}" service${priceClause}${shopClause}. Could you let me know availability and pricing?${linkClause}`
+    : `Hi! I'd like to order "${name}"${priceClause}${shopClause}. Is it available?${linkClause}`;
+  const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <div className="item-sheet-overlay" onClick={onClose}>
@@ -529,8 +611,8 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, onClose, onSelect
         </button>
 
         <div className="item-sheet-image" style={{ background: bg }}>
-          {item.imageUrl ? (
-            <img src={item.imageUrl} alt={name} />
+          {resolvedImage ? (
+            <img src={resolvedImage} alt={name} />
           ) : (
             <div className="item-sheet-placeholder" style={{ background: hashToColor(name || '') }} />
           )}
@@ -546,7 +628,7 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, onClose, onSelect
             )}
           </div>
           <h3 className="item-sheet-name">{name}</h3>
-          {item.price && <p className="item-sheet-price">{isService ? `₵${item.price}+` : `₵${item.price}`}</p>}
+          {item.price && <p className="item-sheet-price">{isService ? `₵${servicePriceLabel(item.price)}` : `₵${item.price}`}</p>}
           {item.description && (
             <p className="item-sheet-desc">{item.description}</p>
           )}

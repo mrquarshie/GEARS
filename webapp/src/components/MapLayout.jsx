@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -23,7 +23,7 @@ const CATEGORY_GLYPH = {
   parts: '<svg viewBox="0 0 256 256" fill="white"><path d="M232,96.09V208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V96.09a8,8,0,0,1,1.37-4.47l32-48A8,8,0,0,1,64,40H192a8,8,0,0,1,6.66,3.62l32,48A8,8,0,0,1,232,96.09ZM80,112a32,32,0,0,0,48,27.71A32,32,0,0,0,176,112H80Zm-34.05-8H74.7l13.33-48H68.28Zm46.09,0h71.92L150.63,56H105.37Zm89.26,0h28.75L187.72,56H168Zm34.7,16H192.8a47.84,47.84,0,0,1-9.6,24H216ZM40,120v24H72.8a47.84,47.84,0,0,1-9.6-24Zm0,80H216V160H40Z"/></svg>',
 };
 
-function getMechanicCategory(specialty) {
+export function getMechanicCategory(specialty) {
   if (specialty === 'Car Detailing') return 'detailer';
   if (specialty === 'Fuel Station') return 'fuel';
   if (
@@ -57,18 +57,16 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-// Memoized cache for marker icons — avoids recreating L.divIcon on every render
-const iconCache = new Map();
-function getCategoryIcon(mechanic, selected = false) {
-  const key = `${mechanic.id}-${selected}`;
-  if (iconCache.has(key)) return iconCache.get(key);
-
-  const category = getMechanicCategory(mechanic.specialty);
+// Builds the same category pin (colored glyph avatar + name label) used
+// everywhere on the real map — exported so other screens (e.g. the business
+// location picker, before a listing has an id to cache against) can render
+// an identical-looking marker without going through the id-keyed cache below.
+export function buildCategoryMarkerIcon(category, name, selected = false) {
   const glyph = CATEGORY_GLYPH[category] || CATEGORY_GLYPH.mechanic;
-  const name = escapeHtml(mechanic.name || 'Gears');
+  const safeName = escapeHtml(name || 'Gears');
   const selectedClass = selected ? ' category-marker-card--selected' : '';
 
-  const divIcon = L.divIcon({
+  return L.divIcon({
     className: 'category-marker-icon',
     html: `
       <div class="category-marker-card category-marker-card--${category}${selectedClass}">
@@ -76,13 +74,56 @@ function getCategoryIcon(mechanic, selected = false) {
           <div class="category-marker-avatar">${glyph}</div>
         </div>
         <div class="category-marker-dot"></div>
-        <div class="category-marker-label">${name}</div>
+        <div class="category-marker-label">${safeName}</div>
       </div>
     `,
     iconSize: [190, 82],
     iconAnchor: [95, 48],
     popupAnchor: [0, -50],
   });
+}
+
+// Draggable/clickable pin using the same category marker as the real map —
+// shared by the onboarding wizard's location step and the business
+// dashboard's Map tab, so picking and later adjusting a location is the
+// same component and the same visual pin in both places.
+export function LocationPicker({ lat, lng, setLat, setLng, category, label, onInteract }) {
+  useMapEvents({
+    click(e) {
+      setLat(e.latlng.lat);
+      setLng(e.latlng.lng);
+      onInteract?.();
+    },
+  });
+  const icon = useMemo(
+    () => buildCategoryMarkerIcon(getMechanicCategory(category), label),
+    [category, label],
+  );
+  return lat && lng ? (
+    <Marker
+      position={[lat, lng]}
+      icon={icon}
+      draggable
+      eventHandlers={{
+        dragend: (e) => {
+          const pos = e.target.getLatLng();
+          setLat(pos.lat);
+          setLng(pos.lng);
+          onInteract?.();
+        },
+      }}
+    />
+  ) : null;
+}
+
+// Memoized cache for marker icons — avoids recreating L.divIcon on every render
+const iconCache = new Map();
+function getCategoryIcon(mechanic, selected = false) {
+  const key = `${mechanic.id}-${selected}`;
+  if (iconCache.has(key)) return iconCache.get(key);
+
+  const category = getMechanicCategory(mechanic.specialty);
+  const divIcon = buildCategoryMarkerIcon(category, mechanic.name, selected);
 
   iconCache.set(key, divIcon);
   return divIcon;
@@ -190,9 +231,9 @@ const UserLocationScanningIcon = L.divIcon({
 
 // We use a single CARTO Voyager tile layer (with labels) instead of two separate
 // layers (nolabels + only_labels), halving the tile requests.
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const TILE_SUBDOMAINS = 'abcd';
-const TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+export const TILE_SUBDOMAINS = 'abcd';
+export const TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 export default function MapLayout({ mechanics, selectedMechanic, onSelectMechanic, userLocation, mapPanTrigger, routeTarget, isLocatingScan }) {
   const defaultCenter = [DEFAULT_LATITUDE, DEFAULT_LONGITUDE];
