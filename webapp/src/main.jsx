@@ -265,17 +265,22 @@ function AuthModal({ close, onSuccess, reason }) {
   const isBusiness = reason === 'business';
 
   const loginWithGoogle = async () => {
-    if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
+    if (!firebaseReady || !auth) return setErrorMsg('Add your Firebase settings to .env first.');
     setLoading(true);
     setErrorMsg('');
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
+      setLoading(false);
       if (result.user) onSuccess(result.user);
     } catch (err) {
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-cancelled-by-user') {
         try {
-          await signInWithRedirect(auth, new GoogleAuthProvider());
+          setLoading(false);
+          const redirectProvider = new GoogleAuthProvider();
+          redirectProvider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithRedirect(auth, redirectProvider);
         } catch (redirectErr) {
           setErrorMsg(redirectErr.message.replace('Firebase: ', ''));
           setLoading(false);
@@ -1257,7 +1262,7 @@ function App() {
   }, [user]);
 
   useEffect(() => {
-    if (!firebaseReady) {
+    if (!firebaseReady || !auth) {
       // No Firebase configured (e.g. local dev without .env) — use local mock
       // data instead so the app is still usable/testable. Remove this once
       // VITE_FIREBASE_* is set up locally.
@@ -1288,7 +1293,6 @@ function App() {
       unsubscribe = onAuthStateChanged(auth, (u) => {
         setUser(u);
         setAuthReady(true);
-        if (u) setModal((current) => current === 'add' || current?.reason === 'business' ? 'add' : null);
       });
 
       // Step 3: load mechanics data
@@ -1609,8 +1613,24 @@ function App() {
       <div className="main-content">
         {/* Mobile floating map controls */}
         <div className="mobile-map-controls">
-          <button className="mobile-hamburger" aria-label="Menu" onClick={() => setMobileSidebarOpen(true)}>
-            <List size={20} />
+          <button
+            className={`mobile-hamburger${user ? ' mobile-hamburger--authed' : ''}`}
+            aria-label="Menu"
+            onClick={() => setMobileSidebarOpen(true)}
+          >
+            {user ? (
+              <div className="mobile-header-avatar">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || 'avatar'} className="mobile-header-avatar-img" referrerPolicy="no-referrer" />
+                ) : (
+                  <span className="mobile-header-avatar-initial">
+                    {(user.displayName?.trim() || user.email || 'U')[0].toUpperCase()}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <List size={20} />
+            )}
           </button>
           <div className="mobile-map-actions">
             <button className="map-action-btn" aria-label="Locate Me" onClick={() => setMapPanTrigger(Date.now())}>
@@ -1713,7 +1733,11 @@ function App() {
         <AuthModal
           close={() => setModal(null)}
           onSuccess={(u) => {
-            if (u) setUser(u);
+            if (u) {
+              setUser(u);
+              const alias = u.displayName?.trim() || u.email?.split('@')[0] || 'User';
+              show(`Welcome, ${alias}!`);
+            }
             if (modal?.reason === 'business') {
               // Returning business account (e.g. one an admin already set up
               // and handed off) — skip the onboarding wizard and go straight

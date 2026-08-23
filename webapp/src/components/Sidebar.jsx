@@ -30,6 +30,9 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
   };
 
   const initial = getInitial();
+  const userAlias = user
+    ? (user.displayName?.trim() || user.email?.split('@')[0] || 'User')
+    : null;
 
   const handleNavClick = (mode) => {
     setViewMode(mode);
@@ -130,12 +133,15 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             <div style={{ width: 44, height: 44 }} />
           ) : user ? (
             <>
-              <div className="sidebar-avatar" title={user.displayName || user.email}>
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="avatar" className="sidebar-avatar-img" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className="sidebar-avatar-letter">{initial}</span>
-                )}
+              <div className="sidebar-user-profile" title={userAlias}>
+                <div className="sidebar-avatar">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="avatar" className="sidebar-avatar-img" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className="sidebar-avatar-letter">{initial}</span>
+                  )}
+                </div>
+                <span className="nav-text sidebar-user-alias">{userAlias}</span>
               </div>
               <button className="auth-btn" onClick={() => { onSignOut(); setIsOpen(false); }} title="Sign Out">
                 <SignOut size={22} />
