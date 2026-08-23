@@ -2515,14 +2515,19 @@ body {
 .business-fields label {
   display: block;
   color: #344054;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
 }
 
 .business-fields label span {
   float: right;
-  color: rgba(0, 0, 0, 0.5);
+  color: rgba(0, 0, 0, 0.8);
   font-weight: 500;
+}
+
+.business-fields label span .field-count-total {
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 400;
 }
 
 .business-fields input,
@@ -2555,6 +2560,19 @@ body {
 .business-location-search input {
   height: 44px;
   padding: 0 12px;
+}
+
+/* Native <select> arrows vary wildly by browser/OS — swap in the same thin
+   chevron everywhere so Opening Days/Operating Time match the rest of the
+   form's design instead of whatever the platform defaults to. */
+.business-fields select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M3.4 7.46L10 13.37L16.6 7.46' stroke='black' stroke-opacity='0.6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px 20px;
+  padding-right: 40px;
 }
 
 .business-fields textarea {
@@ -3614,6 +3632,10 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Clips the deco images to this box's own (possibly keyboard-shrunk)
+     bounds — without it, anything not repositioned in lockstep just
+     bleeds straight past the header into the title/fields below. */
+  overflow: hidden;
 }
 
 .auth-deco {
@@ -3811,20 +3833,28 @@ body {
     box-shadow: none;
   }
 
+  /* --vh shrinks as the keyboard opens (see the visualViewport effect in
+     App), which pulls these three inward on every update. None of that had
+     a transition, so it snapped straight to the new value instead of
+     easing there — this is what makes the modal gently "push up" instead
+     of jumping when a field is focused. */
   .auth-header-graphics {
     inset: auto;
     top: 0;
     left: 0;
     right: 0;
     height: calc(var(--vh, 1vh) * 32);
+    transition: height 0.3s ease;
   }
 
   .auth-logo-box {
     top: calc(var(--vh, 1vh) * 32 - 28px);
+    transition: top 0.3s ease;
   }
 
   .auth-body {
     padding: calc(var(--vh, 1vh) * 32 + 32px) 24px 32px;
+    transition: padding-top 0.3s ease;
   }
 
   .auth-terms {
@@ -3863,6 +3893,37 @@ body {
 
   .auth-modal-content--business .auth-body {
     padding: calc(var(--vh, 1vh) * 32 + 32px) 24px 32px;
+  }
+
+  /* The base (non-business) .auth-deco-* rules already use percentage
+     `top` values, which is why they track the header shrinking correctly
+     — percentages recompute against the header's current height every
+     frame it resizes. The business variant overrode those with fixed
+     pixel offsets tuned for its desktop card, which don't move at all as
+     the header shrinks on mobile: the images stayed put while everything
+     around them animated, so they ended up spilling past the header and
+     overlapping the title/fields once the keyboard opened. Swapping back
+     to equivalent percentages (plus a transition, for browsers that don't
+     recompute per-frame on their own) is what makes the images "push up"
+     in step with the rest instead of sitting still. */
+  .auth-modal-content--business .auth-deco-big {
+    top: 22%;
+    transition: top 0.3s ease;
+  }
+
+  .auth-modal-content--business .auth-deco-top-center {
+    top: 19%;
+    transition: top 0.3s ease;
+  }
+
+  .auth-modal-content--business .auth-deco-top-right {
+    top: 47%;
+    transition: top 0.3s ease;
+  }
+
+  .auth-modal-content--business .auth-deco-bottom-left {
+    top: 54%;
+    transition: top 0.3s ease;
   }
 }
 

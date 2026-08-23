@@ -908,7 +908,7 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
                 <input id="add-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder={typeConfig.namePlaceholder} />
               </label>
               <label>Business Contact
-                <input id="add-phone" required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+233 24 000 0000" />
+                <input id="add-phone" required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+233" />
               </label>
               <label>Opening Days
                 <select required value={openingDays} onChange={(e) => setOpeningDays(e.target.value)}>
@@ -928,7 +928,7 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
                   <option value="By appointment">By appointment</option>
                 </select>
               </label>
-              <label>About Your Business <span>{about.length} / 150</span>
+              <label>About Your Business <span>{about.length}<span className="field-count-total"> / 150</span></span>
                 <textarea maxLength={150} value={about} onChange={(e) => setAbout(e.target.value)} placeholder={typeConfig.aboutPlaceholder} />
               </label>
             </div>
