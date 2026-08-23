@@ -133,7 +133,14 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             <div style={{ width: 44, height: 44 }} />
           ) : user ? (
             <>
-              <div className="sidebar-user-profile" title={userAlias}>
+              <div
+                className="sidebar-user-profile"
+                title={`${userAlias} — Click to view your saved places`}
+                onClick={() => handleNavClick('saved')}
+                style={{ cursor: 'pointer' }}
+                role="button"
+                tabIndex={0}
+              >
                 <div className="sidebar-avatar">
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="avatar" className="sidebar-avatar-img" referrerPolicy="no-referrer" />

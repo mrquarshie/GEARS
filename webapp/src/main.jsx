@@ -1187,10 +1187,8 @@ function App() {
   useEffect(() => {
     const loader = document.getElementById('initial-loader');
     if (loader) {
-      setTimeout(() => {
-        loader.style.opacity = '0';
-        setTimeout(() => loader.remove(), 700);
-      }, 1800);
+      loader.style.opacity = '0';
+      setTimeout(() => loader.remove(), 400);
     }
     
     // Start watching user location globally
@@ -1331,6 +1329,7 @@ function App() {
           setAuthReady(true);
           const alias = redirectResult.user.displayName?.trim() || redirectResult.user.email?.split('@')[0] || 'User';
           show(`Welcome, ${alias}!`);
+          setViewMode('saved');
           setModal((current) => current === 'add' || current?.reason === 'business' ? 'add' : null);
           dismissLoader();
         }
@@ -1805,6 +1804,9 @@ function App() {
               setUser(u);
               const alias = u.displayName?.trim() || u.email?.split('@')[0] || 'User';
               show(`Welcome, ${alias}!`);
+              if (!modal?.reason || modal === 'auth' || modal?.reason === 'bookmark') {
+                setViewMode('saved');
+              }
             }
             if (modal?.reason === 'business') {
               // Returning business account (e.g. one an admin already set up

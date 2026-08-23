@@ -66,6 +66,14 @@
     </div>
     
     <div id="root"></div>
+    <script>
+      try {
+        if (Object.keys(localStorage).some(function(k){ return k.indexOf('firebase:authUser') === 0; })) {
+          var el = document.getElementById('initial-loader');
+          if (el) { el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 200); }
+        }
+      } catch(e) {}
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
