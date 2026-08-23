@@ -248,6 +248,16 @@ function GoogleGLogo({ size = 18 }) {
   );
 }
 
+// Accounts that pitch/onboard businesses on their behalf — a listing created
+// while signed in as one of these goes live pre-verified (tier 1) instead of
+// merely claimed (tier 2), since Gears vetted it directly during the pitch.
+const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princeessandoh316@gmail.com'];
+
+// How often a signed-in user's live location gets persisted to their
+// Firestore doc for "nearby business" notifications — watchPosition fires
+// far more often than this, so writes are throttled to this interval.
+const LOCATION_WRITE_INTERVAL_MS = 10 * 60 * 1000;
+
 // Headline shown per sign-in reason, so the prompt explains why the user was
 // stopped instead of a generic message that doesn't match what they tapped.
 const AUTH_REASON_COPY = {
@@ -584,7 +594,7 @@ function BusinessTypeIcon({ type }) {
   return <BizTypeGearIcon />;
 }
 
-function MechanicModal({ close, submit, initialData, onFinish }) {
+function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
   const initialType = useMemo(() => {
     if (!initialData) return 'mechanic';
     if (initialData.specialty === 'Fuel Station') return 'fuel';
@@ -1007,9 +1017,10 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
 
       {/* Layered on top of the still-mounted wizard (dimmed behind it) rather
           than replacing it, so this shows over whatever step the owner was
-          on — not whatever happens to be behind the whole modal. Tier 2 here
-          matches "Profile Claimed": self-onboarded listings are claimed but
-          not yet independently confirmed by Gears staff. */}
+          on — not whatever happens to be behind the whole modal. Tier shown
+          matches submitMechanic's actual claimed/verified split: self-onboarded
+          listings land on "Profile Claimed" (tier 2), admin-onboarded ones on
+          "Verified By Gears" (tier 1) since staff vetted it during the pitch. */}
       {showSuccess && (
         <div className="verification-sheet-overlay">
           <div className="verification-sheet">
@@ -1017,10 +1028,16 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
               <SealCheck size={44} weight="fill" color="var(--forest)" />
             </div>
             <h3 className="biz-success-title">{typeConfig.successTitle}</h3>
-            <p className="biz-success-desc">
-              You've earned our <strong>Tier 2</strong> badge.<br />
-              Our Staff will contact you to complete your onboarding process.
-            </p>
+            {isAdmin ? (
+              <p className="biz-success-desc">
+                You've earned our <strong>Tier 1</strong> badge — verified by Gears.
+              </p>
+            ) : (
+              <p className="biz-success-desc">
+                You've earned our <strong>Tier 2</strong> badge.<br />
+                Our Staff will contact you to complete your onboarding process.
+              </p>
+            )}
             <div className="verification-sheet-footer">
               <button className="verification-sheet-btn" onClick={onFinish}>Got it</button>
             </div>
@@ -1065,6 +1082,12 @@ function App() {
   const [savedMechanics, setSavedMechanics] = useState([]);
   const [viewMode, setViewMode] = useState('all');
   const [userLocation, setUserLocation] = useState(null);
+  // Read inside the geolocation watch callback below instead of added as an
+  // effect dependency, so watchPosition doesn't get torn down and restarted
+  // (dropping location accuracy) every time sign-in state changes.
+  const currentUserRef = useRef(user);
+  useEffect(() => { currentUserRef.current = user; }, [user]);
+  const lastLocationWriteRef = useRef(0);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isLocatingScan, setIsLocatingScan] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
@@ -1154,9 +1177,25 @@ function App() {
     if ("geolocation" in navigator) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
-          setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
           // If this is the very first time we get location, trigger a pan
           setMapPanTrigger(prev => prev === 0 ? 1 : prev);
+
+          // Persist a coarse location for nearby-business notifications.
+          // watchPosition fires far more often than this write is worth,
+          // so it's throttled — only a signed-in user has anywhere to read
+          // notifications from, so signed-out visitors are skipped entirely.
+          const signedInUser = currentUserRef.current;
+          const now = Date.now();
+          if (signedInUser && db && now - lastLocationWriteRef.current > LOCATION_WRITE_INTERVAL_MS) {
+            lastLocationWriteRef.current = now;
+            setDoc(
+              doc(db, 'users', signedInUser.uid),
+              { location: { lat: latitude, lng: longitude, updatedAt: new Date() } },
+              { merge: true },
+            ).catch(() => {});
+          }
         },
         (err) => {
           console.warn("Location error:", err);
@@ -1492,7 +1531,19 @@ function App() {
     } else {
       // Self-onboarded listings start "claimed" (verification tier 2) since
       // the owner set it up themselves but Gears hasn't confirmed it yet.
-      const mechanic = { ...listing, specialty: listing.specialty || 'General repairs', rating: 'New', ratingCount: 0, ratingSum: 0, open: true, claimed: true };
+      // Admin-onboarded ones (pitch workflow) start verified (tier 1) instead,
+      // since Gears vetted the business directly while setting it up.
+      const isAdminOnboarded = ADMIN_EMAILS.includes(user?.email);
+      const mechanic = {
+        ...listing,
+        specialty: listing.specialty || 'General repairs',
+        rating: 'New',
+        ratingCount: 0,
+        ratingSum: 0,
+        open: true,
+        claimed: !isAdminOnboarded,
+        verified: isAdminOnboarded,
+      };
       if (useLocalBusiness) {
         mechanic.id = `local-business-${Date.now()}`;
       } else {
@@ -1687,6 +1738,7 @@ function App() {
             onOpenSidebar={() => setMobileSidebarOpen(true)}
             onSelectMechanic={handleSelectMechanic}
             mechanics={mechanics}
+            user={user}
           />
         )}
 
@@ -1750,6 +1802,7 @@ function App() {
           submit={submitMechanic}
           initialData={modal?.type === 'edit' ? modal.mechanic : null}
           onFinish={() => { setBusinessDashboardOpen(true); setModal(null); }}
+          isAdmin={ADMIN_EMAILS.includes(user?.email)}
         />
       )}
 

@@ -10,6 +10,33 @@ implemented**).
 
 ---
 
+## At a glance — §2 through §5, sorted into three states
+
+**"Done" here specifically means code is written but not live yet** — each item names the exact Firebase action still needed before it does anything real. Only "Completed · testable now" works in the app today with zero pending action.
+
+**Yet to do**
+- Analytics counters — `visitCount`/`callCount`/`bookmarkCount`/`searchCount` schema, rules, write sites, dashboard tiles (§2). Not started.
+- Periodic mechanics refetch — still a one-time `getDocs(..., limit(100))` on app start (§4).
+- Admin SDK credential rotation for the pitch-workflow handoff (§3.3).
+- Notification rate limiting — 10 products added in a row still fires 10 separate notifications (§5). Known limitation, not solved.
+- Push notifications (FCM) — explicitly out of scope for v1 (§5).
+- Stricter onboarding validation — rules don't check `lat`/`lng` are numbers or `specialties` is an array (§3.5). Optional hardening.
+
+**Done — needs a Firebase deploy before it's testable**
+- Verification tiering security: `isAdminEmail()` gate on `mechanics` create/update — *needs `firestore:rules` deploy* (§3.3).
+- Coarse user-location persistence to `users/{uid}.location` — *needs `firestore:rules` deploy* (§5).
+- Notifications panel wired to real Firestore reads/mark-read — *needs `firestore:rules` deploy* (§5).
+- `onMechanicCreated`/`onProductCreated`/`onServiceCreated` Cloud Functions — *needs Blaze plan + `firebase deploy --only functions`* (§5).
+
+**Completed · testable now**
+- Business email/password auth — one form, sign-in-then-create fallback (§3.2).
+- Single business entry point — "Become a Business" only, admin-gated button removed (§3.1).
+- Sign-in routing — existing owners skip straight to their dashboard (§3.4).
+- Products included in search autosuggest matching (§4).
+- All onboarding fields reach Firestore correctly, including the `businessType`→`specialty` encoding (§3.5).
+
+---
+
 ## 1. Current state (verified in code, as of this writing)
 
 **Analytics**
@@ -23,21 +50,31 @@ implemented**).
 - Business "ownership" still falls back to a random `local-owner-<timestamp>` id in `localStorage` ([main.jsx:1033](../webapp/src/main.jsx#L1033)), but now only when Firebase itself isn't configured (no `.env`) — the same local-dev fallback the rest of the app already uses, not a bypass around real accounts.
 - Self-submitted listings still save `claimed: true`, mapping to verification **tier 2 ("Claimed")** in `getVerificationTier` ([webapp/src/components/MechanicListPanel.jsx:173](../webapp/src/components/MechanicListPanel.jsx#L173)). Curated/admin listings carry `verified: true` (tier 1).
 
-In short: the business auth/entry-point redesign in §3 is now implemented. The dashboard analytics tiles (§2) and the search gaps (§4) are still open.
+**Verification tiering** — *updated 2026-08-23, resolves the §8 open question on what field means "approved"*
+- No new `status` field was added. `submitMechanic` (main.jsx) now checks the signed-in email against an `ADMIN_EMAILS` list — listings created by an admin save `verified: true` (tier 1) immediately; everyone else still saves `claimed: true` (tier 2), unchanged from before.
+- Mirrored server-side in `firestore.rules`: a new `isAdminEmail()` helper gates `create` (only an admin email can set `verified: true`) and `update` (a listing's own owner can never flip `verified` on themselves). Without the rule, the client-side check was cosmetic — anyone could have crafted a write setting `verified: true` on their own doc.
+- Promoting a claimed listing to verified later is a manual field edit in the Firebase console — deliberately no in-app admin approval surface and no Cloud Function for this.
+
+In short: the business auth/entry-point redesign in §3 and the verification tiering above are now implemented. The dashboard analytics tiles (§2) and the search gaps (§4) are still open.
 
 ---
 
 ## 2. Analytics: what to build
 
-Mirror the pattern already used for ratings (`rating` / `ratingCount` / `ratingSum` on the mechanic doc, publicly writable but field-restricted — see [firestore.rules:22-26](../firestore.rules#L22-L26)):
+Mirror the pattern already used for ratings (`rating` / `ratingCount` / `ratingSum` on the mechanic doc, publicly writable but field-restricted — see [firestore.rules:22-26](../firestore.rules#L22-L26)).
 
-- Add counter fields to the `mechanics/{id}` doc: `visitCount`, `callCount`, `bookmarkCount`, `searchCount` (naming TBD to match the four dashboard tiles).
-- Increment them atomically (`increment()`) at the same call sites that already fire `recordInteraction()` today (`onRecordInteraction` calls in [main.jsx](../webapp/src/main.jsx) and [MechanicListPanel.jsx](../webapp/src/components/MechanicListPanel.jsx)).
-- Dashboard reads the counters straight off the mechanic doc — no extra queries.
+### Steps to wire this to Firebase — not yet built
 
-**Tradeoff:** this gives running totals only, not trends over time. If "calls this week" style charts are wanted later, that needs an event subcollection (`mechanics/{id}/interactions/{autoId}`) instead — more writes/reads, but supports time-series. Recommend shipping the counter version first.
+1. **Schema.** Add `visitCount`, `callCount`, `bookmarkCount`, `searchCount` to `mechanics/{id}`, defaulted to `0` at creation time in `submitMechanic` so `increment()` always has a base to add to.
+2. **Rules.** Add a field-restricted branch to `allow update` in `firestore.rules` — same shape as the existing `rating`/`ratingCount`/`ratingSum` branch — so a write can only ever touch these four fields, never anything else on the doc.
+3. **Decide the auth boundary.** Calls and directions work without signing in today, so a rule requiring `request.auth != null` would silently drop those increments for anonymous visitors. Recommend enabling Firebase's **Anonymous Authentication** and calling `signInAnonymously()` once on app load — every visitor gets a real `request.auth.uid` with no sign-in prompt shown, so the rule can still require auth instead of opening the field to `request.auth == null` entirely.
+4. **Wire the writes.** Add an `updateDoc(doc(db, 'mechanics', id), { field: increment(1) })` call alongside each existing `recordInteraction()` site. `call` and `bookmark` (only on save, matching the current `!isSaved` guard) map directly onto `callCount`/`bookmarkCount`. `visitCount` needs a new trigger at `handleSelectMechanic` (opening the detail panel) — kept separate from `recordInteraction`'s "most recent action" bookkeeping so a visit doesn't overwrite a more useful "Called 2 min ago" caption.
+5. **Decide what counts as a search.** Incrementing on every keystroke in `SearchPanel` would spam Firestore with writes proportional to typing speed. Recommend firing `searchCount` only when a business is actually selected out of search results — "found via search," not raw impressions.
+6. **Dashboard.** Point `BizHomeTab`'s four stat tiles at these fields directly off the mechanic doc, replacing the "Coming soon" placeholder — no extra queries needed.
 
-**Security note:** calls and directions currently work without sign-in, so whatever write rule allows anonymous counter increments needs to be scoped tightly (field-restricted, no arbitrary field writes) to limit abuse — same class of risk the existing rating rule already accepts.
+*Open: two of the steps above are recommendations, not decisions — whether adding Anonymous Auth is acceptable, and whether `searchCount` should count only a typed-and-selected result or also a tap on a suggestion chip.*
+
+**Tradeoff:** counters give running totals only, not trends over time. If "calls this week" style charts are wanted later, that needs an event subcollection (`mechanics/{id}/interactions/{autoId}`) instead — more writes/reads, but supports time-series. Recommend shipping the counter version first.
 
 ---
 
@@ -55,12 +92,12 @@ Both paths land in the exact same onboarding wizard (`MechanicModal` — see §3
 
 **Decided:** this only replaces Google for the business flow. Consumer bookmark/rate sign-in is untouched.
 
-### 3.3 Pitch workflow using admin-created "dummy" accounts — not yet implemented
-1. Admin creates a placeholder Firebase Auth account (dummy email + password) and builds out the listing under it — something concrete to show during the pitch, before the business has agreed to anything.
-2. If the business is interested, admin approves the listing so it goes live / starts operating on the app.
-3. Admin then rotates the account's email and password to the business's real details (requires the Firebase **Admin SDK**, since a client can't change another account's email) and sends the new credentials to the business so they can log in themselves going forward.
+### 3.3 Pitch workflow using admin-created "dummy" accounts — partially implemented
+1. ✅ Admin creates a placeholder Firebase Auth account (dummy email + password) and builds out the listing under it. Because `submitMechanic` now checks the signed-in email against `ADMIN_EMAILS`, this listing saves as `verified: true` the moment it's created — no separate step needed.
+2. *Superseded — there's no approval gate to pass through anymore.* The original plan had a business sit pending until admin approval flipped it live. That's resolved differently: admin-created listings are verified and live immediately; self-onboarded ones are claimed and live immediately. Nothing waits in a pending state either way.
+3. Not yet built: admin rotates the account's email and password to the business's real details (requires the Firebase **Admin SDK**, since a client can't change another account's email) and sends the new credentials to the business so they can log in themselves going forward.
 
-*Open question: what does "approve" actually flip? Likely a `status` field (`pending` / `live`) on the mechanic doc, since `verified`/`claimed` already exist for a different purpose (curation tier, not operational status). Needs a decision on who can flip it — Firebase console access only, or an in-app admin role.*
+**Resolved this session:** no new `status` field was added. `verified`/`claimed` already existed for curation tier and now double as the operational gate too — simpler than maintaining two parallel notions of "live." Who can flip a listing to verified is the same `ADMIN_EMAILS` list, enforced in `firestore.rules` (`isAdminEmail()`) so a self-onboarded owner can't set it on themselves. Promoting one later is a manual field edit in the Firebase console — deliberately no in-app admin surface for this yet.
 
 ### 3.4 Sign-in branching logic — ✅ implemented
 On successful sign-in, the `AuthModal` render site checks whether the authenticated account already owns a mechanic doc (`allMechanics.find(m => m.createdBy === user.uid)`):
@@ -72,16 +109,22 @@ On successful sign-in, the `AuthModal` render site checks whether the authentica
 
 | Field | Notes |
 |---|---|
-| `businessType` | mechanic / fuel / detailer / shop, from `BUSINESS_TYPES` — picked first, drives the rest of the wizard |
+| `businessType` | mechanic / fuel / detailer / shop, from `BUSINESS_TYPES` — picked first, drives the rest of the wizard. **Not stored under this name** — see below. |
 | `name` | garage/business name |
-| `area` | landmark / location detail text, reverse-geocoded from the map pin |
+| `area` | landmark / location detail text, reverse-geocoded from the map pin. Written to **both** `area` and `locationDetail` on the doc — the latter is what §4's search matcher actually reads. |
 | `lat`, `lng` | pin dropped on a Leaflet map; Nominatim (OSM) powers location search and reverse-geocoding, default centered on Accra |
 | `phone` | phone number |
 | `openingDays`, `operatingTime` | hours of operation |
-| `selectedSpecialties` | chosen from the specialty list for the picked `businessType` |
+| `selectedSpecialties` | chosen from **that business type's own dedicated list** — mechanic, shop, and detailer each define a different set (e.g. "Brakes" only exists for mechanics, "Ceramic Coating" only for detailers). Fuel stations have no specialty list at all — they differentiate through `fuelPrices[]` instead (§4). Saved as `specialties` on the doc. |
 | `about` | free-text description |
 
 New listings are saved with `claimed: true` (tier 2) and `rating: 'New'` until reviewed — see `submitMechanic` (main.jsx:1425).
+
+**Where `businessType` actually goes:** the four-way picker never gets its own field on the mechanic doc. It's collapsed into a single `specialty` string at write time — each type's dedicated `category` value ("General repairs", "Auto Parts", "Car Detailing", "Fuel Station"). Editing an existing listing reverses this: `initialType` (main.jsx) pattern-matches the stored `specialty` string back to a picker type. This works precisely *because* specialties are dedicated per type — the `specialty` category plus the `specialties[]` array together already imply which type it was, so a separate `businessType` field would be redundant, not missing.
+
+**What this means for Firebase:** every field above already reaches `mechanics/{id}` today via `addDoc`/`updateDoc` in `submitMechanic` — there's no missing write path, and nothing here is blocked on new schema or Cloud Functions the way §2 and §5 are. Two optional hardening items, bypassable for now:
+- **Rules only validate three fields.** `firestore.rules`' `create` rule checks that `name`, `area`, and `phone` are non-empty strings, but doesn't check that `lat`/`lng` are numbers, `specialties` is an array, or `openingDays`/`operatingTime` are set. The wizard's own `canContinue` check enforces this client-side, but a request built directly against the SDK could skip it. Worth tightening only if malformed docs actually start showing up.
+- **businessType could become a real field later.** Reverse-matching `specialty` works today with four types, but would get fragile if a type's `category` string ever needs to change, or a fifth type is added with an ambiguous category. Storing `businessType` directly would remove the indirection — not urgent while there are only four types.
 
 ---
 
@@ -167,10 +210,11 @@ One thing this surfaced worth knowing: detailer businesses' catalog tab is label
 | `main.jsx` — floating admin "Add Mechanic" button | ✅ Removed, along with its hardcoded 3-email allowlist. `Business` submissions only reach `MechanicModal` via "Become a Business" now. |
 | `main.jsx` — `handleOpenBusiness` | Unchanged: routes to the dashboard if the current owner already has a business, else opens the auth modal. |
 | `main.jsx` — `localBusinessOwnerId` | Unchanged code, changed role: now only used when Firebase isn't configured at all, not as a routine bypass. |
-| `main.jsx` — `submitMechanic` | Unchanged; `useLocalBusiness` branch is now effectively a local-dev-only fallback rather than the default business-flow path. |
+| `main.jsx` — `submitMechanic` | ✅ Now checks `ADMIN_EMAILS`: admin-onboarded listings save `verified: true`, everyone else still saves `claimed: true` as before (§3.3). |
+| `firestore.rules` — `isAdminEmail()`, `mechanics` create/update | ✅ New. Mirrors `ADMIN_EMAILS` server-side: `create` only allows `verified: true` from an admin email, and `update` blocks a listing's own owner from flipping `verified` themselves — without this the client-side check alone was cosmetic (§3.3). |
 | `main.jsx:1251` — mechanics load | Still a one-time `getDocs(..., limit(100))` on app start; needs periodic refetch + higher/paginated limit (see §4). |
 | `components/SearchPanel.jsx:57-74` — `suggestions` | Still needs `products[]` added as a matched field alongside `services[]` (see §4). |
-| `firestore.rules` — `mechanics` collection | Will need a rule branch for a `status`/approval field once one exists (see §3.3). |
+| `firestore.rules` — `mechanics` analytics counters | Still needs the field-restricted `visitCount`/`callCount`/`bookmarkCount`/`searchCount` branch described in §2 — not yet added. |
 | `SETUP.md` | Confirms Email/Password sign-in is enabled on the Firebase project — now actually in use. |
 | `components/NotificationsPanel.jsx` | UI is fully built; reads from a hardcoded `MOCK_NOTIFICATIONS` array. Needs a real `users/{uid}/notifications` source and Cloud Function triggers (see §5). |
 | `components/MapLayout.jsx` — `LocationPicker`, `TILE_URL`/`TILE_SUBDOMAINS`/`TILE_ATTRIBUTION` | ✅ Moved here from `main.jsx` and exported; shared by the wizard and the dashboard Map tab (§6.2). |
@@ -184,13 +228,13 @@ One thing this surfaced worth knowing: detailer businesses' catalog tab is label
 
 ## 8. Open questions to settle before backend build starts
 
-- What field represents "approved / live"? New `status` field, or reuse `verified`/`claimed` differently?
-- Who can flip approval — admin via Firebase console only, or does this need an in-app admin surface?
-- Is a mechanic doc created immediately when the admin makes the dummy account (visible in a "pending" state), or only once approved?
+Four questions this list carried at the last update — which field means approved, who can flip it, and whether either onboarding path sits pending — are answered in §3.3/§1 and dropped from here.
+
 - When credentials are rotated to the business's real email, is the old dummy email discarded or reused for the next pitch?
-- Does a self-onboarded business go live immediately, or also sit in "pending" for admin review, same as an admin-added one?
 - How often should the periodic mechanics refresh run — every few minutes, on tab focus/app resume, or something else?
 - Should the 100-doc `limit()` become real pagination now, or just be raised until the business count makes that necessary?
+- Is adding Firebase Anonymous Authentication acceptable, so anonymous call/direction taps can still increment counters under an auth-required rule (§2)?
+- Should `searchCount` fire only for a typed-and-selected result, or also a tap on a popular-search suggestion chip (§2)?
 - Do we persist user location for "nearby" notifications, and as what — live GPS or a chosen home area?
 - Is push (FCM) in scope for notifications now, or is in-app-only the v1?
 - Should new-product/service notifications target bookmarkers, nearby users, or both?

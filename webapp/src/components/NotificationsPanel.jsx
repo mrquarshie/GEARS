@@ -1,5 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { Check, ClockCounterClockwise, BellSimpleRinging } from '@phosphor-icons/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { collection, doc, onSnapshot, orderBy, query, updateDoc, writeBatch } from 'firebase/firestore';
+import { Check, BellSimpleRinging } from '@phosphor-icons/react';
+import { db } from '../firebase';
+import { formatRelativeTime } from '../recentInteractions';
 import {
   BookmarkIcon,
   LocationIcon,
@@ -10,47 +13,70 @@ import {
   NotificationIcon,
 } from './icons';
 
-// ---------------------------------------------------------------------------
-// Mock notification store — in production this would come from Firestore.
-// ---------------------------------------------------------------------------
-const MOCK_NOTIFICATIONS = [
-  { id: 'n1', type: 'rating', title: 'Kofi A. rated IK_AD Automobile Works', description: 'Left a 5-star review: "Sent updates and pictures throughout."', time: '2m ago', read: false, mechanicId: 'mock-1' },
-  { id: 'n2', type: 'order', title: 'Order confirmed', description: 'Bosch Spark Plug Set (4pc) is being prepared by IK_AD Automobile Works.', time: '1h ago', read: false, mechanicId: 'mock-1' },
-  { id: 'n3', type: 'price', title: 'Price drop on something you saved', description: 'Engine Oil 5L dropped from ₵120 to ₵98 at Circle Auto Parts.', time: '3h ago', read: false, mechanicId: 'mock-2' },
-  { id: 'n4', type: 'nearby', title: '3 new detailers near you', description: 'Aura Detailers, Sparkle Auto Care and 1 more just joined Gears in Osu.', time: 'Yesterday', read: true },
-  { id: 'n5', type: 'verify', title: 'Your listing was verified', description: 'IK_AD Automobile Works is now verified by the Gears team.', time: 'Yesterday', read: true, mechanicId: 'mock-1' },
-  { id: 'n6', type: 'promo', title: 'Weekend detailing special', description: '20% off full interior detailing at participating shops this weekend.', time: '2d ago', read: true },
-  { id: 'n7', type: 'fuel', title: 'Fuel price update', description: 'Petrol prices changed at 5 stations near Adum, Kumasi.', time: '3d ago', read: true },
-  { id: 'n8', type: 'bookmark', title: 'Reminder: saved mechanic is open', description: 'IK_AD Automobile Works is open now — Mon–Sat · 7:00 AM – 6:00 PM.', time: '5d ago', read: true, mechanicId: 'mock-1' },
-];
-
 const TYPE_META = {
   rating: { icon: StarRatingIcon, color: '#FB8C00', bg: '#FFF3E0' },
   order: { icon: ShopIcon, color: '#155e42', bg: '#E8F5E9' },
   price: { icon: BookmarkIcon, color: '#6D28D9', bg: '#F3E8FF' },
   nearby: { icon: LocationIcon, color: '#2477E8', bg: '#E3F2FD' },
+  'new-listing': { icon: NotificationIcon, color: '#6D28D9', bg: '#F3E8FF' },
   verify: { icon: StarRatingIcon, color: '#155e42', bg: '#E8F5E9' },
   promo: { icon: NotificationIcon, color: '#C2185B', bg: '#FCE4EC' },
   fuel: { icon: FillingStationIcon, color: '#2477E8', bg: '#E3F2FD' },
   bookmark: { icon: BookmarkIcon, color: '#155e42', bg: '#E8F5E9' },
 };
 
-function groupByDay(notifications) {
-  const groups = [];
-  const today = new Set();
-  const seen = new Set();
-  const order = ['Today', 'Yesterday', 'Earlier'];
-  for (const n of notifications) {
-    const key = n.time.includes('ago') ? 'Today' : n.time === 'Yesterday' ? 'Yesterday' : 'Earlier';
-    if (!seen.has(key)) { seen.add(key); groups.push({ key, items: [] }); }
-    groups.find(g => g.key === key).items.push(n);
-  }
-  return groups.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+// "Today" / "Yesterday" / "Earlier" by calendar day, not elapsed hours, so a
+// notification from 11pm yesterday and one from 1am today land in the right
+// bucket even though they're only two hours apart.
+function dayBucket(date) {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+  if (date >= startOfToday) return 'Today';
+  if (date >= startOfYesterday) return 'Yesterday';
+  return 'Earlier';
 }
 
-export default function NotificationsPanel({ onOpenSidebar, onSelectMechanic, mechanics }) {
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+function formatNotificationTime(date, bucket) {
+  if (bucket === 'Today') return formatRelativeTime(date.getTime());
+  if (bucket === 'Yesterday') return 'Yesterday';
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function groupByDay(notifications) {
+  const order = ['Today', 'Yesterday', 'Earlier'];
+  const groups = order.map((key) => ({ key, items: [] }));
+  for (const n of notifications) {
+    groups.find((g) => g.key === n.bucket).items.push(n);
+  }
+  return groups.filter((g) => g.items.length > 0);
+}
+
+export default function NotificationsPanel({ onOpenSidebar, onSelectMechanic, mechanics, user }) {
+  const [rawNotifications, setRawNotifications] = useState([]);
   const [activeFilter, setActiveFilter] = useState('All');
+
+  useEffect(() => {
+    if (!db || !user) {
+      setRawNotifications([]);
+      return;
+    }
+    const notificationsQuery = query(
+      collection(db, 'users', user.uid, 'notifications'),
+      orderBy('createdAt', 'desc'),
+    );
+    const unsubscribe = onSnapshot(notificationsQuery, (snap) => {
+      setRawNotifications(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    }, () => setRawNotifications([]));
+    return unsubscribe;
+  }, [user?.uid]);
+
+  const notifications = useMemo(() => rawNotifications.map((n) => {
+    const date = n.createdAt?.toDate ? n.createdAt.toDate() : new Date();
+    const bucket = dayBucket(date);
+    return { ...n, date, bucket, time: formatNotificationTime(date, bucket) };
+  }), [rawNotifications]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -62,11 +88,17 @@ export default function NotificationsPanel({ onOpenSidebar, onSelectMechanic, me
   const groups = groupByDay(filtered);
 
   const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    if (!db || !user) return;
+    const unread = notifications.filter(n => !n.read);
+    if (unread.length === 0) return;
+    const batch = writeBatch(db);
+    unread.forEach((n) => batch.update(doc(db, 'users', user.uid, 'notifications', n.id), { read: true }));
+    batch.commit().catch(() => {});
   };
 
   const markRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    if (!db || !user) return;
+    updateDoc(doc(db, 'users', user.uid, 'notifications', id), { read: true }).catch(() => {});
   };
 
   const resolveMechanic = (notification) => {

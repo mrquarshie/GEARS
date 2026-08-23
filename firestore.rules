@@ -2,6 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Accounts that pitch/onboard businesses on Gears' behalf — kept in sync
+    // with ADMIN_EMAILS in webapp/src/main.jsx. Only these can mark a listing
+    // verified (tier 1); everyone else's onboarding lands on claimed (tier 2).
+    function isAdminEmail() {
+      return request.auth.token.email in
+        ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princeessandoh316@gmail.com'];
+    }
+
     // ---------------------------------------------------------------
     // Mechanics collection
     // ---------------------------------------------------------------
@@ -11,17 +19,23 @@ service cloud.firestore {
 
       // Only authenticated users can submit a new mechanic
       // Validates required fields are non-empty strings
+      // "verified: true" can only be set by an admin account — everyone else
+      // starts at most "claimed" and needs Gears staff to flip it manually.
       allow create: if request.auth != null
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.area is string
         && request.resource.data.area.size() > 0
         && request.resource.data.phone is string
-        && request.resource.data.phone.size() > 0;
+        && request.resource.data.phone.size() > 0
+        && (request.resource.data.verified != true || isAdminEmail());
 
-      // Creator can update any fields. Others can only update ratings via transaction.
+      // Creator can update any field except "verified" (only an admin can
+      // flip that). Others can only update ratings via transaction.
       allow update: if request.auth != null && (
-        (resource.data.createdBy == request.auth.uid) ||
+        (resource.data.createdBy == request.auth.uid
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['verified'])
+              || isAdminEmail())) ||
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'ratingCount', 'ratingSum']))
       );
 
@@ -58,6 +72,29 @@ service cloud.firestore {
       match /media/{mediaId} {
         allow read: if true;
         allow write: if request.auth != null;
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Users collection — bookmarks and coarse location live on the root
+    // doc; notifications are Cloud-Function-written only.
+    // ---------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['savedMechanics', 'location']);
+
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['savedMechanics', 'location']);
+
+      // A user can read and mark their own notifications read, but never
+      // create or delete one directly — only a Cloud Function (Admin SDK,
+      // which bypasses these rules entirely) writes new notification docs.
+      match /notifications/{notificationId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow update: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       }
     }
 
