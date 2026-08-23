@@ -20,6 +20,7 @@ import {
   setDoc,
   arrayUnion,
   arrayRemove,
+  increment,
 } from 'firebase/firestore';
 import {
   signInWithPopup,
@@ -275,9 +276,13 @@ function AuthModal({ close, onSuccess, reason }) {
       setLoading(false);
       if (result.user) onSuccess(result.user);
     } catch (err) {
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-cancelled-by-user') {
+      if (err.code === 'auth/popup-cancelled-by-user') {
+        // User closed the popup intentionally — do not force a redirect
+        setLoading(false);
+        return;
+      }
+      if (err.code === 'auth/popup-blocked') {
         try {
-          setLoading(false);
           const redirectProvider = new GoogleAuthProvider();
           redirectProvider.setCustomParameters({ prompt: 'select_account' });
           await signInWithRedirect(auth, redirectProvider);
@@ -285,6 +290,9 @@ function AuthModal({ close, onSuccess, reason }) {
           setErrorMsg(redirectErr.message.replace('Firebase: ', ''));
           setLoading(false);
         }
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setErrorMsg('Domain not authorized. Please add this domain to Firebase Console > Authentication > Settings > Authorized Domains.');
+        setLoading(false);
       } else {
         setErrorMsg(err.message.replace('Firebase: ', ''));
         setLoading(false);
@@ -1091,6 +1099,28 @@ function App() {
   const [pendingItemQuery, setPendingItemQuery] = useState(null);
   const deepLinkHandledRef = useRef(false);
 
+  // Records atomic counter increments for business analytics (visits, calls, searches, bookmarks)
+  const recordAnalyticsCount = async (mechanicId, field, amount = 1) => {
+    if (!db || !mechanicId || String(mechanicId).startsWith('mock-') || String(mechanicId).startsWith('local-')) return;
+    try {
+      const mechanicRef = doc(db, 'mechanics', mechanicId);
+      await updateDoc(mechanicRef, {
+        [field]: increment(amount),
+      });
+      setAllMechanics((prev) =>
+        prev.map((m) => {
+          if (m.id === mechanicId) {
+            const currentVal = typeof m[field] === 'number' ? m[field] : 0;
+            return { ...m, [field]: Math.max(0, currentVal + amount) };
+          }
+          return m;
+        })
+      );
+    } catch (e) {
+      console.warn(`Failed to record ${field} for ${mechanicId}:`, e);
+    }
+  };
+
   // Records the single most recent explicit action per mechanic (call,
   // bookmark, direction, rate) so cards can show "Called 2 min ago" etc.
   const recordInteraction = (mechanicId, action) => {
@@ -1099,6 +1129,11 @@ function App() {
       saveRecentInteractions(next);
       return next;
     });
+    if (action === 'call') {
+      recordAnalyticsCount(mechanicId, 'callCount', 1);
+    } else if (action === 'bookmark') {
+      recordAnalyticsCount(mechanicId, 'bookmarkCount', 1);
+    }
   };
 
   const handleShowDirection = (mechanic) => {
@@ -1109,6 +1144,9 @@ function App() {
 
   const handleSelectMechanic = (mechanic) => {
     setSelectedMechanic(mechanic);
+    if (mechanic?.id) {
+      recordAnalyticsCount(mechanic.id, 'visitCount', 1);
+    }
     const isDesktop = typeof window !== 'undefined' && window.innerWidth > 768;
     if (isDesktop && mechanic) {
       handleShowDirection(mechanic);
@@ -1262,6 +1300,14 @@ function App() {
   }, [user]);
 
   useEffect(() => {
+    const dismissLoader = () => {
+      const loader = document.getElementById('initial-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 400);
+      }
+    };
+
     if (!firebaseReady || !auth) {
       // No Firebase configured (e.g. local dev without .env) — use local mock
       // data instead so the app is still usable/testable. Remove this once
@@ -1270,6 +1316,7 @@ function App() {
       setAllMechanics(mockData);
       setLoading(false);
       setAuthReady(true);
+      dismissLoader();
       return;
     }
 
@@ -1282,7 +1329,10 @@ function App() {
         if (redirectResult?.user) {
           setUser(redirectResult.user);
           setAuthReady(true);
+          const alias = redirectResult.user.displayName?.trim() || redirectResult.user.email?.split('@')[0] || 'User';
+          show(`Welcome, ${alias}!`);
           setModal((current) => current === 'add' || current?.reason === 'business' ? 'add' : null);
+          dismissLoader();
         }
       } catch (e) {
         console.error('Redirect result error:', e);
@@ -1303,6 +1353,7 @@ function App() {
         console.error(e);
       } finally {
         setLoading(false);
+        dismissLoader();
       }
     };
 
@@ -1401,7 +1452,22 @@ function App() {
     setSearchedArea(term);
     if (!term) return;
 
-    const t = term.toLowerCase();
+    const t = term.toLowerCase().trim();
+    if (t) {
+      const matched = allMechanics.filter(
+        (m) =>
+          m.name?.toLowerCase().includes(t) ||
+          m.area?.toLowerCase().includes(t) ||
+          m.specialty?.toLowerCase().includes(t) ||
+          (m.specialties || []).some((s) => s.toLowerCase().includes(t)) ||
+          (m.services || []).some((s) => (typeof s === 'string' ? s : s.name)?.toLowerCase().includes(t)) ||
+          (m.products || []).some((p) => (typeof p === 'string' ? p : p.name)?.toLowerCase().includes(t))
+      );
+      matched.slice(0, 5).forEach((m) => {
+        recordAnalyticsCount(m.id, 'searchCount', 1);
+      });
+    }
+
     const isLocationMatch = allMechanics.some(
       (m) => m.area?.toLowerCase().includes(t) || m.locationDetail?.toLowerCase().includes(t),
     );
@@ -1446,10 +1512,12 @@ function App() {
         await setDoc(userRef, { savedMechanics: arrayRemove(mechanic.id) }, { merge: true });
         newSaves = savedMechanics.filter(id => id !== mechanic.id);
         show('Removed from saved');
+        recordAnalyticsCount(mechanic.id, 'bookmarkCount', -1);
       } else {
         await setDoc(userRef, { savedMechanics: arrayUnion(mechanic.id) }, { merge: true });
         newSaves = [...savedMechanics, mechanic.id];
         show('Saved successfully');
+        recordInteraction(mechanic.id, 'bookmark');
       }
       setSavedMechanics(newSaves);
       localStorage.setItem('savedMechanics', JSON.stringify(newSaves));
@@ -1460,15 +1528,15 @@ function App() {
       if (isSaved) {
         newSaves = savedMechanics.filter(id => id !== mechanic.id);
         show('Removed from saved (Local)');
+        recordAnalyticsCount(mechanic.id, 'bookmarkCount', -1);
       } else {
         newSaves = [...savedMechanics, mechanic.id];
         show('Saved successfully (Local)');
+        recordInteraction(mechanic.id, 'bookmark');
       }
       setSavedMechanics(newSaves);
       localStorage.setItem('savedMechanics', JSON.stringify(newSaves));
     }
-
-    if (!isSaved) recordInteraction(mechanic.id, 'bookmark');
   };
 
   const submitMechanic = async (listing, existingData) => {

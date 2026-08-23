@@ -68,6 +68,10 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, searchR
         const serviceName = typeof s === 'string' ? s : s.name;
         if (serviceName?.toLowerCase().includes(term)) uniqueMatches.set(serviceName, { type: 'Service', value: serviceName });
       });
+      (m.products || []).forEach(p => {
+        const prodName = typeof p === 'string' ? p : p.name;
+        if (prodName?.toLowerCase().includes(term)) uniqueMatches.set(prodName, { type: 'Product', value: prodName });
+      });
       (m.fuelPrices || []).forEach(f => { if (f.type?.toLowerCase().includes(term)) uniqueMatches.set(f.type, { type: 'Fuel', value: f.type }); });
     });
     return Array.from(uniqueMatches.values()).slice(0, 8);
