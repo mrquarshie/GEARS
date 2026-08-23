@@ -39,7 +39,8 @@ html {
 body {
   margin: 0;
   height: 100%;
-  overflow: hidden; /* App takes full height */
+  overflow: hidden;
+  /* App takes full height */
   overscroll-behavior: none;
 }
 
@@ -90,7 +91,7 @@ body {
   padding: 8px 0 24px 0;
   z-index: 20;
   border-right: 1px solid var(--border);
-  box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
 }
 
 .brand-logo {
@@ -116,8 +117,13 @@ body {
 }
 
 @keyframes logoGearSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .sidebar-divider {
@@ -164,6 +170,13 @@ body {
   gap: 24px;
 }
 
+/* Hidden on the desktop rail (icon-only, no room for a text label — same
+   as every nav-btn above it) and shown only in the mobile dropdown, where
+   this section actually reads as a list with a heading. */
+.sidebar-section-label {
+  display: none;
+}
+
 .auth-btn {
   position: relative;
   background: transparent;
@@ -191,11 +204,25 @@ body {
   color: #0d402b;
 }
 
+/* Profile row — shows the avatar, not clickable (no profile page yet) */
+.auth-btn--static {
+  cursor: default;
+}
+
+.auth-btn--danger {
+  color: #ff3b30;
+}
+
+.auth-btn--danger:hover {
+  color: #d92c22;
+}
+
 .avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #3b82f6; /* blue */
+  background: #3b82f6;
+  /* blue */
   color: white;
   display: flex;
   align-items: center;
@@ -241,7 +268,7 @@ body {
   bottom: 24px;
   background: var(--cream);
   border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -435,15 +462,39 @@ body {
 }
 
 @keyframes cursorBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 @keyframes placeholderSwap {
-  0%, 70% { opacity: 1; transform: translateY(0); }
-  85% { opacity: 0; transform: translateY(-6px); }
-  90% { opacity: 0; transform: translateY(6px); }
-  100% { opacity: 1; transform: translateY(0); }
+
+  0%,
+  70% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  85% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  90% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Search Suggestions — sits flush under .search-input-box (no gap, matching
@@ -497,8 +548,8 @@ body {
   background: #fafafa;
   border: 1.5px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -725,8 +776,15 @@ body {
 }
 
 @keyframes sortDropdownOpen {
-  from { opacity: 0; transform: scale(0.8) translateY(-6px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .sort-option {
@@ -1113,9 +1171,17 @@ body {
 }
 
 @keyframes bookmarksEmptyPop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.25); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.25);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .bookmarks-empty-call-btn {
@@ -1147,7 +1213,9 @@ body {
 }
 
 @keyframes gears-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .mechanic-cards {
@@ -1173,7 +1241,7 @@ body {
 
 .mechanic-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .mechanic-card--active {
@@ -1183,7 +1251,7 @@ body {
 }
 
 .mechanic-card--active:hover {
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .card-body {
@@ -1272,16 +1340,17 @@ body {
 }
 
 .verification-sheet-icon {
-  width: 48px;
-  height: 48px;
+  width: 68px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* background-color: red; */
 }
 
 .verification-sheet-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--ink);
   text-align: center;
@@ -1289,7 +1358,7 @@ body {
 
 .verification-sheet-desc {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: rgba(0, 0, 0, 0.5);
   text-align: center;
@@ -1321,7 +1390,7 @@ body {
    (icon/card/footer/button) but with its own larger, higher-emphasis type,
    since this is a one-time celebratory screen, not a small info tooltip. */
 .biz-success-icon {
-  width: 52px;
+  width: 152px;
   height: 52px;
   display: flex;
   align-items: center;
@@ -1330,7 +1399,7 @@ body {
 
 .biz-success-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #000;
   text-align: center;
@@ -1415,8 +1484,15 @@ body {
 }
 
 @keyframes cursorBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 /* Wraps the specialty tag + the "recently interacted" badge on the same row. */
@@ -1872,7 +1948,7 @@ body {
   bottom: 24px;
   background: var(--cream);
   border-radius: 32px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   outline: 1px solid rgba(0, 0, 0, 0.05);
   outline-offset: -1px;
   z-index: 10;
@@ -1883,8 +1959,15 @@ body {
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .close-panel-btn {
@@ -1901,7 +1984,7 @@ body {
   justify-content: center;
   cursor: pointer;
   z-index: 20;
-  box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px 2px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .close-panel-btn:hover {
@@ -1921,14 +2004,17 @@ body {
   flex-shrink: 0;
 }
 
+/* A business thumbnail, not a person's — 8px per the app-wide rule
+   (.card-avatar, .biz-account-avatar), not the fully-rounded shape a
+   user's own avatar gets (.sidebar-avatar). */
 .detail-hero-avatar {
   width: 64px;
   height: 64px;
-  border-radius: 50%;
+  border-radius: 8px;
   background: #ffffff;
   border: 2px solid #ffffff;
   margin: 12px 0 0 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -1945,7 +2031,7 @@ body {
   color: white;
   font-size: 24px;
   font-weight: 800;
-  border-radius: 50%;
+  border-radius: 8px;
 }
 
 .avatar-letter {
@@ -1979,7 +2065,7 @@ body {
 
 .detail-hero-area {
   margin: 0 14px;
-  color: rgba(0,0,0,0.4);
+  color: rgba(0, 0, 0, 0.4);
   font-size: 12px;
   font-weight: 400;
 }
@@ -1990,7 +2076,8 @@ body {
   margin: 12px 14px 0;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2007,12 +2094,15 @@ body {
   color: #ef4444;
   border-color: #fca5a5;
 }
-.delete-btn:hover { background: #fef2f2; }
+
+.delete-btn:hover {
+  background: #fef2f2;
+}
 
 .detail-tabs {
   display: flex;
   padding: 12px 12px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -2028,7 +2118,7 @@ body {
   padding: 10px 12px 10px;
   font-size: 14px;
   font-weight: 600;
-  color: rgba(0,0,0,0.6);
+  color: rgba(0, 0, 0, 0.6);
   cursor: pointer;
   position: relative;
   white-space: nowrap;
@@ -2072,7 +2162,7 @@ body {
 /* Info rows — icon on left, label + value stacked on the right. */
 .info-row {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -2095,7 +2185,7 @@ body {
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', ui-sans-serif, system-ui, sans-serif;
   text-transform: uppercase;
-  color: rgba(0,0,0,0.5);
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .info-row-value {
@@ -2132,7 +2222,7 @@ body {
 .detail-bottom-bar {
   padding: 12px 12px max(20px, env(safe-area-inset-bottom));
   background: #fafafa;
-  border-top: 1px solid rgba(0,0,0,0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2155,7 +2245,7 @@ body {
   height: 28px;
   transform-origin: top left;
   /* transform: rotate(90deg); */
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   outline-offset: -0.5px;
   flex-shrink: 0;
 }
@@ -2199,7 +2289,8 @@ body {
 }
 
 /* Shared icon/action buttons for cards (used in MechanicListPanel & SearchPanel) */
-.icon-btn, .action-btn {
+.icon-btn,
+.action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2227,7 +2318,8 @@ body {
   gap: 6px;
 }
 
-.icon-btn:hover, .action-btn:hover {
+.icon-btn:hover,
+.action-btn:hover {
   background: #f3f4f6;
 }
 
@@ -2257,7 +2349,7 @@ body {
   width: 90%;
   max-width: 400px;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .modal .close {
@@ -2284,8 +2376,16 @@ body {
   margin-bottom: 16px;
 }
 
-.modal h2 { margin: 0 0 8px; font-weight: 800; }
-.modal p { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+.modal h2 {
+  margin: 0 0 8px;
+  font-weight: 800;
+}
+
+.modal p {
+  color: var(--muted);
+  margin: 0 0 24px;
+  font-size: 14px;
+}
 
 .modal label {
   display: block;
@@ -2757,7 +2857,7 @@ body {
 
 .business-specialties-step {
   padding-top: 0px;
-  
+
 }
 
 .business-specialty-grid {
@@ -2824,8 +2924,15 @@ body {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translate(-50%, 20px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 /* --- MOBILE LAYOUT --- */
@@ -2837,7 +2944,7 @@ body {
   .app-container {
     flex-direction: column;
   }
-  
+
   .sidebar {
     display: flex;
     flex-direction: column;
@@ -2896,8 +3003,13 @@ body {
   }
 
   @keyframes filterSheetUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 
 
@@ -2909,9 +3021,10 @@ body {
     left: 0;
     right: 0;
     z-index: 10001;
-    pointer-events: none; /* Let clicks pass through empty space */
+    pointer-events: none;
+    /* Let clicks pass through empty space */
   }
-  
+
   .mobile-hamburger {
     position: absolute;
     top: 0;
@@ -2921,7 +3034,7 @@ body {
     border-radius: 50%;
     background: white;
     border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2946,7 +3059,7 @@ body {
     border-radius: 12px;
     background: white;
     border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2981,7 +3094,7 @@ body {
   padding: 32px 0 0;
   position: relative;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   max-height: calc(var(--vh, 1vh) * 90);
@@ -3037,7 +3150,8 @@ body {
   border: none;
   font-size: 36px;
   cursor: pointer;
-  color: #fb923c; /* orange outline */
+  color: #fb923c;
+  /* orange outline */
   -webkit-text-stroke: 2px #fb923c;
   color: transparent;
   transition: all 0.2s;
@@ -3144,10 +3258,11 @@ body {
   margin-bottom: 10px;
 }
 
+/* A reviewer is a person, not a business — 108px per the app-wide rule. */
 .review-avatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 108px;
   background: #ffedd5;
   display: flex;
   align-items: center;
@@ -3305,6 +3420,7 @@ body {
   font-weight: 500;
   color: rgba(0, 0, 0, 0.6);
 }
+
 .item-list {
   display: flex;
   flex-direction: column;
@@ -3498,7 +3614,7 @@ body {
   padding: 8px 10px;
   font-size: 12px;
   font-weight: 600;
-  color: rgba(0,0,0,0.6);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .media-tile-play-badge {
@@ -3529,7 +3645,9 @@ body {
   border-radius: 50px;
   overflow: hidden;
   position: relative;
-  background: #fafaf9;
+  /* Same lime-to-white gradient every auth reason uses now (bookmark, rate,
+     business) — previously only the business variant had it. */
+  background: linear-gradient(180deg, #f1ffbb 0%, #fafafa 100%);
   outline: 1px solid rgba(0, 0, 0, 0.06);
   outline-offset: -1px;
   box-shadow:
@@ -3544,7 +3662,6 @@ body {
   max-width: none;
   max-height: none;
   border-radius: 36px;
-  background: linear-gradient(180deg, #fef9c3 0%, #fafafa 100%);
   outline: 1px solid rgba(0, 0, 0, 0.1);
   outline-offset: -1px;
 }
@@ -3589,6 +3706,10 @@ body {
 
 .auth-modal-content--business .auth-body {
   padding: 302px 32px 32px;
+  /* Content is sized to fit without scrolling (see the mobile override's
+     comment) — hidden rather than auto so a fraction-of-a-pixel rounding
+     difference can never produce a visible scrollbar or bounce-scroll. */
+  overflow-y: hidden;
 }
 
 .auth-modal-content--business .auth-body h2 {
@@ -3599,7 +3720,9 @@ body {
   margin-bottom: 28px;
 }
 
-.auth-modal-content--business .google-auth-btn {
+/* Same button size/shape everywhere, matching the design's Google button
+   — previously only the business (email/password) variant used this size. */
+.auth-modal-content .google-auth-btn {
   width: 100%;
   max-width: 330px;
   height: 52px;
@@ -3615,7 +3738,7 @@ body {
   right: 16px;
   background: white !important;
   color: var(--ink) !important;
-  box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px 2px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.3);
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -3635,7 +3758,7 @@ body {
   /* Clips the deco images to this box's own (possibly keyboard-shrunk)
      bounds — without it, anything not repositioned in lockstep just
      bleeds straight past the header into the title/fields below. */
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 .auth-deco {
@@ -3645,20 +3768,20 @@ body {
 
 .auth-deco-big {
   width: 38%;
-  top: -12%;
+  top: -1%;
   left: -4%;
 }
 
 .auth-deco-top-center {
   width: 32%;
-  top: 2%;
+  top: -2%;
   left: 40%;
   transform: rotate(17.75deg);
 }
 
 .auth-deco-top-right {
   width: 23%;
-  top: 11%;
+  top: 1%;
   left: 84%;
 }
 
@@ -3788,30 +3911,33 @@ body {
 }
 
 /* --- Sidebar user avatar --- */
+/* 108px: fully rounded regardless of size — the standard radius for a
+   person's own avatar everywhere in the app, as opposed to a business's
+   (.card-avatar, 8px — a rounded square, not a circle). */
 .sidebar-avatar {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 108px;
   background: var(--forest);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(21,94,66,0.18);
+  box-shadow: 0 2px 8px rgba(21, 94, 66, 0.18);
   border: 2px solid var(--lime);
   cursor: pointer;
   transition: box-shadow 0.2s;
 }
 
 .sidebar-avatar:hover {
-  box-shadow: 0 4px 16px rgba(21,94,66,0.28);
+  box-shadow: 0 4px 16px rgba(21, 94, 66, 0.28);
 }
 
 .sidebar-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 108px;
 }
 
 .sidebar-avatar-letter {
@@ -3866,64 +3992,79 @@ body {
     right: 20px;
   }
 
-  .auth-modal-content--business {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
-    outline: none;
-    box-shadow: none;
-  }
+  /* auth-modal-content, auth-header-graphics, auth-close, auth-logo-box,
+     and auth-body above already apply identically to the business variant
+     (its class list always includes the base auth-modal-content class too)
+     — no business-specific mobile overrides needed for any of them. */
 
+  /* The business form has real content below the headline (two fields, a
+     button, a hint line) that the other reasons don't — at the shared 32vh
+     header height there wasn't reliably enough room left for all of it
+     without scrolling on shorter/toolbar-expanded viewports. Shrinking the
+     header (and the vh-driven values tied to it) to 24vh buys back that
+     room while leaving the image arrangement itself — which is percentage-
+     based within this box — identical to every other auth reason. */
   .auth-modal-content--business .auth-header-graphics {
-    inset: auto;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: calc(var(--vh, 1vh) * 32);
-  }
-
-  .auth-modal-content--business .auth-close {
-    top: 20px;
-    right: 20px;
+    height: calc(var(--vh, 1vh) * 24);
   }
 
   .auth-modal-content--business .auth-logo-box {
-    top: calc(var(--vh, 1vh) * 32 - 28px);
+    top: calc(var(--vh, 1vh) * 24 - 28px);
   }
 
   .auth-modal-content--business .auth-body {
-    padding: calc(var(--vh, 1vh) * 32 + 32px) 24px 32px;
+    padding: calc(var(--vh, 1vh) * 24 + 32px) 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    overflow-y: hidden;
   }
 
-  /* The base (non-business) .auth-deco-* rules already use percentage
-     `top` values, which is why they track the header shrinking correctly
-     — percentages recompute against the header's current height every
-     frame it resizes. The business variant overrode those with fixed
-     pixel offsets tuned for its desktop card, which don't move at all as
-     the header shrinks on mobile: the images stayed put while everything
-     around them animated, so they ended up spilling past the header and
-     overlapping the title/fields once the keyboard opened. Swapping back
-     to equivalent percentages (plus a transition, for browsers that don't
-     recompute per-frame on their own) is what makes the images "push up"
-     in step with the rest instead of sitting still. */
-  .auth-modal-content--business .auth-deco-big {
-    top: 22%;
+  /* Every auth reason shares this exact arrangement on mobile now — sized
+     and positioned per the business form's design (the one this was
+     originally built for). The desktop .auth-deco-* rules further up are
+     tuned for each variant's own desktop card shape instead, since those
+     still differ (a wide landscape card vs. a phone-shaped one) and
+     weren't part of this. Percentages track the header shrinking as the
+     keyboard opens instead of sitting still while everything around them
+     animates — a transition is added for browsers that don't recompute
+     per-frame on their own. */
+  .auth-modal-content .auth-deco-big {
+    width: 39%;
+    left: -3%;
+    top: 2%;
     transition: top 0.3s ease;
   }
 
-  .auth-modal-content--business .auth-deco-top-center {
-    top: 19%;
+  .auth-modal-content .auth-deco-top-center {
+    width: 34%;
+    left: 61%;
+    top: -3%;
     transition: top 0.3s ease;
   }
 
-  .auth-modal-content--business .auth-deco-top-right {
+  .auth-modal-content .auth-deco-top-right {
+    width: 25%;
+    left: 83%;
     top: 47%;
     transition: top 0.3s ease;
   }
 
-  .auth-modal-content--business .auth-deco-bottom-left {
+  .auth-modal-content .auth-deco-bottom-left {
+    width: 24%;
+    left: -6%;
     top: 54%;
     transition: top 0.3s ease;
+  }
+
+  /* While a field in the business form is focused (keyboard open), the
+     already-short 24vh header has even less real room — rather than
+     cramming the images into it, slide them up out of view entirely.
+     -100% clears a full header-height above the box regardless of any
+     given image's own rendered height, so every image ends up fully
+     behind auth-header-graphics's overflow:hidden, not just partway —
+     -10% wasn't enough to do that, the images were still half-visible.
+     Each image keeps its own transition: top rule above, so this still
+     animates smoothly; only the resting position changes. */
+  .auth-header-graphics.keyboard-open .auth-deco {
+    top: -100%;
   }
 }
 
@@ -3978,7 +4119,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     color: var(--ink);
     cursor: pointer;
   }
@@ -3998,7 +4139,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     color: var(--ink);
     cursor: pointer;
   }
@@ -4020,7 +4161,8 @@ body {
   /* Sidebar mobile popup */
   .sidebar {
     position: fixed;
-    top: 70px; /* Below sandwich button */
+    top: 70px;
+    /* Below sandwich button */
     left: 16px;
     bottom: auto;
     width: 200px;
@@ -4028,7 +4170,7 @@ body {
     border-radius: 16px;
     z-index: 10001;
     background: white;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transform: translateY(-10px) scale(0.95);
     opacity: 0;
     pointer-events: none;
@@ -4047,7 +4189,8 @@ body {
     width: 100%;
   }
 
-  .sidebar-logo, .sidebar-divider {
+  .sidebar-logo,
+  .sidebar-divider {
     display: none;
   }
 
@@ -4094,6 +4237,20 @@ body {
     gap: 4px;
   }
 
+  /* Matches .biz-menu-section-label's look (same "section heading over a
+     list of rows" pattern, just in the customer sidebar instead of the
+     business dashboard's menu). */
+  .sidebar-section-label {
+    display: block;
+    width: 100%;
+    padding: 4px 12px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
   .auth-btn {
     flex-direction: row;
     width: 100%;
@@ -4104,6 +4261,30 @@ body {
     justify-content: flex-start;
     border-radius: 8px;
   }
+
+  /* Shrunk to sit inline with the "Profile" label instead of the full-size
+     rail icon it is on desktop, where it stands alone with no text next to it. */
+  .sidebar-avatar {
+    width: 24px;
+    height: 24px;
+    border-width: 1.5px;
+    box-shadow: none;
+    flex-shrink: 0;
+  }
+
+  .sidebar-avatar-letter {
+    font-size: 12px;
+  }
+
+  /* Same treatment as .sidebar-avatar above, for the same reason — sits
+     inline with a label instead of standing alone. */
+  .sidebar-business-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
   /* Remove old mobile sidebar styles */
 
   /* Bottom Sheet MechanicListPanel - floats above the map on all sides */
@@ -4114,7 +4295,8 @@ body {
     right: 12px;
     bottom: 12px;
     width: auto;
-    height: calc(var(--vh, 1vh) * 90); /* Max height when fully expanded */
+    height: calc(var(--vh, 1vh) * 90);
+    /* Max height when fully expanded */
     border-radius: 28px;
     z-index: 1000;
     outline: 1px solid rgba(0, 0, 0, 0.1);
@@ -4124,12 +4306,14 @@ body {
       0 16px 32px -4px rgba(12, 12, 13, 0.1);
     /* By default, transition the transform for snapping */
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    transform: translateY(calc(100% - 150px)); /* Minimized state default */
+    transform: translateY(calc(100% - 150px));
+    /* Minimized state default */
     padding-bottom: env(safe-area-inset-bottom);
   }
 
   .mechanic-list-panel.dragging {
-    transition: none; /* Disable transition while finger is dragging */
+    transition: none;
+    /* Disable transition while finger is dragging */
   }
 
   .mobile-drag-handle {
@@ -4152,7 +4336,10 @@ body {
   /* Mechanic Detail Panel Mobile Override */
   .mechanic-detail-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.50);
     border: 1px solid rgba(0, 0, 0, 0.05);
     backdrop-filter: blur(20px) saturate(180%);
@@ -4176,8 +4363,13 @@ body {
   }
 
   @keyframes slideUpMobile {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 
   /* Peek bar shown after tapping Direction on mobile: collapses the full detail page
@@ -4190,7 +4382,7 @@ body {
     z-index: 10001;
     background: #ffffff;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     padding: 16px 20px;
     display: flex;
     align-items: center;
@@ -4262,16 +4454,18 @@ body {
     z-index: 10002;
     background: white;
     color: var(--ink);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-  
+
   .detail-bottom-bar {
     padding: 12px 12px max(20px, env(safe-area-inset-bottom));
     background: #fafafa;
   }
 
-  .detail-bottom-left, .detail-bottom-right {
-    display: contents; /* Flattens children into the parent flex container */
+  .detail-bottom-left,
+  .detail-bottom-right {
+    display: contents;
+    /* Flattens children into the parent flex container */
   }
 
   /* Rate Modal Mobile Override */
@@ -4304,7 +4498,7 @@ body {
   bottom: 24px;
   background: var(--cream);
   border-radius: 24px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -4525,7 +4719,7 @@ body {
   background-color: #3b82f6;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: 2;
 }
@@ -4541,8 +4735,15 @@ body {
 }
 
 @keyframes mapPulse {
-  0% { transform: scale(0.5); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; }
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
 /* Radar-scan rings shown on the user's location dot while "Use my location" is
@@ -4562,12 +4763,24 @@ body {
   pointer-events: none;
 }
 
-.user-location-marker--scanning .radar-ring-2 { animation-delay: 1s; }
-.user-location-marker--scanning .radar-ring-3 { animation-delay: 2s; }
+.user-location-marker--scanning .radar-ring-2 {
+  animation-delay: 1s;
+}
+
+.user-location-marker--scanning .radar-ring-3 {
+  animation-delay: 2s;
+}
 
 @keyframes radarExpand {
-  0% { transform: scale(0.3); opacity: 0.8; }
-  100% { transform: scale(8); opacity: 0; }
+  0% {
+    transform: scale(0.3);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(8);
+    opacity: 0;
+  }
 }
 
 /* Category Markers */
@@ -4589,10 +4802,21 @@ body {
   transition: transform 0.18s ease;
 }
 
-.category-marker-card--mechanic { --category-color: var(--marker-mechanic); }
-.category-marker-card--detailer { --category-color: var(--marker-detailer); }
-.category-marker-card--fuel { --category-color: var(--marker-fuel); }
-.category-marker-card--parts { --category-color: var(--marker-parts); }
+.category-marker-card--mechanic {
+  --category-color: var(--marker-mechanic);
+}
+
+.category-marker-card--detailer {
+  --category-color: var(--marker-detailer);
+}
+
+.category-marker-card--fuel {
+  --category-color: var(--marker-fuel);
+}
+
+.category-marker-card--parts {
+  --category-color: var(--marker-parts);
+}
 
 /* The dot is the marker's true anchor point (matches the Leaflet iconAnchor) and never
    moves. The head is pinned to a fixed distance ABOVE it via `bottom`, so growing it on
@@ -4758,7 +4982,7 @@ body {
 .modal select:focus {
   outline: none;
   border-color: var(--forest);
-  box-shadow: 0 0 0 4px rgba(21,94,66,0.1);
+  box-shadow: 0 0 0 4px rgba(21, 94, 66, 0.1);
 }
 
 /* Product / Service Detail Sheet — floating card with horizontal margins */
@@ -4814,6 +5038,7 @@ body {
   .item-sheet-overlay {
     align-items: center;
   }
+
   .item-sheet {
     margin-bottom: 0;
     align-self: center;
@@ -4822,8 +5047,15 @@ body {
 }
 
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.95) translateY(12px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .item-sheet-close {
@@ -4892,10 +5124,11 @@ body {
   margin-bottom: 4px;
 }
 
+/* A shop, not a person — 8px per the app-wide business-thumbnail rule. */
 .item-sheet-shop-avatar {
   width: 20px;
   height: 20px;
-  border-radius: 100px;
+  border-radius: 8px;
   background: #EEEEEE;
   border: 1px solid white;
   display: flex;
@@ -5085,8 +5318,13 @@ body {
   z-index: 5;
 }
 
-.media-lightbox-nav--prev { left: 10px; }
-.media-lightbox-nav--next { right: 10px; }
+.media-lightbox-nav--prev {
+  left: 10px;
+}
+
+.media-lightbox-nav--next {
+  right: 10px;
+}
 
 .media-lightbox-dots {
   position: absolute;
@@ -5464,24 +5702,6 @@ body {
   cursor: pointer;
 }
 
-.biz-avatar {
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.biz-avatar-letter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f4a241;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-}
-
 /* Business dashboard hamburger menu — matches the customer view's mobile
    sidebar popup (same overlay + card + nav-btn styling). */
 .biz-menu {
@@ -5520,13 +5740,20 @@ body {
   pointer-events: auto;
 }
 
-.biz-avatar-btn {
+/* Wraps the header's BizAccountAvatar (a business, not a person) — 8px to
+   match .card-avatar's shape, not the fully-rounded shape a user's own
+   avatar gets elsewhere (.sidebar-avatar). */
+.biz-header-avatar-btn {
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
   display: flex;
-  border-radius: 50%;
+  border-radius: 8px;
+}
+
+.biz-menu .nav-btn.biz-menu-danger {
+  color: #ff3b30;
 }
 
 /* Account switcher — only rendered when the signed-in owner manages more
@@ -6052,8 +6279,13 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .biz-empty-text {
@@ -6128,8 +6360,15 @@ body {
 }
 
 @keyframes bizCatalogCaretBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 .biz-catalog-empty-price {
@@ -6565,7 +6804,9 @@ body {
 }
 
 @keyframes bizPhotoSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .biz-catalog-form-close {

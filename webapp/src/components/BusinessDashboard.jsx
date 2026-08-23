@@ -24,21 +24,15 @@ import {
   ClockCounterClockwise,
   Bell,
   SquaresFour,
+  SignOut,
 } from '@phosphor-icons/react';
 import { FillingStationIcon, CarDetailingIcon, ShopIcon, MechanicIcon, StarRatingIcon } from './icons';
 import { db } from '../firebase';
+import { shareMechanic } from '../utils/share';
+import { vibrateTap } from '../utils/feedback';
 import bizIllustrationBattery from './AuthImages/Car battery.png';
 import bizIllustrationEngine from './AuthImages/Engine.png';
 import bizIllustrationSteer from './AuthImages/Steer.png';
-
-function BizAvatar({ user, onClick }) {
-  const initial = user?.displayName?.trim()?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
-  const content = user?.photoURL
-    ? <img src={user.photoURL} alt="" className="biz-avatar" referrerPolicy="no-referrer" />
-    : <div className="biz-avatar biz-avatar-letter">{initial}</div>;
-  if (!onClick) return content;
-  return <button type="button" className="biz-avatar-btn" onClick={onClick} aria-label="Account">{content}</button>;
-}
 
 // Same square-with-initial treatment used for mechanic cards elsewhere
 // (.card-avatar), reused here so a business reads the same way in its own
@@ -208,13 +202,14 @@ function timeGreeting() {
   return 'Good Evening';
 }
 
-export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, show }) {
+export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, onSignOut, onAddBusiness, onViewProfile, show }) {
   const [activeTab, setActiveTab] = useState('home');
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(null); // 'product' | 'service' | 'media'
 
   const handleAddOption = (kind) => {
+    vibrateTap();
     setShowAddSheet(false);
     setPendingAdd(kind);
     setActiveTab(kind === 'media' ? 'media' : 'catalog');
@@ -268,10 +263,12 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
           </button>
           <h1>{PAGE_TITLES[activeTab] || 'Your Business'}</h1>
           <div className="biz-header-actions">
-            <button className="biz-header-icon-btn" aria-label="QR code">
+            <button className="biz-header-icon-btn" aria-label="Share shop page" onClick={() => shareMechanic(mechanic, { onNotice: show })}>
               <QrCode size={18} />
             </button>
-            <BizAvatar user={user} onClick={() => setMenuOpen(true)} />
+            <button type="button" className="biz-header-avatar-btn" onClick={() => setMenuOpen(true)} aria-label="Account">
+              <BizAccountAvatar name={mechanic?.name} />
+            </button>
           </div>
         </header>
 
@@ -301,7 +298,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
                     <button
                       key={b.id}
                       className={`biz-account-row ${b.id === mechanic?.id ? 'active' : ''}`}
-                      onClick={() => { setMenuOpen(false); onSwitchBusiness?.(b.id); }}
+                      onClick={() => { vibrateTap(); setMenuOpen(false); onSwitchBusiness?.(b.id); }}
                     >
                       <BizAccountAvatar name={b.name} />
                       <span className="biz-account-row-text">
@@ -318,12 +315,25 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
                 <div className="biz-menu-divider"></div>
               </>
             )}
+            <button className="nav-btn" onClick={() => { vibrateTap(); setMenuOpen(false); onViewProfile?.(); }}>
+              <Eye size={20} />
+              <span className="nav-text">View Profile</span>
+            </button>
+            <button className="nav-btn" onClick={() => { vibrateTap(); setMenuOpen(false); onAddBusiness?.(); }}>
+              <Plus size={20} />
+              <span className="nav-text">Add Another Business</span>
+            </button>
             <button
               className="nav-btn"
-              onClick={() => { setMenuOpen(false); onExit(); }}
+              onClick={() => { vibrateTap(); setMenuOpen(false); onExit(); }}
             >
               <ArrowsLeftRight size={20} />
               <span className="nav-text">Switch to Customer View</span>
+            </button>
+            <div className="biz-menu-divider"></div>
+            <button className="nav-btn biz-menu-danger" onClick={() => { vibrateTap(); setMenuOpen(false); onSignOut?.(); }}>
+              <SignOut size={20} />
+              <span className="nav-text">Sign Out</span>
             </button>
           </div>
         )}
@@ -388,7 +398,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
         <button
           className={`biz-add-fab ${showAddSheet ? 'open' : ''}`}
-          onClick={() => { playTapSound(); setShowAddSheet((v) => !v); }}
+          onClick={() => { playTapSound(); vibrateTap(); setShowAddSheet((v) => !v); }}
           aria-label={showAddSheet ? 'Close add menu' : 'Add product, service or media'}
         >
           <Plus size={24} weight="bold" />

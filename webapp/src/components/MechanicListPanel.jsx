@@ -474,7 +474,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   useEffect(() => {
     function handleClickOutside(event) {
       if (filterRef.current && !filterRef.current.contains(event.target) &&
-          filterPopupRef.current && !filterPopupRef.current.contains(event.target)) {
+        filterPopupRef.current && !filterPopupRef.current.contains(event.target)) {
         setIsFilterOpen(false);
       }
       if (sortRef.current && !sortRef.current.contains(event.target)) setIsSortOpen(false);
@@ -663,82 +663,82 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
               <div className="search-sticky-bar">
                 <form className={`search-bar-wrapper ${searchTerm ? 'search-bar-wrapper--typing' : ''}`} onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
                   <div className={`search-combo ${showSuggestions && suggestions.length > 0 ? 'search-combo--open' : ''}`}>
-                  <div className="search-input-box">
+                    <div className="search-input-box">
                       <SearchIcon size={18} className="search-icon" />
                       <input
-                      ref={searchRef}
-                      type="text"
-                      placeholder=""
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setShowSuggestions(true);
-                      }}
-                      onPointerDown={(e) => {
-                        if (isMobile && onOpenSearch) {
-                          // Hand off to the full-screen search overlay instead of
-                          // expanding the sheet in place.
-                          e.preventDefault();
-                          onOpenSearch();
-                          return;
-                        }
-                        if (isMobile && sheetState !== 'expanded') {
-                          if (panelRef.current) {
-                            panelRef.current.style.transition = 'none';
-                            panelRef.current.style.transform = 'translateY(240px)';
+                        ref={searchRef}
+                        type="text"
+                        placeholder=""
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setShowSuggestions(true);
+                        }}
+                        onPointerDown={(e) => {
+                          if (isMobile && onOpenSearch) {
+                            // Hand off to the full-screen search overlay instead of
+                            // expanding the sheet in place.
+                            e.preventDefault();
+                            onOpenSearch();
+                            return;
                           }
-                          setSheetState('expanded');
-                          setDragOffset(0);
-                        }
-                      }}
-                      onFocus={() => {
-                        if (searchTerm) setShowSuggestions(true);
-                        if (isMobile && panelRef.current) panelRef.current.style.transition = '';
-                      }}
-                    />
-                    {!searchTerm && (
-                      <span className="search-placeholder-animated">
-                        <span className="search-placeholder-prefix">Search </span>
-                        <span className="search-placeholder-suffix">{placeholderText}<span className="placeholder-cursor">|</span></span>
-                      </span>
-                    )}
-                    {searchTerm && (
-                    
-                        <svg 
-                      aria-label="Clear search"
+                          if (isMobile && sheetState !== 'expanded') {
+                            if (panelRef.current) {
+                              panelRef.current.style.transition = 'none';
+                              panelRef.current.style.transform = 'translateY(240px)';
+                            }
+                            setSheetState('expanded');
+                            setDragOffset(0);
+                          }
+                        }}
+                        onFocus={() => {
+                          if (searchTerm) setShowSuggestions(true);
+                          if (isMobile && panelRef.current) panelRef.current.style.transition = '';
+                        }}
+                      />
+                      {!searchTerm && (
+                        <span className="search-placeholder-animated">
+                          <span className="search-placeholder-prefix">Search </span>
+                          <span className="search-placeholder-suffix">{placeholderText}<span className="placeholder-cursor">|</span></span>
+                        </span>
+                      )}
+                      {searchTerm && (
+
+                        <svg
+                          aria-label="Clear search"
                           onClick={() => {
                             setSearchTerm('');
                             setShowSuggestions(false);
                             onSearch('');
                           }}
-                        xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                           <path d="M5.33464 15.8334L4.16797 14.6667L8.83464 10.0001L4.16797 5.33341L5.33464 4.16675L10.0013 8.83341L14.668 4.16675L15.8346 5.33341L11.168 10.0001L15.8346 14.6667L14.668 15.8334L10.0013 11.1667L5.33464 15.8334Z" fill="black" fill-opacity="0.6" />
                         </svg>
-               
-                    )}
-                  </div>
 
-                  {showSuggestions && suggestions.length > 0 && (
-                    <div className="search-suggestions">
-                      {suggestions.map((s, i) => (
-                        <div
-                          key={i}
-                          className="search-suggestion-row"
-                          onClick={() => {
-                            setSearchTerm(s.value);
-                            setShowSuggestions(false);
-                            onSearch(s.value);
-                          }}
-                        >
-                          <span className="search-suggestion-row-icon">
-                            <SuggestionRowIcon row={s} mechanicsByName={mechanicsByName} />
-                          </span>
-                          <span className="search-suggestion-row-text">{s.value}</span>
-                          <ArrowRight size={18} className="search-suggestion-row-caret" />
-                        </div>
-                      ))}
+                      )}
                     </div>
-                  )}
+
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="search-suggestions">
+                        {suggestions.map((s, i) => (
+                          <div
+                            key={i}
+                            className="search-suggestion-row"
+                            onClick={() => {
+                              setSearchTerm(s.value);
+                              setShowSuggestions(false);
+                              onSearch(s.value);
+                            }}
+                          >
+                            <span className="search-suggestion-row-icon">
+                              <SuggestionRowIcon row={s} mechanicsByName={mechanicsByName} />
+                            </span>
+                            <span className="search-suggestion-row-text">{s.value}</span>
+                            <ArrowRight size={18} className="search-suggestion-row-caret" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="filter-container" ref={filterRef}>
@@ -899,28 +899,28 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                   )}
                 </span>
                 {!searchedArea && (
-                <div className="sort-container" ref={sortRef}>
-                  <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
-                    {currentSort} ↓
-                  </span>
-                  {isSortOpen && (
-                    <div className="sort-dropdown">
-                      {sortOptions.map(option => (
-                        <div
-                          key={option}
-                          className={`sort-option ${currentSort === option ? 'active' : ''}`}
-                          onClick={() => {
-                            setCurrentSort(option);
-                            setIsSortOpen(false);
-                          }}
-                        >
-                          {option}
-                          {currentSort === option && <Target size={16} weight="bold" />}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  <div className="sort-container" ref={sortRef}>
+                    <span className="sort" onClick={() => setIsSortOpen(!isSortOpen)}>
+                      {currentSort} ↓
+                    </span>
+                    {isSortOpen && (
+                      <div className="sort-dropdown">
+                        {sortOptions.map(option => (
+                          <div
+                            key={option}
+                            className={`sort-option ${currentSort === option ? 'active' : ''}`}
+                            onClick={() => {
+                              setCurrentSort(option);
+                              setIsSortOpen(false);
+                            }}
+                          >
+                            {option}
+                            {currentSort === option && <Target size={16} weight="bold" />}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -1027,39 +1027,39 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           i % 3 !== 1 ? 'bookmarks-empty-card--dim' : '',
                         ].filter(Boolean).join(' ')}
                       >
-                      <div className="skeleton-card-body">
-                        <div className="skeleton-card-top">
-                          <div className="skeleton-avatar"></div>
-                          <div className="skeleton-badges">
-                            <div className="skeleton-badge"></div>
-                            <div className="skeleton-badge"></div>
-                            <span className="bookmarks-empty-open-pill">Open</span>
+                        <div className="skeleton-card-body">
+                          <div className="skeleton-card-top">
+                            <div className="skeleton-avatar"></div>
+                            <div className="skeleton-badges">
+                              <div className="skeleton-badge"></div>
+                              <div className="skeleton-badge"></div>
+                              <span className="bookmarks-empty-open-pill">Open</span>
+                            </div>
+                          </div>
+                          <div className="skeleton-name"></div>
+                          <div className="bookmarks-empty-area">{data.area}</div>
+                          <div className="bookmarks-empty-specialty">
+                            {data.icon}
+                            {data.specialty}
                           </div>
                         </div>
-                        <div className="skeleton-name"></div>
-                        <div className="bookmarks-empty-area">{data.area}</div>
-                        <div className="bookmarks-empty-specialty">
-                          {data.icon}
-                          {data.specialty}
-                        </div>
-                      </div>
-                      <div className="skeleton-card-bar">
-                        <div className="skeleton-bar-left">
-                          <div className={`bookmarks-empty-bookmark-btn ${filled ? 'bookmarks-empty-bookmark-btn--active' : ''}`}>
-                            <BookmarkIcon size={16} state={filled ? 'filled' : 'default'} color={filled ? '#145E42' : 'currentColor'} />
+                        <div className="skeleton-card-bar">
+                          <div className="skeleton-bar-left">
+                            <div className={`bookmarks-empty-bookmark-btn ${filled ? 'bookmarks-empty-bookmark-btn--active' : ''}`}>
+                              <BookmarkIcon size={16} state={filled ? 'filled' : 'default'} color={filled ? '#145E42' : 'currentColor'} />
+                            </div>
+                            <div className="skeleton-bar-btn"><RateIcon size={16} /></div>
+                            <div className="skeleton-bar-btn"><ShareIcon size={16} /></div>
+                            <div className="bookmarks-empty-bar-divider" />
                           </div>
-                          <div className="skeleton-bar-btn"><RateIcon size={16} /></div>
-                          <div className="skeleton-bar-btn"><ShareIcon size={16} /></div>
-                          <div className="bookmarks-empty-bar-divider" />
-                        </div>
-                        <div className="bookmarks-empty-call-btn">
-                          <CallIcon size={16} />
-                          Call
+                          <div className="bookmarks-empty-call-btn">
+                            <CallIcon size={16} />
+                            Call
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
                 </div>
               </div>
               <p className="bookmarks-empty-text">
@@ -1304,7 +1304,26 @@ function VerificationSheet({ tier, name, onClose }) {
     <div className="verification-sheet-overlay" onClick={onClose}>
       <div className="verification-sheet" onClick={e => e.stopPropagation()}>
         <div className="verification-sheet-icon">
-          {tier === 1 ? <VerifiedIcon size={44} /> : tier === 2 ? <ClaimedIcon size={44} /> : <UnverifiedIcon size={44} />}
+          {tier === 1 ?
+            <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" fill="none">
+              <path opacity="0.2" d="M47.125 26C47.125 28.5411 43.5053 30.4586 42.5181 32.8433C41.5675 35.1427 42.8066 39.0691 40.9378 40.9378C39.0691 42.8066 35.1427 41.5675 32.8433 42.5181C30.4688 43.5053 28.5391 47.125 26 47.125C23.4609 47.125 21.5312 43.5053 19.1567 42.5181C16.8573 41.5675 12.9309 42.8066 11.0622 40.9378C9.19344 39.0691 10.4325 35.1427 9.48187 32.8433C8.49469 30.4688 4.875 28.5391 4.875 26C4.875 23.4609 8.49469 21.5312 9.48187 19.1567C10.4325 16.8594 9.19344 12.9309 11.0622 11.0622C12.9309 9.19344 16.8594 10.4325 19.1567 9.48187C21.5414 8.49469 23.4609 4.875 26 4.875C28.5391 4.875 30.4688 8.49469 32.8433 9.48187C35.1427 10.4325 39.0691 9.19344 40.9378 11.0622C42.8066 12.9309 41.5675 16.8573 42.5181 19.1567C43.5053 21.5414 47.125 23.4609 47.125 26Z" fill="#145E42" />
+              <path d="M45.8778 20.8853C45.112 20.085 44.3198 19.2603 44.0213 18.5352C43.745 17.8709 43.7287 16.77 43.7125 15.7036C43.682 13.7211 43.6495 11.4745 42.0875 9.9125C40.5255 8.35047 38.2789 8.31797 36.2964 8.2875C35.23 8.27125 34.1291 8.255 33.4648 7.97875C32.7417 7.68016 31.915 6.88797 31.1147 6.12219C29.7131 4.77547 28.1206 3.25 26 3.25C23.8794 3.25 22.2889 4.77547 20.8853 6.12219C20.085 6.88797 19.2603 7.68016 18.5352 7.97875C17.875 8.255 16.77 8.27125 15.7036 8.2875C13.7211 8.31797 11.4745 8.35047 9.9125 9.9125C8.35047 11.4745 8.32812 13.7211 8.2875 15.7036C8.27125 16.77 8.255 17.8709 7.97875 18.5352C7.68016 19.2583 6.88797 20.085 6.12219 20.8853C4.77547 22.2869 3.25 23.8794 3.25 26C3.25 28.1206 4.77547 29.7111 6.12219 31.1147C6.88797 31.915 7.68016 32.7397 7.97875 33.4648C8.255 34.1291 8.27125 35.23 8.2875 36.2964C8.31797 38.2789 8.35047 40.5255 9.9125 42.0875C11.4745 43.6495 13.7211 43.682 15.7036 43.7125C16.77 43.7287 17.8709 43.745 18.5352 44.0213C19.2583 44.3198 20.085 45.112 20.8853 45.8778C22.2869 47.2245 23.8794 48.75 26 48.75C28.1206 48.75 29.7111 47.2245 31.1147 45.8778C31.915 45.112 32.7397 44.3198 33.4648 44.0213C34.1291 43.745 35.23 43.7287 36.2964 43.7125C38.2789 43.682 40.5255 43.6495 42.0875 42.0875C43.6495 40.5255 43.682 38.2789 43.7125 36.2964C43.7287 35.23 43.745 34.1291 44.0213 33.4648C44.3198 32.7417 45.112 31.915 45.8778 31.1147C47.2245 29.7131 48.75 28.1206 48.75 26C48.75 23.8794 47.2245 22.2889 45.8778 20.8853ZM43.5317 28.8661C42.5588 29.8817 41.5512 30.9319 41.017 32.2217C40.5052 33.4608 40.4828 34.8766 40.4625 36.2477C40.4422 37.6695 40.4198 39.1584 39.7881 39.7881C39.1564 40.4178 37.6777 40.4422 36.2477 40.4625C34.8766 40.4828 33.4608 40.5052 32.2217 41.017C30.9319 41.5512 29.8817 42.5588 28.8661 43.5317C27.8505 44.5047 26.8125 45.5 26 45.5C25.1875 45.5 24.1414 44.5006 23.1339 43.5317C22.1264 42.5628 21.0681 41.5512 19.7783 41.017C18.5392 40.5052 17.1234 40.4828 15.7523 40.4625C14.3305 40.4422 12.8416 40.4198 12.2119 39.7881C11.5822 39.1564 11.5578 37.6777 11.5375 36.2477C11.5172 34.8766 11.4948 33.4608 10.983 32.2217C10.4488 30.9319 9.44125 29.8817 8.46828 28.8661C7.49531 27.8505 6.5 26.8125 6.5 26C6.5 25.1875 7.49937 24.1414 8.46828 23.1339C9.43719 22.1264 10.4488 21.0681 10.983 19.7783C11.4948 18.5392 11.5172 17.1234 11.5375 15.7523C11.5578 14.3305 11.5802 12.8416 12.2119 12.2119C12.8436 11.5822 14.3223 11.5578 15.7523 11.5375C17.1234 11.5172 18.5392 11.4948 19.7783 10.983C21.0681 10.4488 22.1183 9.44125 23.1339 8.46828C24.1495 7.49531 25.1875 6.5 26 6.5C26.8125 6.5 27.8586 7.49937 28.8661 8.46828C29.8736 9.43719 30.9319 10.4488 32.2217 10.983C33.4608 11.4948 34.8766 11.5172 36.2477 11.5375C37.6695 11.5578 39.1584 11.5802 39.7881 12.2119C40.4178 12.8436 40.4422 14.3223 40.4625 15.7523C40.4828 17.1234 40.5052 18.5392 41.017 19.7783C41.5512 21.0681 42.5588 22.1183 43.5317 23.1339C44.5047 24.1495 45.5 25.1875 45.5 26C45.5 26.8125 44.5006 27.8586 43.5317 28.8661ZM35.2747 19.9753C35.4258 20.1262 35.5456 20.3055 35.6274 20.5027C35.7092 20.7 35.7513 20.9114 35.7513 21.125C35.7513 21.3386 35.7092 21.55 35.6274 21.7473C35.5456 21.9445 35.4258 22.1238 35.2747 22.2747L23.8997 33.6497C23.7488 33.8008 23.5695 33.9206 23.3723 34.0024C23.175 34.0842 22.9636 34.1263 22.75 34.1263C22.5364 34.1263 22.325 34.0842 22.1277 34.0024C21.9305 33.9206 21.7512 33.8008 21.6003 33.6497L16.7253 28.7747C16.4204 28.4698 16.2491 28.0562 16.2491 27.625C16.2491 27.1938 16.4204 26.7802 16.7253 26.4753C17.0302 26.1704 17.4438 25.9991 17.875 25.9991C18.3062 25.9991 18.7198 26.1704 19.0247 26.4753L22.75 30.2027L32.9753 19.9753C33.1262 19.8242 33.3055 19.7044 33.5027 19.6226C33.7 19.5408 33.9114 19.4987 34.125 19.4987C34.3386 19.4987 34.55 19.5408 34.7473 19.6226C34.9445 19.7044 35.1238 19.8242 35.2747 19.9753Z" fill="#145E42" />
+            </svg>
+
+            : tier === 2 ?
+
+              <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" fill="none">
+                <path opacity="0.2" d="M47.125 26C47.125 28.5411 43.5053 30.4586 42.5181 32.8433C41.5675 35.1427 42.8066 39.0691 40.9378 40.9378C39.0691 42.8066 35.1427 41.5675 32.8433 42.5181C30.4688 43.5053 28.5391 47.125 26 47.125C23.4609 47.125 21.5312 43.5053 19.1567 42.5181C16.8573 41.5675 12.9309 42.8066 11.0622 40.9378C9.19344 39.0691 10.4325 35.1427 9.48187 32.8433C8.49469 30.4688 4.875 28.5391 4.875 26C4.875 23.4609 8.49469 21.5312 9.48187 19.1567C10.4325 16.8594 9.19344 12.9309 11.0622 11.0622C12.9309 9.19344 16.8594 10.4325 19.1567 9.48187C21.5414 8.49469 23.4609 4.875 26 4.875C28.5391 4.875 30.4688 8.49469 32.8433 9.48187C35.1427 10.4325 39.0691 9.19344 40.9378 11.0622C42.8066 12.9309 41.5675 16.8573 42.5181 19.1567C43.5053 21.5414 47.125 23.4609 47.125 26Z" fill="black" fill-opacity="0.4" />
+                <path d="M45.8778 20.8853C45.112 20.085 44.3198 19.2603 44.0213 18.5352C43.745 17.8709 43.7287 16.77 43.7125 15.7036C43.682 13.7211 43.6495 11.4745 42.0875 9.9125C40.5255 8.35047 38.2789 8.31797 36.2964 8.2875C35.23 8.27125 34.1291 8.255 33.4648 7.97875C32.7417 7.68016 31.915 6.88797 31.1147 6.12219C29.7131 4.77547 28.1206 3.25 26 3.25C23.8794 3.25 22.2889 4.77547 20.8853 6.12219C20.085 6.88797 19.2603 7.68016 18.5352 7.97875C17.875 8.255 16.77 8.27125 15.7036 8.2875C13.7211 8.31797 11.4745 8.35047 9.9125 9.9125C8.35047 11.4745 8.32812 13.7211 8.2875 15.7036C8.27125 16.77 8.255 17.8709 7.97875 18.5352C7.68016 19.2583 6.88797 20.085 6.12219 20.8853C4.77547 22.2869 3.25 23.8794 3.25 26C3.25 28.1206 4.77547 29.7111 6.12219 31.1147C6.88797 31.915 7.68016 32.7397 7.97875 33.4648C8.255 34.1291 8.27125 35.23 8.2875 36.2964C8.31797 38.2789 8.35047 40.5255 9.9125 42.0875C11.4745 43.6495 13.7211 43.682 15.7036 43.7125C16.77 43.7287 17.8709 43.745 18.5352 44.0213C19.2583 44.3198 20.085 45.112 20.8853 45.8778C22.2869 47.2245 23.8794 48.75 26 48.75C28.1206 48.75 29.7111 47.2245 31.1147 45.8778C31.915 45.112 32.7397 44.3198 33.4648 44.0213C34.1291 43.745 35.23 43.7287 36.2964 43.7125C38.2789 43.682 40.5255 43.6495 42.0875 42.0875C43.6495 40.5255 43.682 38.2789 43.7125 36.2964C43.7287 35.23 43.745 34.1291 44.0213 33.4648C44.3198 32.7417 45.112 31.915 45.8778 31.1147C47.2245 29.7131 48.75 28.1206 48.75 26C48.75 23.8794 47.2245 22.2889 45.8778 20.8853ZM43.5317 28.8661C42.5588 29.8817 41.5512 30.9319 41.017 32.2217C40.5052 33.4608 40.4828 34.8766 40.4625 36.2477C40.4422 37.6695 40.4198 39.1584 39.7881 39.7881C39.1564 40.4178 37.6777 40.4422 36.2477 40.4625C34.8766 40.4828 33.4608 40.5052 32.2217 41.017C30.9319 41.5512 29.8817 42.5588 28.8661 43.5317C27.8505 44.5047 26.8125 45.5 26 45.5C25.1875 45.5 24.1414 44.5006 23.1339 43.5317C22.1264 42.5628 21.0681 41.5512 19.7783 41.017C18.5392 40.5052 17.1234 40.4828 15.7523 40.4625C14.3305 40.4422 12.8416 40.4198 12.2119 39.7881C11.5822 39.1564 11.5578 37.6777 11.5375 36.2477C11.5172 34.8766 11.4948 33.4608 10.983 32.2217C10.4488 30.9319 9.44125 29.8817 8.46828 28.8661C7.49531 27.8505 6.5 26.8125 6.5 26C6.5 25.1875 7.49937 24.1414 8.46828 23.1339C9.43719 22.1264 10.4488 21.0681 10.983 19.7783C11.4948 18.5392 11.5172 17.1234 11.5375 15.7523C11.5578 14.3305 11.5802 12.8416 12.2119 12.2119C12.8436 11.5822 14.3223 11.5578 15.7523 11.5375C17.1234 11.5172 18.5392 11.4948 19.7783 10.983C21.0681 10.4488 22.1183 9.44125 23.1339 8.46828C24.1495 7.49531 25.1875 6.5 26 6.5C26.8125 6.5 27.8586 7.49937 28.8661 8.46828C29.8736 9.43719 30.9319 10.4488 32.2217 10.983C33.4608 11.4948 34.8766 11.5172 36.2477 11.5375C37.6695 11.5578 39.1584 11.5802 39.7881 12.2119C40.4178 12.8436 40.4422 14.3223 40.4625 15.7523C40.4828 17.1234 40.5052 18.5392 41.017 19.7783C41.5512 21.0681 42.5588 22.1183 43.5317 23.1339C44.5047 24.1495 45.5 25.1875 45.5 26C45.5 26.8125 44.5006 27.8586 43.5317 28.8661ZM35.2747 19.9753C35.4258 20.1262 35.5456 20.3055 35.6274 20.5027C35.7092 20.7 35.7513 20.9114 35.7513 21.125C35.7513 21.3386 35.7092 21.55 35.6274 21.7473C35.5456 21.9445 35.4258 22.1238 35.2747 22.2747L23.8997 33.6497C23.7488 33.8008 23.5695 33.9206 23.3723 34.0024C23.175 34.0842 22.9636 34.1263 22.75 34.1263C22.5364 34.1263 22.325 34.0842 22.1277 34.0024C21.9305 33.9206 21.7512 33.8008 21.6003 33.6497L16.7253 28.7747C16.4204 28.4698 16.2491 28.0562 16.2491 27.625C16.2491 27.1938 16.4204 26.7802 16.7253 26.4753C17.0302 26.1704 17.4438 25.9991 17.875 25.9991C18.3062 25.9991 18.7198 26.1704 19.0247 26.4753L22.75 30.2027L32.9753 19.9753C33.1262 19.8242 33.3055 19.7044 33.5027 19.6226C33.7 19.5408 33.9114 19.4987 34.125 19.4987C34.3386 19.4987 34.55 19.5408 34.7473 19.6226C34.9445 19.7044 35.1238 19.8242 35.2747 19.9753Z" fill="black" fill-opacity="0.4" />
+              </svg>
+
+              :
+
+              <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52" fill="none">
+                <path d="M19.6976 19.4999C20.207 18.0519 21.2124 16.8308 22.5358 16.053C23.8592 15.2753 25.4152 14.991 26.9282 15.2505C28.4411 15.51 29.8134 16.2966 30.8019 17.4709C31.7905 18.6452 32.3316 20.1315 32.3293 21.6666C32.3293 25.9999 25.8293 28.1666 25.8293 28.1666M26.0026 36.8333H26.0243M47.6693 25.9999C47.6693 37.9661 37.9688 47.6666 26.0026 47.6666C14.0364 47.6666 4.33594 37.9661 4.33594 25.9999C4.33594 14.0337 14.0364 4.33325 26.0026 4.33325C37.9688 4.33325 47.6693 14.0337 47.6693 25.9999Z" stroke="#1E1E1E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+
+          }
         </div>
         <h3 className="verification-sheet-title">{title}</h3>
         <p className="verification-sheet-desc">{desc}</p>

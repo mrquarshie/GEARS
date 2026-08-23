@@ -42,6 +42,7 @@ import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
 import BusinessDashboard from './components/BusinessDashboard';
 import { CarDetailingIcon } from './components/icons';
+import { vibrateTap } from './utils/feedback';
 
 import authImgCar from './components/AuthImages/Car.png';
 import authImgSteer from './components/AuthImages/Steer.png';
@@ -271,10 +272,12 @@ function AuthModal({ close, onSuccess, reason }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const headline = AUTH_REASON_COPY[reason] || 'Find trusted mechanics, anywhere in Ghana.';
   const isBusiness = reason === 'business';
 
   const loginWithGoogle = async () => {
+    vibrateTap();
     if (!firebaseReady) return setErrorMsg('Add your Firebase settings to .env first.');
     setLoading(true);
     setErrorMsg('');
@@ -304,6 +307,7 @@ function AuthModal({ close, onSuccess, reason }) {
   // it creates one.
   const submitBusinessAuth = async (e) => {
     e.preventDefault();
+    vibrateTap();
     if (!email || !password) return setErrorMsg('Enter an email and password.');
     if (!firebaseReady) {
       // No Firebase configured (local frontend work, no .env) — fall
@@ -343,7 +347,7 @@ function AuthModal({ close, onSuccess, reason }) {
           <X size={18} />
         </button>
 
-        <div className="auth-header-graphics">
+        <div className={`auth-header-graphics ${keyboardOpen ? 'keyboard-open' : ''}`}>
           <img className="auth-deco auth-deco-big" src={authImgCar} alt="" />
           <img className="auth-deco auth-deco-top-center" src={authImgSteer} alt="" />
           <img className="auth-deco auth-deco-top-right" src={authImgEngine} alt="" />
@@ -363,18 +367,22 @@ function AuthModal({ close, onSuccess, reason }) {
               className="auth-email-form business-fields"
               onSubmit={submitBusinessAuth}
               onFocus={(e) => {
-                // Same "scroll the focused field into view" pattern the
-                // onboarding wizard already uses (MechanicModal's
-                // .business-fields onFocus) — the app already cancels the
-                // OS's own keyboard-pan behavior (see the visualViewport
-                // effects in App), so a plain page-shove would fight that;
-                // this scrolls just the one field into the space the
-                // shrunk (--vh-driven) modal still has.
+                // Used to also scrollIntoView the focused field, back when
+                // the header images stayed cramped in place on focus. Now
+                // that focusing a field hides them entirely (auth-header-
+                // graphics.keyboard-open below) there's already plenty of
+                // room without moving anything — scrolling on top of that
+                // just fought the keyboard's own layout, so it's gone.
                 if (!e.target.matches('input')) return;
-                const field = e.target;
-                setTimeout(() => {
-                  field.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                }, 300);
+                setKeyboardOpen(true);
+              }}
+              onBlur={(e) => {
+                // Only counts as "closed" once focus actually leaves the
+                // form — tabbing from Email to Password blurs one input
+                // and immediately focuses the other, and relatedTarget
+                // still points inside the form at that instant.
+                if (e.currentTarget.contains(e.relatedTarget)) return;
+                setKeyboardOpen(false);
               }}
             >
               <label>Email
@@ -752,6 +760,7 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
 
   const send = async (e) => {
     e.preventDefault();
+    vibrateTap();
     if (step === 'type') {
       setStep('info');
       return;
@@ -1025,7 +1034,7 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
         <div className="verification-sheet-overlay">
           <div className="verification-sheet">
             <div className="biz-success-icon">
-              <SealCheck size={44} weight="fill" color="var(--forest)" />
+              <SealCheck size={64} weight="fill" color="var(--forest)" />
             </div>
             <h3 className="biz-success-title">{typeConfig.successTitle}</h3>
             {isAdmin ? (
@@ -1111,7 +1120,10 @@ function App() {
 
   // Records the single most recent explicit action per mechanic (call,
   // bookmark, direction, rate) so cards can show "Called 2 min ago" etc.
+  // Doubles as the one choke point every one of those actions already
+  // passes through, so a vibration here covers all of them for free.
   const recordInteraction = (mechanicId, action) => {
+    vibrateTap();
     setRecentInteractions((prev) => {
       const next = { ...prev, [mechanicId]: { action, timestamp: Date.now() } };
       saveRecentInteractions(next);
@@ -1455,7 +1467,10 @@ function App() {
     if (!mechanic) return;
     const isSaved = savedMechanics.includes(mechanic.id);
 
-    // Play a short beep on save/unsave
+    // Play a short beep on save/unsave, plus a subtle vibration. Called
+    // directly here (not left to recordInteraction below) since unsaving
+    // doesn't go through that — only a fresh save does.
+    vibrateTap();
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -1623,6 +1638,9 @@ function App() {
         onSwitchBusiness={setActiveBusinessId}
         onUpdateLocation={handleUpdateBusinessLocation}
         onExit={() => setBusinessDashboardOpen(false)}
+        onSignOut={() => { signOut(auth); setUser(null); setBusinessDashboardOpen(false); }}
+        onAddBusiness={() => { setBusinessDashboardOpen(false); setModal('add'); }}
+        onViewProfile={() => { setBusinessDashboardOpen(false); handleSelectMechanic(myBusiness); }}
         show={show}
       />
     );
@@ -1645,6 +1663,7 @@ function App() {
         openAuth={() => setModal('auth')}
         onSignOut={() => { signOut(auth); setUser(null); }}
         onOpenBusiness={handleOpenBusiness}
+        myBusiness={myBusiness}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
         isSearchPanelOpen={isSearchPanelOpen}
