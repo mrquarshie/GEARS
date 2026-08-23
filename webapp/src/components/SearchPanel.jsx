@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, X, Wrench, ClockCounterClockwise, ArrowRight } from '@phosphor-icons/react';
-import { LocationIcon, FillingStationIcon, CarDetailingIcon } from './icons';
+import { ArrowLeft, X, ClockCounterClockwise, ArrowRight } from '@phosphor-icons/react';
 import { getPlaceholderPhrases } from '../searchPlaceholders';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriterPlaceholder';
+import { buildMechanicsByName, buildSuggestionMatches, SuggestionRowIcon } from './SearchSuggestions';
 
 const RECENT_SEARCHES_KEY = 'gearsRecentSearches';
 const MAX_RECENT_SEARCHES = 5;
@@ -24,22 +24,6 @@ function saveRecentSearches(list) {
   }
 }
 
-// Small icon per suggestion, matching what the row is actually pointing to.
-function SuggestionRowIcon({ row, mechanicsByName }) {
-  if (row.type === 'Area' || row.type === 'Location') {
-    return <LocationIcon size={20} state="filled" />;
-  }
-  if (row.type === 'Fuel') {
-    return <FillingStationIcon size={20} state="filled" />;
-  }
-  if (row.type === 'Name') {
-    const specialty = mechanicsByName.get(row.value)?.specialty;
-    if (specialty === 'Fuel Station') return <FillingStationIcon size={20} state="filled" />;
-    if (specialty === 'Car Detailing') return <CarDetailingIcon size={20} state="filled" />;
-  }
-  return <Wrench size={20} />;
-}
-
 export default function SearchPanel({ mechanics, searchedArea, onSearch, searchRef, onClose, viewMode }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches);
@@ -52,26 +36,9 @@ export default function SearchPanel({ mechanics, searchedArea, onSearch, searchR
     searchRef?.current?.focus();
   }, [searchRef]);
 
-  const mechanicsByName = useMemo(() => new Map(mechanics.map(m => [m.name, m])), [mechanics]);
+  const mechanicsByName = useMemo(() => buildMechanicsByName(mechanics), [mechanics]);
 
-  const suggestions = useMemo(() => {
-    if (!searchTerm) return [];
-    const term = searchTerm.toLowerCase();
-    const uniqueMatches = new Map();
-    mechanics.forEach(m => {
-      if (m.name?.toLowerCase().includes(term)) uniqueMatches.set(m.name, { type: 'Name', value: m.name });
-      if (m.area?.toLowerCase().includes(term)) uniqueMatches.set(m.area, { type: 'Area', value: m.area });
-      if (m.specialty?.toLowerCase().includes(term)) uniqueMatches.set(m.specialty, { type: 'Category', value: m.specialty });
-      if (m.locationDetail?.toLowerCase().includes(term)) uniqueMatches.set(m.locationDetail, { type: 'Location', value: m.locationDetail });
-      (m.specialties || []).forEach(s => { if (s.toLowerCase().includes(term)) uniqueMatches.set(s, { type: 'Speciality', value: s }); });
-      (m.services || []).forEach(s => {
-        const serviceName = typeof s === 'string' ? s : s.name;
-        if (serviceName?.toLowerCase().includes(term)) uniqueMatches.set(serviceName, { type: 'Service', value: serviceName });
-      });
-      (m.fuelPrices || []).forEach(f => { if (f.type?.toLowerCase().includes(term)) uniqueMatches.set(f.type, { type: 'Fuel', value: f.type }); });
-    });
-    return Array.from(uniqueMatches.values()).slice(0, 8);
-  }, [searchTerm, mechanics]);
+  const suggestions = useMemo(() => buildSuggestionMatches(mechanics, searchTerm), [searchTerm, mechanics]);
 
   // Default (no query yet) rows: a mix of top-rated businesses, areas and
   // categories pulled from real data, echoing the "popular searches" pattern.

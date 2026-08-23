@@ -1645,6 +1645,7 @@ function App() {
             recentInteractions={recentInteractions}
             onRecordInteraction={recordInteraction}
             onNotice={show}
+            onRate={(m) => setModal({ type: 'rate', mechanic: m })}
             hideOnDesktop={!!selectedMechanic}
               onUseMyLocation={() => {
                 if (navigator.geolocation) {

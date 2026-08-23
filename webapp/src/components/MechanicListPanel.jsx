@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft, X, Wrench } from '@phosphor-icons/react';
+import { Target, ArrowLeft, ArrowRight, X, Wrench } from '@phosphor-icons/react';
 import {
   BookmarkIcon,
   CallIcon,
+  CarDetailingIcon,
   FillingStationIcon,
   FilterIcon,
   LocationIcon,
+  MechanicIcon,
   RateIcon,
   SearchIcon,
   ShareIcon,
+  ShopIcon,
   StarRatingIcon,
 } from './icons';
 import { getPlaceholderPhrases } from '../searchPlaceholders';
@@ -18,6 +21,7 @@ import { useTypewriterLoop } from '../hooks/useTypewriterLoop';
 import { ItemSheet } from './MechanicDetailPanel';
 import { getRecentInteraction, formatRelativeTime } from '../recentInteractions';
 import { shareMechanic } from '../utils/share';
+import { buildMechanicsByName, buildSuggestionMatches, SuggestionRowIcon } from './SearchSuggestions';
 
 // Expanding drive-time windows used by the "Use my location" search: start tight
 // (5-10 min) and widen in 10-minute steps up to an hour until a window has a match.
@@ -86,6 +90,14 @@ function AnimatedSpecialtyTypewriter({ specialties }) {
       <span className="specialty-typewriter-cursor">|</span>
     </span>
   );
+}
+
+// Category mark shown before the specialty tag on each card.
+function SpecialtyMarkIcon({ specialty }) {
+  if (specialty === 'Fuel Station') return <FillingStationIcon size={14} />;
+  if (specialty === 'Car Detailing') return <CarDetailingIcon size={14} />;
+  if (['Shop', 'Parts Shop', 'Auto Parts', 'Car Parts'].includes(specialty)) return <ShopIcon size={14} />;
+  return <MechanicIcon size={14} />;
 }
 
 // When a search matched a mechanic via one of its products or services (rather
@@ -208,7 +220,7 @@ function UnverifiedIcon({ size = 20 }) {
 // least this long so the loading/radar sequence is actually visible.
 const MIN_SCAN_MS = 3500;
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice, onRate }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -245,28 +257,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const scanStartRef = useRef(0);
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
-  const suggestions = useMemo(() => {
-    if (!searchTerm) return [];
-    const term = searchTerm.toLowerCase();
-    const uniqueMatches = new Map();
-    mechanics.forEach(m => {
-      if (m.name?.toLowerCase().includes(term)) uniqueMatches.set(m.name, { type: 'Name', value: m.name });
-      if (m.area?.toLowerCase().includes(term)) uniqueMatches.set(m.area, { type: 'Area', value: m.area });
-      if (m.specialty?.toLowerCase().includes(term)) uniqueMatches.set(m.specialty, { type: 'Category', value: m.specialty });
-      if (m.locationDetail?.toLowerCase().includes(term)) uniqueMatches.set(m.locationDetail, { type: 'Location', value: m.locationDetail });
-      if (m.about?.toLowerCase().includes(term)) uniqueMatches.set(m.about, { type: 'About', value: m.about });
-      (m.specialties || []).forEach(s => { if (s.toLowerCase().includes(term)) uniqueMatches.set(s, { type: 'Speciality', value: s }); });
-      (m.services || []).forEach(s => {
-        const serviceName = typeof s === 'string' ? s : s.name;
-        if (serviceName?.toLowerCase().includes(term)) uniqueMatches.set(serviceName, { type: 'Service', value: serviceName });
-      });
-      (m.products || []).forEach(p => { if (p.name?.toLowerCase().includes(term)) uniqueMatches.set(p.name, { type: 'Product', value: p.name }); });
-      (m.fuelPrices || []).forEach(f => { if (f.type?.toLowerCase().includes(term)) uniqueMatches.set(f.type, { type: 'Fuel', value: f.type }); });
-      (m.facilities || []).forEach(f => { if (f.toLowerCase?.().includes(term)) uniqueMatches.set(f, { type: 'Facility', value: f }); });
-      if (m.phone?.toLowerCase().includes(term)) uniqueMatches.set(m.phone, { type: 'Phone', value: m.phone });
-    });
-    return Array.from(uniqueMatches.values()).slice(0, 8);
-  }, [searchTerm, mechanics]);
+  const mechanicsByName = useMemo(() => buildMechanicsByName(mechanics), [mechanics]);
+
+  const suggestions = useMemo(() => buildSuggestionMatches(mechanics, searchTerm), [searchTerm, mechanics]);
 
   const popularProducts = useMemo(() => {
     if (viewMode !== 'shop') return [];
@@ -668,10 +661,11 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             then pins to the top of the scroll area once the title scrolls past it. */}
             {viewMode !== 'saved' && viewMode !== 'history' && (
               <div className="search-sticky-bar">
-                <form className="search-bar-wrapper" onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
+                <form className={`search-bar-wrapper ${searchTerm ? 'search-bar-wrapper--typing' : ''}`} onSubmit={handleSearchSubmit} ref={searchWrapperRef}>
+                  <div className={`search-combo ${showSuggestions && suggestions.length > 0 ? 'search-combo--open' : ''}`}>
                   <div className="search-input-box">
-                    <SearchIcon size={18} className="search-icon" />
-                    <input
+                      <SearchIcon size={18} className="search-icon" />
+                      <input
                       ref={searchRef}
                       type="text"
                       placeholder=""
@@ -729,20 +723,23 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                       {suggestions.map((s, i) => (
                         <div
                           key={i}
-                          className="suggestion-item"
+                          className="search-suggestion-row"
                           onClick={() => {
                             setSearchTerm(s.value);
                             setShowSuggestions(false);
                             onSearch(s.value);
                           }}
                         >
-                          <SearchIcon size={14} className="suggestion-icon" />
-                          <span className="suggestion-text">{s.value}</span>
-                          <span className="suggestion-type">{s.type}</span>
+                          <span className="search-suggestion-row-icon">
+                            <SuggestionRowIcon row={s} mechanicsByName={mechanicsByName} />
+                          </span>
+                          <span className="search-suggestion-row-text">{s.value}</span>
+                          <ArrowRight size={18} className="search-suggestion-row-caret" />
                         </div>
                       ))}
                     </div>
                   )}
+                  </div>
 
                   <div className="filter-container" ref={filterRef}>
                     <button type="button" className={`filter-btn ${activeFilterCount > 0 ? 'filter-btn--active' : ''}`} onClick={() => setIsFilterOpen(!isFilterOpen)}>
@@ -1198,10 +1195,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                                 </div>
                               ) : (m.specialties?.length || m.specialty) ? (
                                 <div className="card-specialty">
-                                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                    <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="0.75" />
-                                    <circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.2" />
-                                  </svg>
+                                  <SpecialtyMarkIcon specialty={m.specialty} />
                                   <SpecialtyTypewriter specialties={(m.specialties?.length ? m.specialties : [m.specialty])} />
                                 </div>
                               ) : null}
@@ -1236,7 +1230,12 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                             >
                               <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
                             </button>
-                            <button className="card-bottom-icon"><RateIcon size={16} /></button>
+                            <button
+                              className="card-bottom-icon"
+                              onClick={(e) => { e.stopPropagation(); onRate?.(m); }}
+                            >
+                              <RateIcon size={16} />
+                            </button>
                             <button
                               className="card-bottom-icon"
                               onClick={(e) => { e.stopPropagation(); onRecordInteraction?.(m.id, 'share'); shareMechanic(m, { onNotice }); }}

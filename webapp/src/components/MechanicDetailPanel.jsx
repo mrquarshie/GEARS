@@ -590,7 +590,10 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mecha
   const bg = isService ? '#EDE9FE' : '#F9F1C2';
   const accent = isService ? '#9747FF' : '#FF9500';
   const name = item.name || item.title;
-  const resolvedImage = item.imageUrl || (isService && mechanicSpecialty === 'Car Detailing' ? getDetailerPlaceholderImage(name) : null);
+  const photos = (item.images?.length ? item.images : [item.imageUrl]).filter(Boolean);
+  const [activePhoto, setActivePhoto] = useState(0);
+  const resolvedImage = photos[Math.min(activePhoto, photos.length - 1)]
+    || (isService && mechanicSpecialty === 'Car Detailing' ? getDetailerPlaceholderImage(name) : null);
   const whatsappDigits = ORDER_WHATSAPP_NUMBER.replace(/^0/, '233');
   const shopClause = mechanicName ? ` from ${mechanicName}` : '';
   const priceClause = item.price ? ` (${isService ? 'from ' : ''}GH₵${item.price})` : '';
@@ -615,6 +618,19 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mecha
             <img src={resolvedImage} alt={name} />
           ) : (
             <div className="item-sheet-placeholder" style={{ background: hashToColor(name || '') }} />
+          )}
+          {photos.length > 1 && (
+            <div className="item-sheet-image-dots">
+              {photos.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`item-sheet-image-dot ${i === activePhoto ? 'active' : ''}`}
+                  aria-label={`Photo ${i + 1}`}
+                  onClick={(e) => { e.stopPropagation(); setActivePhoto(i); }}
+                />
+              ))}
+            </div>
           )}
         </div>
 
