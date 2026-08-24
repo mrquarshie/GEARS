@@ -270,14 +270,16 @@ function AuthModal({ close, onSuccess, reason }) {
     setLoading(true);
     setErrorMsg('');
     try {
+      sessionStorage.setItem('gearsPendingAuth', 'true');
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       setLoading(false);
+      sessionStorage.removeItem('gearsPendingAuth');
       if (result.user) onSuccess(result.user);
     } catch (err) {
-      if (err.code === 'auth/popup-cancelled-by-user') {
-        // User closed the popup intentionally — do not force a redirect
+      if (err.code === 'auth/popup-cancelled-by-user' || err.code === 'auth/cancelled-popup-request') {
+        sessionStorage.removeItem('gearsPendingAuth');
         setLoading(false);
         return;
       }
@@ -287,13 +289,16 @@ function AuthModal({ close, onSuccess, reason }) {
           redirectProvider.setCustomParameters({ prompt: 'select_account' });
           await signInWithRedirect(auth, redirectProvider);
         } catch (redirectErr) {
+          sessionStorage.removeItem('gearsPendingAuth');
           setErrorMsg(redirectErr.message.replace('Firebase: ', ''));
           setLoading(false);
         }
       } else if (err.code === 'auth/unauthorized-domain') {
+        sessionStorage.removeItem('gearsPendingAuth');
         setErrorMsg('Domain not authorized. Please add this domain to Firebase Console > Authentication > Settings > Authorized Domains.');
         setLoading(false);
       } else {
+        sessionStorage.removeItem('gearsPendingAuth');
         setErrorMsg(err.message.replace('Firebase: ', ''));
         setLoading(false);
       }
@@ -1076,7 +1081,17 @@ function App() {
   const [selectedMechanic, setSelectedMechanic] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [savedMechanics, setSavedMechanics] = useState([]);
-  const [viewMode, setViewMode] = useState('all');
+  const [viewMode, setViewMode] = useState(() => {
+    const savedMode = localStorage.getItem('gearsViewMode');
+    if (savedMode) return savedMode;
+    const hasAuth = (auth && auth.currentUser) || Object.keys(localStorage).some(k => k.startsWith('firebase:authUser'));
+    return hasAuth ? 'saved' : 'all';
+  });
+
+  const handleSetViewMode = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('gearsViewMode', mode);
+  };
   const [userLocation, setUserLocation] = useState(null);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isLocatingScan, setIsLocatingScan] = useState(false);
@@ -1314,7 +1329,6 @@ function App() {
       setAllMechanics(mockData);
       setLoading(false);
       setAuthReady(true);
-      dismissLoader();
       return;
     }
 
@@ -1329,9 +1343,8 @@ function App() {
           setAuthReady(true);
           const alias = redirectResult.user.displayName?.trim() || redirectResult.user.email?.split('@')[0] || 'User';
           show(`Welcome, ${alias}!`);
-          setViewMode('saved');
+          handleSetViewMode('saved');
           setModal((current) => current === 'add' || current?.reason === 'business' ? 'add' : null);
-          dismissLoader();
         }
       } catch (e) {
         console.error('Redirect result error:', e);
@@ -1342,6 +1355,15 @@ function App() {
       unsubscribe = onAuthStateChanged(auth, (u) => {
         setUser(u);
         setAuthReady(true);
+        if (u) {
+          const pending = sessionStorage.getItem('gearsPendingAuth');
+          if (pending) {
+            sessionStorage.removeItem('gearsPendingAuth');
+            const alias = u.displayName?.trim() || u.email?.split('@')[0] || 'User';
+            show(`Welcome, ${alias}!`);
+            handleSetViewMode('saved');
+          }
+        }
       });
 
       // Step 3: load mechanics data
@@ -1352,7 +1374,6 @@ function App() {
         console.error(e);
       } finally {
         setLoading(false);
-        dismissLoader();
       }
     };
 
@@ -1661,9 +1682,9 @@ function App() {
         user={user}
         authReady={authReady}
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        setViewMode={handleSetViewMode}
         openAuth={() => setModal('auth')}
-        onSignOut={() => { signOut(auth); setUser(null); }}
+        onSignOut={() => { signOut(auth); setUser(null); handleSetViewMode('all'); show('Signed out'); }}
         onOpenBusiness={handleOpenBusiness}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
@@ -1804,9 +1825,7 @@ function App() {
               setUser(u);
               const alias = u.displayName?.trim() || u.email?.split('@')[0] || 'User';
               show(`Welcome, ${alias}!`);
-              if (!modal?.reason || modal === 'auth' || modal?.reason === 'bookmark') {
-                setViewMode('saved');
-              }
+              handleSetViewMode('saved');
             }
             if (modal?.reason === 'business') {
               // Returning business account (e.g. one an admin already set up
