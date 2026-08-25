@@ -15,3 +15,4 @@ export { default as StarRatingIcon } from './StarRatingIcon.jsx';
 export { default as ArrowDownIcon } from './ArrowDownIcon.jsx';
 export { default as FilterIcon } from './FilterIcon.jsx';
 export { default as RadioButtonIcon } from './RadioButtonIcon.jsx';
+export { default as GearsLogoMark } from './GearsLogoMark.jsx';

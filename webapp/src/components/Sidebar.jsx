@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Gear,
   UserPlus,
   SignOut,
   Storefront,
@@ -13,6 +12,7 @@ import {
   BookmarkIcon,
   HistoryIcon,
   NotificationIcon,
+  GearsLogoMark,
 } from './icons';
 import { vibrateTap } from '../utils/feedback';
 
@@ -48,7 +48,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
           <div className="sidebar-logo">
             <a className="brand-logo" href="/">
               <div className="sidebar-logo-box">
-                <Gear size={22} color="var(--lime)" weight="fill" className="logo-gear-spin" />
+                <GearsLogoMark size={22} color="var(--lime)" className="logo-gear-spin" />
               </div>
             </a>
           </div>

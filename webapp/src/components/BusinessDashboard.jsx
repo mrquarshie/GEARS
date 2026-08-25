@@ -26,7 +26,7 @@ import {
   SquaresFour,
   SignOut,
 } from '@phosphor-icons/react';
-import { FillingStationIcon, CarDetailingIcon, ShopIcon, MechanicIcon, StarRatingIcon } from './icons';
+import { FillingStationIcon, CarDetailingIcon, ShopIcon, MechanicIcon, StarRatingIcon, GearsLogoMark } from './icons';
 import { db } from '../firebase';
 import { shareMechanic } from '../utils/share';
 import { vibrateTap } from '../utils/feedback';
@@ -204,7 +204,12 @@ function timeGreeting() {
 
 export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, onSignOut, onAddBusiness, onViewProfile, show }) {
   const [activeTab, setActiveTab] = useState('home');
-  const [menuOpen, setMenuOpen] = useState(false);
+  // Split into two menus to match the hamburger vs. avatar triggers: the
+  // hamburger (and the desktop sidebar switcher) is purely about switching
+  // *between businesses*, while the avatar is about the signed-in *person's*
+  // account. They used to be one combined menu behind both triggers.
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(null); // 'product' | 'service' | 'media'
 
@@ -226,11 +231,11 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
       {/* Desktop-only: mobile uses the hamburger + bottom tab bar below instead. */}
       <aside className="biz-sidebar">
         <div className="biz-sidebar-brand">
-          <span className="biz-sidebar-brand-icon"><Gear size={16} color="var(--lime)" weight="fill" /></span>
+          <span className="biz-sidebar-brand-icon"><GearsLogoMark size={16} color="var(--lime)" /></span>
           <span>Gears</span>
         </div>
 
-        <button className="biz-sidebar-switcher" onClick={() => setMenuOpen(true)}>
+        <button className="biz-sidebar-switcher" onClick={() => setAccountMenuOpen(true)}>
           <BizAccountAvatar name={mechanic?.name} />
           <span className="biz-sidebar-switcher-text">
             <span className="biz-sidebar-switcher-name">{mechanic?.name}</span>
@@ -258,7 +263,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
       <div className="biz-main">
         <header className="biz-header">
-          <button className="biz-back-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
+          <button className="biz-back-btn" onClick={() => setAccountMenuOpen(true)} aria-label="Menu">
             <List size={22} />
           </button>
           <h1>{PAGE_TITLES[activeTab] || 'Your Business'}</h1>
@@ -266,7 +271,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
             <button className="biz-header-icon-btn" aria-label="Share shop page" onClick={() => shareMechanic(mechanic, { onNotice: show })}>
               <QrCode size={18} />
             </button>
-            <button type="button" className="biz-header-avatar-btn" onClick={() => setMenuOpen(true)} aria-label="Account">
+            <button type="button" className="biz-header-avatar-btn" onClick={() => setProfileMenuOpen(true)} aria-label="Account">
               <BizAccountAvatar name={mechanic?.name} />
             </button>
           </div>
@@ -287,8 +292,8 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
           </div>
         </div>
 
-        {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
-        {menuOpen && (
+        {accountMenuOpen && <div className="sidebar-overlay" onClick={() => setAccountMenuOpen(false)}></div>}
+        {accountMenuOpen && (
           <div className="biz-menu">
             {businesses && businesses.length > 1 && (
               <>
@@ -298,7 +303,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
                     <button
                       key={b.id}
                       className={`biz-account-row ${b.id === mechanic?.id ? 'active' : ''}`}
-                      onClick={() => { vibrateTap(); setMenuOpen(false); onSwitchBusiness?.(b.id); }}
+                      onClick={() => { vibrateTap(); setAccountMenuOpen(false); onSwitchBusiness?.(b.id); }}
                     >
                       <BizAccountAvatar name={b.name} />
                       <span className="biz-account-row-text">
@@ -315,23 +320,33 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
                 <div className="biz-menu-divider"></div>
               </>
             )}
-            <button className="nav-btn" onClick={() => { vibrateTap(); setMenuOpen(false); onViewProfile?.(); }}>
-              <Eye size={20} />
-              <span className="nav-text">View Profile</span>
-            </button>
-            <button className="nav-btn" onClick={() => { vibrateTap(); setMenuOpen(false); onAddBusiness?.(); }}>
+            <button className="nav-btn" onClick={() => { vibrateTap(); setAccountMenuOpen(false); onAddBusiness?.(); }}>
               <Plus size={20} />
               <span className="nav-text">Add Another Business</span>
             </button>
             <button
               className="nav-btn"
-              onClick={() => { vibrateTap(); setMenuOpen(false); onExit(); }}
+              onClick={() => { vibrateTap(); setAccountMenuOpen(false); onExit(); }}
             >
               <ArrowsLeftRight size={20} />
               <span className="nav-text">Switch to Customer View</span>
             </button>
+          </div>
+        )}
+
+        {profileMenuOpen && <div className="sidebar-overlay" onClick={() => setProfileMenuOpen(false)}></div>}
+        {profileMenuOpen && (
+          <div className="biz-menu biz-menu--right">
+            <button className="nav-btn" onClick={() => { vibrateTap(); setProfileMenuOpen(false); onViewProfile?.(); }}>
+              <Eye size={20} />
+              <span className="nav-text">View Profile</span>
+            </button>
+            <button className="nav-btn" onClick={() => { vibrateTap(); setProfileMenuOpen(false); show?.('Coming soon'); }}>
+              <Gear size={20} />
+              <span className="nav-text">Account Settings</span>
+            </button>
             <div className="biz-menu-divider"></div>
-            <button className="nav-btn biz-menu-danger" onClick={() => { vibrateTap(); setMenuOpen(false); onSignOut?.(); }}>
+            <button className="nav-btn biz-menu-danger" onClick={() => { vibrateTap(); setProfileMenuOpen(false); onSignOut?.(); }}>
               <SignOut size={20} />
               <span className="nav-text">Sign Out</span>
             </button>

@@ -19,6 +19,16 @@ const app = firebaseReady ? initializeApp(config) : null;
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
 
+// Explicit rather than relying on the SDK's implicit default — without this,
+// some environments (Safari ITP, private browsing, sandboxed iframes) fall
+// back to in-memory persistence, which is what was forcing a fresh sign-in
+// on every launch instead of staying signed in like a normal web app.
+if (auth) {
+  setPersistence(auth, browserLocalPersistence).catch(() => {
+    // Storage genuinely unavailable — user will just need to sign in each visit.
+  });
+}
+
 // Analytics is only supported in browser environments (not SSR/Node)
 if (app) {
   isSupported().then((supported) => {

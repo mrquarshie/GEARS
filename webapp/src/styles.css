@@ -5717,6 +5717,13 @@ body {
   padding: 8px;
 }
 
+/* Profile menu hangs off the header's avatar button on the right instead
+   of the hamburger/switcher on the left — same card, opposite anchor. */
+.biz-menu--right {
+  left: auto;
+  right: 16px;
+}
+
 .biz-menu .nav-btn {
   width: 100%;
   justify-content: flex-start;

@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo } from '@phosphor-icons/react';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
-import { shareMechanic, getShareImagePath, getShareUrl } from '../utils/share';
+import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
 import {
   BookmarkIcon,
   CallIcon,
@@ -195,7 +195,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
           <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. Call ${mechanic.phone}.`} />
           <meta property="og:title" content={`${mechanic.name} | Gears`} />
           <meta property="og:description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}.`} />
-          <meta property="og:image" content={`${window.location.origin}${getShareImagePath(mechanic)}`} />
+          <meta property="og:image" content={`${window.location.origin}${getStaticShareImagePath(mechanic)}`} />
           <meta property="og:url" content={getShareUrl(mechanic)} />
           <script type="application/ld+json">
             {JSON.stringify(schemaMarkup)}

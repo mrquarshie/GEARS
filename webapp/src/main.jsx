@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import mockExtrasData from './mockExtras.json';
 import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { List, NavigationArrow, Gear, X, SealCheck, MagnifyingGlass } from '@phosphor-icons/react';
+import { List, NavigationArrow, X, SealCheck, MagnifyingGlass } from '@phosphor-icons/react';
 import {
   addDoc,
   collection,
@@ -41,7 +41,7 @@ import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
 import BusinessDashboard from './components/BusinessDashboard';
-import { CarDetailingIcon } from './components/icons';
+import { CarDetailingIcon, GearsLogoMark } from './components/icons';
 import { vibrateTap } from './utils/feedback';
 
 import authImgCar from './components/AuthImages/Car.png';
@@ -353,7 +353,7 @@ function AuthModal({ close, onSuccess, reason }) {
           <img className="auth-deco auth-deco-top-right" src={authImgEngine} alt="" />
           <img className="auth-deco auth-deco-bottom-left" src={authImgBattery} alt="" />
           <div className="auth-logo-box">
-            <Gear size={26} color="var(--lime)" weight="fill" className="logo-gear-spin" />
+            <GearsLogoMark size={26} color="var(--lime)" className="logo-gear-spin" />
           </div>
         </div>
 
