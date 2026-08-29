@@ -10,6 +10,9 @@ build/
 .vscode/
 *.iml
 
+# macOS
+.DS_Store
+
 # Platform-generated files
 android/.gradle/
 android/local.properties

@@ -1566,6 +1566,13 @@ body {
   font-size: 18px;
   font-weight: 400;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.card-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .card-badges {
@@ -2019,6 +2026,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.detail-hero-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .detail-hero-avatar-letter {
@@ -5073,7 +5086,8 @@ body {
   flex-shrink: 0;
 }
 
-.item-sheet-image img {
+.item-sheet-image img,
+.item-sheet-image video {
   width: 100%;
   height: 100%;
   object-fit: cover;

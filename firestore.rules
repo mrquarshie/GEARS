@@ -19,6 +19,8 @@ service cloud.firestore {
 
       // Only authenticated users can submit a new mechanic
       // Validates required fields are non-empty strings
+      // A business needs a phone OR an email — some (e.g. an email-only
+      // supplier) don't want calls/a phone number published at all.
       // "verified: true" can only be set by an admin account — everyone else
       // starts at most "claimed" and needs Gears staff to flip it manually.
       allow create: if request.auth != null
@@ -26,8 +28,8 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.area is string
         && request.resource.data.area.size() > 0
-        && request.resource.data.phone is string
-        && request.resource.data.phone.size() > 0
+        && ((request.resource.data.phone is string && request.resource.data.phone.size() > 0)
+            || (request.resource.data.email is string && request.resource.data.email.size() > 0))
         && (request.resource.data.verified != true || isAdminEmail());
 
       // Creator can update any field except "verified" (only an admin can
