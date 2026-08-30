@@ -234,7 +234,7 @@ const UserLocationScanningIcon = L.divIcon({
 
 // We use a single CARTO Voyager tile layer (with labels) instead of two separate
 // layers (nolabels + only_labels), halving the tile requests.
-export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+export const TILE_URL = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${import.meta.env.VITE_CARTO_API_KEY}`;
 export const TILE_SUBDOMAINS = 'abcd';
 export const TILE_ATTRIBUTION = '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
