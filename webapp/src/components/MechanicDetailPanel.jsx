@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo } from '@phosphor-icons/react';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
-import { shareMechanic, getShareImagePath, getShareUrl } from '../utils/share';
+import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
 import {
   BookmarkIcon,
   CallIcon,
@@ -195,7 +195,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
           <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. Call ${mechanic.phone}.`} />
           <meta property="og:title" content={`${mechanic.name} | Gears`} />
           <meta property="og:description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}.`} />
-          <meta property="og:image" content={`${window.location.origin}${getShareImagePath(mechanic)}`} />
+          <meta property="og:image" content={`${window.location.origin}${getStaticShareImagePath(mechanic)}`} />
           <meta property="og:url" content={getShareUrl(mechanic)} />
           <script type="application/ld+json">
             {JSON.stringify(schemaMarkup)}
@@ -590,7 +590,10 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mecha
   const bg = isService ? '#EDE9FE' : '#F9F1C2';
   const accent = isService ? '#9747FF' : '#FF9500';
   const name = item.name || item.title;
-  const resolvedImage = item.imageUrl || (isService && mechanicSpecialty === 'Car Detailing' ? getDetailerPlaceholderImage(name) : null);
+  const photos = (item.images?.length ? item.images : [item.imageUrl]).filter(Boolean);
+  const [activePhoto, setActivePhoto] = useState(0);
+  const resolvedImage = photos[Math.min(activePhoto, photos.length - 1)]
+    || (isService && mechanicSpecialty === 'Car Detailing' ? getDetailerPlaceholderImage(name) : null);
   const whatsappDigits = ORDER_WHATSAPP_NUMBER.replace(/^0/, '233');
   const shopClause = mechanicName ? ` from ${mechanicName}` : '';
   const priceClause = item.price ? ` (${isService ? 'from ' : ''}GH₵${item.price})` : '';
@@ -615,6 +618,19 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mecha
             <img src={resolvedImage} alt={name} />
           ) : (
             <div className="item-sheet-placeholder" style={{ background: hashToColor(name || '') }} />
+          )}
+          {photos.length > 1 && (
+            <div className="item-sheet-image-dots">
+              {photos.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`item-sheet-image-dot ${i === activePhoto ? 'active' : ''}`}
+                  aria-label={`Photo ${i + 1}`}
+                  onClick={(e) => { e.stopPropagation(); setActivePhoto(i); }}
+                />
+              ))}
+            </div>
           )}
         </div>
 

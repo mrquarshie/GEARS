@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query } from 'firebase/firestore';
-import { LocationPicker, TILE_URL, TILE_SUBDOMAINS, TILE_ATTRIBUTION } from './MapLayout';
+import { LocationPicker, TILE_URL, TILE_SUBDOMAINS, TILE_ATTRIBUTION, getMechanicCategory } from './MapLayout';
 import {
   List,
   ArrowsLeftRight,
@@ -18,28 +18,21 @@ import {
   ListPlus,
   Gear,
   QrCode,
-  Wrench,
   Check,
   CaretDown,
   CaretLeft,
   ClockCounterClockwise,
   Bell,
   SquaresFour,
+  SignOut,
 } from '@phosphor-icons/react';
-import { FillingStationIcon, CarDetailingIcon, ShopIcon } from './icons';
+import { FillingStationIcon, CarDetailingIcon, ShopIcon, MechanicIcon, StarRatingIcon, GearsLogoMark } from './icons';
 import { db } from '../firebase';
+import { shareMechanic } from '../utils/share';
+import { vibrateTap } from '../utils/feedback';
 import bizIllustrationBattery from './AuthImages/Car battery.png';
 import bizIllustrationEngine from './AuthImages/Engine.png';
 import bizIllustrationSteer from './AuthImages/Steer.png';
-
-function BizAvatar({ user, onClick }) {
-  const initial = user?.displayName?.trim()?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
-  const content = user?.photoURL
-    ? <img src={user.photoURL} alt="" className="biz-avatar" referrerPolicy="no-referrer" />
-    : <div className="biz-avatar biz-avatar-letter">{initial}</div>;
-  if (!onClick) return content;
-  return <button type="button" className="biz-avatar-btn" onClick={onClick} aria-label="Account">{content}</button>;
-}
 
 // Same square-with-initial treatment used for mechanic cards elsewhere
 // (.card-avatar), reused here so a business reads the same way in its own
@@ -62,7 +55,26 @@ function BizAccountTypeIcon({ specialty }) {
   if (specialty === 'Fuel Station') return <FillingStationIcon size={14} />;
   if (specialty === 'Car Detailing') return <CarDetailingIcon size={14} />;
   if (specialty === 'Auto Parts') return <ShopIcon size={14} />;
-  return <Wrench size={14} />;
+  return <MechanicIcon size={14} />;
+}
+
+// A mechanic only ever lists services, an auto shop only ever lists
+// products, a detailer only ever lists (detailing) services — so for those
+// three the catalog form locks to the one kind that makes sense instead of
+// asking the owner to pick. Fuel stations aren't covered by that rule (their
+// forecourt pricing lives elsewhere, in `fuelPrices`), so they keep the
+// free Product/Service toggle.
+const CATALOG_KIND_BY_CATEGORY = {
+  // A mechanic can sell parts alongside labor, so they keep the free
+  // Product/Service toggle (same as Fuel Station) instead of a fixed kind.
+  mechanic: null,
+  parts: { kind: 'products', label: 'Auto Part Product' },
+  detailer: { kind: 'services', label: 'Detailing Service' },
+  fuel: null,
+};
+
+function catalogKindFor(specialty) {
+  return CATALOG_KIND_BY_CATEGORY[getMechanicCategory(specialty)] || null;
 }
 
 // Catalog empty-state illustration — 3 cards that rotate through 3 fixed
@@ -190,17 +202,25 @@ function timeGreeting() {
   return 'Good Evening';
 }
 
-export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, show }) {
+export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, onSignOut, onAddBusiness, onViewProfile, show }) {
   const [activeTab, setActiveTab] = useState('home');
-  const [menuOpen, setMenuOpen] = useState(false);
+  // Split into two menus to match the hamburger vs. avatar triggers: the
+  // hamburger (and the desktop sidebar switcher) is purely about switching
+  // *between businesses*, while the avatar is about the signed-in *person's*
+  // account. They used to be one combined menu behind both triggers.
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(null); // 'product' | 'service' | 'media'
 
   const handleAddOption = (kind) => {
+    vibrateTap();
     setShowAddSheet(false);
     setPendingAdd(kind);
     setActiveTab(kind === 'media' ? 'media' : 'catalog');
   };
+
+  const fixedCatalogKind = catalogKindFor(mechanic?.specialty);
 
   const PAGE_TITLES = { home: 'Overview', catalog: 'Catalog', map: 'Map', media: 'Media' };
 
@@ -211,11 +231,11 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
       {/* Desktop-only: mobile uses the hamburger + bottom tab bar below instead. */}
       <aside className="biz-sidebar">
         <div className="biz-sidebar-brand">
-          <span className="biz-sidebar-brand-icon"><Gear size={16} color="var(--lime)" weight="fill" /></span>
+          <span className="biz-sidebar-brand-icon"><GearsLogoMark size={16} color="var(--lime)" /></span>
           <span>Gears</span>
         </div>
 
-        <button className="biz-sidebar-switcher" onClick={() => setMenuOpen(true)}>
+        <button className="biz-sidebar-switcher" onClick={() => setAccountMenuOpen(true)}>
           <BizAccountAvatar name={mechanic?.name} />
           <span className="biz-sidebar-switcher-text">
             <span className="biz-sidebar-switcher-name">{mechanic?.name}</span>
@@ -243,15 +263,17 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
       <div className="biz-main">
         <header className="biz-header">
-          <button className="biz-back-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
+          <button className="biz-back-btn" onClick={() => setAccountMenuOpen(true)} aria-label="Menu">
             <List size={22} />
           </button>
           <h1>{PAGE_TITLES[activeTab] || 'Your Business'}</h1>
           <div className="biz-header-actions">
-            <button className="biz-header-icon-btn" aria-label="QR code">
+            <button className="biz-header-icon-btn" aria-label="Share shop page" onClick={() => shareMechanic(mechanic, { onNotice: show })}>
               <QrCode size={18} />
             </button>
-            <BizAvatar user={user} onClick={() => setMenuOpen(true)} />
+            <button type="button" className="biz-header-avatar-btn" onClick={() => setProfileMenuOpen(true)} aria-label="Account">
+              <BizAccountAvatar name={mechanic?.name} />
+            </button>
           </div>
         </header>
 
@@ -270,8 +292,8 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
           </div>
         </div>
 
-        {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
-        {menuOpen && (
+        {accountMenuOpen && <div className="sidebar-overlay" onClick={() => setAccountMenuOpen(false)}></div>}
+        {accountMenuOpen && (
           <div className="biz-menu">
             {businesses && businesses.length > 1 && (
               <>
@@ -281,7 +303,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
                     <button
                       key={b.id}
                       className={`biz-account-row ${b.id === mechanic?.id ? 'active' : ''}`}
-                      onClick={() => { setMenuOpen(false); onSwitchBusiness?.(b.id); }}
+                      onClick={() => { vibrateTap(); setAccountMenuOpen(false); onSwitchBusiness?.(b.id); }}
                     >
                       <BizAccountAvatar name={b.name} />
                       <span className="biz-account-row-text">
@@ -298,9 +320,13 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
                 <div className="biz-menu-divider"></div>
               </>
             )}
+            <button className="nav-btn" onClick={() => { vibrateTap(); setAccountMenuOpen(false); onAddBusiness?.(); }}>
+              <Plus size={20} />
+              <span className="nav-text">Add Another Business</span>
+            </button>
             <button
               className="nav-btn"
-              onClick={() => { setMenuOpen(false); onExit(); }}
+              onClick={() => { vibrateTap(); setAccountMenuOpen(false); onExit(); }}
             >
               <ArrowsLeftRight size={20} />
               <span className="nav-text">Switch to Customer View</span>
@@ -308,7 +334,26 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
           </div>
         )}
 
-        <div className="biz-content">
+        {profileMenuOpen && <div className="sidebar-overlay" onClick={() => setProfileMenuOpen(false)}></div>}
+        {profileMenuOpen && (
+          <div className="biz-menu biz-menu--right">
+            <button className="nav-btn" onClick={() => { vibrateTap(); setProfileMenuOpen(false); onViewProfile?.(); }}>
+              <Eye size={20} />
+              <span className="nav-text">View Profile</span>
+            </button>
+            <button className="nav-btn" onClick={() => { vibrateTap(); setProfileMenuOpen(false); show?.('Coming soon'); }}>
+              <Gear size={20} />
+              <span className="nav-text">Account Settings</span>
+            </button>
+            <div className="biz-menu-divider"></div>
+            <button className="nav-btn biz-menu-danger" onClick={() => { vibrateTap(); setProfileMenuOpen(false); onSignOut?.(); }}>
+              <SignOut size={20} />
+              <span className="nav-text">Sign Out</span>
+            </button>
+          </div>
+        )}
+
+        <div className={`biz-content ${activeTab === 'map' ? 'biz-content--map' : ''}`}>
           {activeTab === 'home' && <h2 className="biz-greeting">{timeGreeting()}, {firstName}</h2>}
           {activeTab === 'home' && <BizHomeTab mechanic={mechanic} />}
           {activeTab === 'catalog' && <BizCatalogTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} />}
@@ -331,20 +376,32 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
           </nav>
 
           <div className={`biz-add-sheet ${showAddSheet ? 'open' : ''}`} aria-hidden={!showAddSheet}>
-          <button className="biz-add-option" onClick={() => handleAddOption('product')} tabIndex={showAddSheet ? 0 : -1}>
-            <ListPlus size={20} className="biz-add-option-icon" />
-            <div className="biz-add-option-text">
-              <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Product</span></span>
-              <span className="biz-add-option-sub">List an item customers can order</span>
-            </div>
-          </button>
-          <button className="biz-add-option" onClick={() => handleAddOption('service')} tabIndex={showAddSheet ? 0 : -1}>
-            <Gear size={20} className="biz-add-option-icon" />
-            <div className="biz-add-option-text">
-              <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Service</span></span>
-              <span className="biz-add-option-sub">Add a service you offer</span>
-            </div>
-          </button>
+          {fixedCatalogKind ? (
+            <button className="biz-add-option" onClick={() => handleAddOption(fixedCatalogKind.kind === 'products' ? 'product' : 'service')} tabIndex={showAddSheet ? 0 : -1}>
+              {fixedCatalogKind.kind === 'products' ? <ListPlus size={20} className="biz-add-option-icon" /> : <Gear size={20} className="biz-add-option-icon" />}
+              <div className="biz-add-option-text">
+                <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">{fixedCatalogKind.label}</span></span>
+                <span className="biz-add-option-sub">{fixedCatalogKind.kind === 'products' ? 'List an item customers can order' : 'Add a service you offer'}</span>
+              </div>
+            </button>
+          ) : (
+            <>
+              <button className="biz-add-option" onClick={() => handleAddOption('product')} tabIndex={showAddSheet ? 0 : -1}>
+                <ListPlus size={20} className="biz-add-option-icon" />
+                <div className="biz-add-option-text">
+                  <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Product</span></span>
+                  <span className="biz-add-option-sub">List an item customers can order</span>
+                </div>
+              </button>
+              <button className="biz-add-option" onClick={() => handleAddOption('service')} tabIndex={showAddSheet ? 0 : -1}>
+                <Gear size={20} className="biz-add-option-icon" />
+                <div className="biz-add-option-text">
+                  <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Service</span></span>
+                  <span className="biz-add-option-sub">Add a service you offer</span>
+                </div>
+              </button>
+            </>
+          )}
           <button className="biz-add-option" onClick={() => handleAddOption('media')} tabIndex={showAddSheet ? 0 : -1}>
             <ImageSquare size={20} className="biz-add-option-icon" />
             <div className="biz-add-option-text">
@@ -356,7 +413,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
         <button
           className={`biz-add-fab ${showAddSheet ? 'open' : ''}`}
-          onClick={() => { playTapSound(); setShowAddSheet((v) => !v); }}
+          onClick={() => { playTapSound(); vibrateTap(); setShowAddSheet((v) => !v); }}
           aria-label={showAddSheet ? 'Close add menu' : 'Add product, service or media'}
         >
           <Plus size={24} weight="bold" />
@@ -415,19 +472,128 @@ function BizHomeTab({ mechanic }) {
   );
 }
 
+const MAX_ITEM_PHOTOS = 3;
+const MAX_UPLOAD_SOURCE_BYTES = 15 * 1024 * 1024; // sanity cap before we even try to decode it
+
+// There's no Storage bucket wired up (see firebase.js) — photos are kept as
+// downscaled/recompressed data URLs stored directly on the Firestore doc.
+// Re-encoding through a canvas (rather than storing the raw file) is what
+// keeps a normal phone photo (often several MB) from blowing past
+// Firestore's 1MiB document limit once base64-encoded.
+function downscaleImageFile(file, { maxDimension = 1000, quality = 0.72 } = {}) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error || new Error('Could not read file'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not decode image'));
+      img.onload = () => {
+        const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// A single upload slot: idle (tap to choose a file) → loading (reading +
+// downscaling) → error (bad file type or read failure, tap to retry) →
+// back to idle once `onAdd` hands the result to the parent. The slot never
+// holds its own "filled" state — the parent owns the resulting array, so a
+// successful pick immediately resets this tile for the next one.
+function AddPhotoTile({ onAdd, label = 'Add Photo' }) {
+  const [status, setStatus] = useState('idle'); // idle | loading | error
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setStatus('error');
+      setErrorMsg('Choose an image file');
+    } else if (file.size > MAX_UPLOAD_SOURCE_BYTES) {
+      setStatus('error');
+      setErrorMsg('That image is too large');
+    } else {
+      setStatus('loading');
+      try {
+        const dataUrl = await downscaleImageFile(file);
+        onAdd(dataUrl);
+        setStatus('idle');
+      } catch {
+        setStatus('error');
+        setErrorMsg('Could not read that image');
+      }
+    }
+  };
+
+  // A <label> wrapping a hidden file input — not a <button>, since a file
+  // input is interactive content and browsers won't nest that correctly
+  // inside a <button> (it was rendering its native "Choose File" widget
+  // instead of staying hidden). Clicking the label opens the picker with
+  // no ref/`.click()` trick needed; not rendering the input while loading
+  // is what blocks a second pick before the first finishes.
+  return (
+    <label className={`biz-photo-tile biz-photo-tile--add biz-photo-tile--${status}`}>
+      {status !== 'loading' && (
+        <input
+          type="file"
+          accept="image/*"
+          hidden
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            handleFile(file);
+          }}
+        />
+      )}
+      {status === 'loading' ? (
+        <span className="biz-photo-tile-spinner" aria-label="Uploading" />
+      ) : status === 'error' ? (
+        <>
+          <X size={18} />
+          <span className="biz-photo-tile-caption">{errorMsg}</span>
+        </>
+      ) : (
+        <>
+          <Plus size={20} />
+          <span className="biz-photo-tile-caption">{label}</span>
+        </>
+      )}
+    </label>
+  );
+}
+
 function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   const [products, setProducts] = useState([]);
   const [services, setServices] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [kind, setKind] = useState('products');
+  // Only meaningful for Fuel Station (or no listing yet) — every other
+  // category has a single fixed kind, see `fixedKind` below.
+  const [manualKind, setManualKind] = useState('products');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoUrls, setPhotoUrls] = useState([]);
+  const [photosError, setPhotosError] = useState(false);
+  const [activePhoto, setActivePhoto] = useState(0);
   const [previewing, setPreviewing] = useState(false);
   const [previewTab, setPreviewTab] = useState('details'); // 'details' | 'listing'
   const [saving, setSaving] = useState(false);
   const [emptyStateStep, setEmptyStateStep] = useState(0);
+
+  const fixedKind = catalogKindFor(mechanic?.specialty);
+  const kind = fixedKind ? fixedKind.kind : manualKind;
+  const kindLabel = fixedKind ? fixedKind.label : (kind === 'products' ? 'Product' : 'Service');
+  const photos = photoUrls;
 
   useEffect(() => {
     const id = setInterval(() => setEmptyStateStep((s) => s + 1), 5000);
@@ -440,7 +606,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
   useEffect(() => {
     if (pendingAdd === 'product' || pendingAdd === 'service') {
-      setKind(pendingAdd === 'service' ? 'services' : 'products');
+      setManualKind(pendingAdd === 'service' ? 'services' : 'products');
       setShowForm(true);
       onAddHandled?.();
     }
@@ -463,7 +629,9 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
     setName('');
     setDescription('');
     setPrice('');
-    setPhotoUrl('');
+    setPhotoUrls([]);
+    setPhotosError(false);
+    setActivePhoto(0);
     setPreviewing(false);
     setPreviewTab('details');
     setShowForm(false);
@@ -471,8 +639,11 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
   const handlePreview = (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !price.trim()) return;
+    if (photos.length === 0) { setPhotosError(true); return; }
+    setPhotosError(false);
     setPreviewTab('details');
+    setActivePhoto(0);
     setPreviewing(true);
   };
 
@@ -484,13 +655,13 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
         name: name.trim(),
         description: description.trim(),
         price: price.trim(),
-        ...(photoUrl.trim() ? { imageUrl: photoUrl.trim() } : {}),
+        ...(photos.length ? { imageUrl: photos[0], images: photos } : {}),
         inStock: true,
         addedBy: user.uid,
         createdAt: new Date().toISOString(),
       });
       resetForm();
-      show?.(`${kind === 'products' ? 'Product' : 'Service'} published!`);
+      show?.(`${kindLabel} published!`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -526,90 +697,141 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
     <div className="biz-catalog-tab">
 
       {showForm && !previewing && (
-        <form className="biz-catalog-form business-fields" onSubmit={handlePreview}>
-          <div className="biz-catalog-form-header">
-            <h4>Add New {kind === 'products' ? 'Product' : 'Service'}</h4>
-            <button type="button" className="biz-catalog-form-close" onClick={resetForm} aria-label="Close">
-              <X size={16} />
+        <div className="biz-catalog-page">
+          <div className="biz-catalog-page-header">
+            <button type="button" className="biz-back-btn" onClick={resetForm} aria-label="Close">
+              <CaretLeft size={20} />
             </button>
+            <h1>Add New {kindLabel}</h1>
           </div>
-          <div className="biz-catalog-form-kind">
-            <button type="button" className={kind === 'products' ? 'active' : ''} onClick={() => setKind('products')}>Product</button>
-            <button type="button" className={kind === 'services' ? 'active' : ''} onClick={() => setKind('services')}>Service</button>
-          </div>
-          <label>Title
-            <input required placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-          <label>Description
-            <textarea placeholder="Items, Pickup Details or Instructions" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </label>
-          <label>Price (₵)
-            <input placeholder="0.00" value={price} onChange={(e) => setPrice(e.target.value)} />
-          </label>
-          <label>Photos
-            <input placeholder="Image URL" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} />
-          </label>
-          <div className="biz-catalog-form-actions">
-            <button type="button" onClick={resetForm}>Cancel</button>
-            <button type="submit" className="biz-primary-btn small">Preview</button>
-          </div>
-        </form>
+          <form className="biz-catalog-page-form" onSubmit={handlePreview}>
+            <div className="biz-catalog-page-body business-fields">
+              {!fixedKind && (
+                <div className="biz-catalog-form-kind">
+                  <button type="button" className={kind === 'products' ? 'active' : ''} onClick={() => setManualKind('products')}>Product</button>
+                  <button type="button" className={kind === 'services' ? 'active' : ''} onClick={() => setManualKind('services')}>Service</button>
+                </div>
+              )}
+              <label>Title
+                <input required placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+              </label>
+              <label>Description <span className="biz-catalog-form-optional">(optional)</span>
+                <textarea placeholder="Items, Pickup Details or Instructions" value={description} onChange={(e) => setDescription(e.target.value)} />
+              </label>
+              <label>Price (₵)
+                <input required placeholder="0.00" value={price} onChange={(e) => setPrice(e.target.value)} />
+              </label>
+              <label>Photos <span className="biz-catalog-form-photos-count">({photos.length}/{MAX_ITEM_PHOTOS})</span>
+                <div className="biz-catalog-photo-tiles">
+                  {photoUrls.map((url, i) => (
+                    <div className="biz-photo-tile biz-photo-tile--filled" key={i}>
+                      <img src={url} alt="" />
+                      <button
+                        type="button"
+                        className="biz-photo-tile-remove"
+                        aria-label="Remove photo"
+                        onClick={() => setPhotoUrls((prev) => prev.filter((_, idx) => idx !== i))}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {photoUrls.length < MAX_ITEM_PHOTOS && (
+                    <AddPhotoTile
+                      label={photoUrls.length ? 'Add Photo' : 'Upload Photo'}
+                      onAdd={(dataUrl) => { setPhotoUrls((prev) => [...prev, dataUrl]); setPhotosError(false); }}
+                    />
+                  )}
+                </div>
+                {photosError && <span className="biz-catalog-form-field-error">Add at least one photo</span>}
+              </label>
+            </div>
+            <div className="biz-catalog-page-actions">
+              <button type="submit" className="biz-preview-publish-btn">Preview</button>
+            </div>
+          </form>
+        </div>
       )}
 
       {showForm && previewing && (
-        <div className="biz-preview">
-          <div className="biz-preview-topbar">
-            <button type="button" className="biz-preview-back" onClick={() => setPreviewing(false)} aria-label="Back to editing">
-              <CaretLeft size={18} />
-            </button>
-            <div className="biz-preview-tabs">
-              <button type="button" className={previewTab === 'details' ? 'active' : ''} onClick={() => setPreviewTab('details')}>Details Page</button>
-              <button type="button" className={previewTab === 'listing' ? 'active' : ''} onClick={() => setPreviewTab('listing')}>Listing Page</button>
+        <div className="biz-preview-overlay">
+          <div className="biz-preview">
+            <div className="biz-preview-header">
+              <button type="button" className="biz-preview-back nav-pill nav-pill--light nav-pill--sm" onClick={() => setPreviewing(false)} aria-label="Back to editing">
+                <CaretLeft size={18} />
+              </button>
             </div>
-          </div>
 
-          <div className="biz-preview-body">
-            {previewTab === 'details' ? (
-              <>
-                <div className="item-sheet-image" style={{ background: photoUrl ? undefined : '#f5e6c8' }}>
-                  {photoUrl && <img src={photoUrl} alt={name} />}
-                </div>
-                <div className="item-sheet-body biz-preview-item-sheet-body">
-                  {mechanic?.name && (
-                    <div className="item-sheet-shop">
-                      <div className="item-sheet-shop-avatar">{mechanic.name.charAt(0).toUpperCase()}</div>
-                      <span className="item-sheet-shop-name">{mechanic.name}</span>
-                    </div>
-                  )}
-                  <h3 className="item-sheet-name">{name || 'Untitled'}</h3>
-                  {price && (
-                    <p className="item-sheet-price">
-                      ₵{kind === 'services' && !price.trim().endsWith('+') ? `${price}+` : price}
-                    </p>
-                  )}
-                  {description && <p className="item-sheet-desc">{description}</p>}
-                </div>
-              </>
-            ) : (
-              <div className="biz-preview-listing-card">
-                <div className="service-card-image" style={{ background: photoUrl ? undefined : '#f5e6c8' }}>
-                  {photoUrl && <img src={photoUrl} alt={name} />}
-                </div>
-                <div className="service-card-row">
-                  <div className="service-card-body">
-                    <h4 className="service-card-name">{name || 'Untitled'}</h4>
-                    {description && <p className="service-card-desc">{description}</p>}
+            <div className="biz-preview-tabs-row">
+              <div className="biz-preview-tabs">
+                <button type="button" className={previewTab === 'details' ? 'active' : ''} onClick={() => setPreviewTab('details')}>Details Page</button>
+                <button type="button" className={previewTab === 'listing' ? 'active' : ''} onClick={() => setPreviewTab('listing')}>Listing Page</button>
+                <span className={`biz-preview-tabs-indicator ${previewTab === 'listing' ? 'biz-preview-tabs-indicator--right' : ''}`} />
+              </div>
+            </div>
+
+            <div className="biz-preview-body">
+              <div className={`biz-preview-panels ${previewTab === 'listing' ? 'biz-preview-panels--listing' : ''}`}>
+                <div className="biz-preview-panel">
+                  <div className="item-sheet-image biz-preview-item-sheet-image" style={{ background: photos.length ? undefined : '#F4F4F4' }}>
+                    {photos.length > 0 && <img src={photos[Math.min(activePhoto, photos.length - 1)]} alt={name} />}
+                    {photos.length > 1 && (
+                      <div className="item-sheet-image-dots">
+                        {photos.map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            className={`item-sheet-image-dot ${i === activePhoto ? 'active' : ''}`}
+                            aria-label={`Photo ${i + 1}`}
+                            onClick={() => setActivePhoto(i)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {price && <span className="service-card-price">GH₵ {price}</span>}
+                  <div className="item-sheet-body biz-preview-item-sheet-body">
+                    <h3 className="item-sheet-name">{name || 'Untitled'}</h3>
+                    <div className="biz-preview-price-row">
+                      {price && (
+                        <span className="item-sheet-price">
+                          ₵{kind === 'services' && !price.trim().endsWith('+') ? `${price}+` : price}
+                        </span>
+                      )}
+                      {mechanic?.rating && mechanic.rating !== 'New' && (
+                        <>
+                          <span className="biz-preview-price-dot" />
+                          <span className="biz-preview-rating">
+                            <StarRatingIcon size={10} state="filled" />
+                            {mechanic.rating}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {description && <p className="item-sheet-desc">{description}</p>}
+                  </div>
+                </div>
+
+                <div className="biz-preview-panel">
+                  <div className="biz-preview-listing-card">
+                    <div className="service-card-image" style={{ background: photos.length ? undefined : '#E0FAE8' }}>
+                      {photos.length > 0 && <img src={photos[0]} alt={name} />}
+                    </div>
+                    <div className="service-card-row">
+                      <div className="service-card-body">
+                        <h4 className="service-card-name">{name || 'Untitled'}</h4>
+                      </div>
+                      {price && <span className="service-card-price">₵ {price}</span>}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="biz-preview-footer">
-            <button type="button" className="biz-preview-publish-btn" onClick={handlePublish} disabled={saving}>
-              {saving ? 'Publishing…' : 'Publish'}
-            </button>
+            <div className="biz-preview-footer">
+              <button type="button" className="biz-preview-publish-btn" onClick={handlePublish} disabled={saving}>
+                {saving ? 'Publishing…' : 'Publish'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -650,9 +872,9 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
           <p className="biz-catalog-empty-heading">
             List your products and services to show up in more customer searches.
           </p>
-          <button type="button" className="biz-catalog-empty-btn" onClick={() => { setKind('products'); setShowForm(true); }}>
+          <button type="button" className="biz-catalog-empty-btn" onClick={() => setShowForm(true)}>
             <Plus size={24} weight="bold" />
-            Add Your First Product
+            Add Your First {kindLabel}
           </button>
         </div>
       )}
@@ -714,16 +936,11 @@ function BizMapTab({ mechanic, onUpdateLocation, show }) {
   }
 
   return (
-    <div className="biz-map-tab">
-      <h3>Your Location</h3>
-      <p className="biz-map-hint">Drag the pin to update where customers see you.</p>
-      <div className="biz-map-frame">
-        <MapContainer center={[lat, lng]} zoom={16} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-          <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} subdomains={TILE_SUBDOMAINS} maxNativeZoom={18} maxZoom={20} />
-          <LocationPicker lat={lat} lng={lng} setLat={setLat} setLng={setLng} category={mechanic.specialty} label={mechanic.name} />
-        </MapContainer>
-      </div>
-      <p className="biz-map-address">{mechanic.area}</p>
+    <div className="biz-map-shell">
+      <MapContainer center={[lat, lng]} zoom={16} scrollWheelZoom={false} zoomControl={false} style={{ height: '100%', width: '100%' }}>
+        <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} subdomains={TILE_SUBDOMAINS} maxNativeZoom={18} maxZoom={20} />
+        <LocationPicker lat={lat} lng={lng} setLat={setLat} setLng={setLng} category={mechanic.specialty} label={mechanic.name} />
+      </MapContainer>
     </div>
   );
 }
@@ -732,6 +949,17 @@ const MEDIA_CATEGORIES = [
   { key: 'general', label: 'General' },
   { key: 'products', label: 'Products' },
   { key: 'services', label: 'Services' },
+];
+
+// Empty-state nudge — concrete photo ideas instead of a flat "no photos
+// yet" line, so a brand new listing still shows something worth tapping.
+const MEDIA_SUGGESTIONS = [
+  { label: 'Workshop front', bg: '#F5E6C8' },
+  { label: 'Engine bay', bg: '#F1F1F1' },
+  { label: 'AC job', bg: '#DCF3E3' },
+  { label: 'Brake job', bg: '#F6DCE0' },
+  { label: 'Wiring repair', bg: '#E3E1F3' },
+  { label: 'Tools & gear', bg: '#EDE9CE' },
 ];
 
 function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
@@ -812,23 +1040,42 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
       </div>
 
       {showForm && (
-        <form className="biz-catalog-form business-fields" onSubmit={handleAdd}>
-          <label>Image URL
-            <input required placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
-          </label>
-          <label>Caption (optional)
-            <input placeholder="e.g. Workshop front" value={label} onChange={(e) => setLabel(e.target.value)} />
-          </label>
-          <div className="biz-catalog-form-kind">
-            {MEDIA_CATEGORIES.map((c) => (
-              <button type="button" key={c.key} className={category === c.key ? 'active' : ''} onClick={() => setCategory(c.key)}>{c.label}</button>
-            ))}
-          </div>
-          <div className="biz-catalog-form-actions">
-            <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" className="biz-primary-btn small" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
-          </div>
-        </form>
+        <div className="biz-catalog-form-overlay" onClick={() => setShowForm(false)}>
+          <form className="biz-catalog-form business-fields" onSubmit={handleAdd} onClick={(e) => e.stopPropagation()}>
+            <div className="mobile-drag-handle"></div>
+            <button type="button" className="biz-catalog-form-close" onClick={() => setShowForm(false)} aria-label="Close">
+              <X size={16} />
+            </button>
+            <h4 className="biz-catalog-form-title">Add Photo</h4>
+            <div className="biz-catalog-form-scroll">
+              <label>Photo
+                <div className="biz-catalog-photo-tiles">
+                  {url ? (
+                    <div className="biz-photo-tile biz-photo-tile--filled">
+                      <img src={url} alt="" />
+                      <button type="button" className="biz-photo-tile-remove" aria-label="Remove photo" onClick={() => setUrl('')}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <AddPhotoTile label="Upload Photo" onAdd={setUrl} />
+                  )}
+                </div>
+              </label>
+              <label>Caption (optional)
+                <input placeholder="e.g. Workshop front" value={label} onChange={(e) => setLabel(e.target.value)} />
+              </label>
+              <div className="biz-catalog-form-kind">
+                {MEDIA_CATEGORIES.map((c) => (
+                  <button type="button" key={c.key} className={category === c.key ? 'active' : ''} onClick={() => setCategory(c.key)}>{c.label}</button>
+                ))}
+              </div>
+            </div>
+            <div className="biz-catalog-form-actions">
+              <button type="submit" className="biz-preview-publish-btn" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+            </div>
+          </form>
+        </div>
       )}
 
       {media.length > 0 && (
@@ -841,7 +1088,19 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
       )}
 
       {media.length === 0 && !showForm && (
-        <p className="biz-empty-text">No photos yet. Add some to showcase your business.</p>
+        <div className="biz-media-empty-grid">
+          {MEDIA_SUGGESTIONS.map((s) => (
+            <button
+              type="button"
+              key={s.label}
+              className="biz-media-suggestion"
+              style={{ background: s.bg }}
+              onClick={() => { setLabel(s.label); setShowForm(true); }}
+            >
+              <span className="biz-media-suggestion-label">{s.label}</span>
+            </button>
+          ))}
+        </div>
       )}
 
       {media.length > 0 && filteredMedia.length === 0 && (

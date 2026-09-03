@@ -1,0 +1,13 @@
+{
+  "name": "gears-functions",
+  "private": true,
+  "description": "Cloud Functions backing Gears' in-app notifications (nearby businesses, new products/services).",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^5.1.1"
+  }
+}

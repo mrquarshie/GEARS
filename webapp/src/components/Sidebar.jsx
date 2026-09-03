@@ -1,8 +1,6 @@
 import React from 'react';
 import {
-  Gear,
   UserPlus,
-  SignIn,
   SignOut,
   Storefront,
 } from '@phosphor-icons/react';
@@ -14,9 +12,11 @@ import {
   BookmarkIcon,
   HistoryIcon,
   NotificationIcon,
+  GearsLogoMark,
 } from './icons';
+import { vibrateTap } from '../utils/feedback';
 
-export default function Sidebar({ user, authReady, viewMode, setViewMode, openAuth, onSignOut, onOpenBusiness, isOpen, setIsOpen, isSearchPanelOpen, onCloseSearch, onCloseDetail }) {
+export default function Sidebar({ user, authReady, viewMode, setViewMode, openAuth, onSignOut, onOpenBusiness, myBusiness, isOpen, setIsOpen, isSearchPanelOpen, onCloseSearch, onCloseDetail }) {
   // Get initials from display name or email
   const getInitial = () => {
     if (!user) return null;
@@ -51,7 +51,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
           <div className="sidebar-logo">
             <a className="brand-logo" href="/">
               <div className="sidebar-logo-box">
-                <Gear size={22} color="var(--lime)" weight="fill" className="logo-gear-spin" />
+                <GearsLogoMark size={22} color="var(--lime)" className="logo-gear-spin" />
               </div>
             </a>
           </div>
@@ -121,14 +121,26 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
 
         {/* Bottom: auth section */}
         <div className="sidebar-bottom">
-          <button
-            className="nav-btn business-nav-btn"
-            title="Become a Business"
-            onClick={() => { onOpenBusiness(); setIsOpen(false); }}
-          >
-            <Storefront size={20} />
-            <span className="nav-text">Become a Business</span>
-          </button>
+          <div className="sidebar-section-label">Accounts</div>
+          {myBusiness ? (
+            <button
+              className="nav-btn business-nav-btn"
+              title={`${myBusiness.name} · View Business`}
+              onClick={() => { vibrateTap(); onOpenBusiness(); setIsOpen(false); }}
+            >
+              <div className="card-avatar sidebar-business-avatar">{myBusiness.name?.charAt(0)?.toUpperCase() || '?'}</div>
+              <span className="nav-text">{myBusiness.name} · View Business</span>
+            </button>
+          ) : (
+            <button
+              className="nav-btn business-nav-btn"
+              title="Become a Business"
+              onClick={() => { vibrateTap(); onOpenBusiness(); setIsOpen(false); }}
+            >
+              <Storefront size={20} />
+              <span className="nav-text">Become a Business</span>
+            </button>
+          )}
           {!authReady ? (
             <div style={{ width: 44, height: 44 }} />
           ) : user ? (
@@ -150,22 +162,19 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
                 </div>
                 <span className="nav-text sidebar-user-alias">{userAlias}</span>
               </div>
-              <button className="auth-btn" onClick={() => { onSignOut(); setIsOpen(false); }} title="Sign Out">
+              <button className="auth-btn auth-btn--danger" onClick={() => { vibrateTap(); onSignOut(); setIsOpen(false); }} title="Log Out">
                 <SignOut size={22} />
-                <span className="nav-text">Sign Out</span>
+                <span className="nav-text">Log Out</span>
               </button>
             </>
           ) : (
-            <>
-              <button className="auth-btn primary" onClick={() => { openAuth(); setIsOpen(false); }} title="Sign Up">
-                <UserPlus size={22} />
-                <span className="nav-text">Sign Up</span>
-              </button>
-              <button className="auth-btn" onClick={() => { openAuth(); setIsOpen(false); }} title="Log In">
-                <SignIn size={22} />
-                <span className="nav-text">Log In</span>
-              </button>
-            </>
+            // One button, not two — Google's own popup already handles
+            // whether the email is new or existing, so a separate "Sign Up"
+            // vs "Log In" button would just open the identical flow twice.
+            <button className="auth-btn primary" onClick={() => { vibrateTap(); openAuth(); setIsOpen(false); }} title="Sign Up / Log In">
+              <UserPlus size={22} />
+              <span className="nav-text">Sign Up / Log In</span>
+            </button>
           )}
         </div>
       </aside>

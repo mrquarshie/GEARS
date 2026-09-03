@@ -1,6 +1,7 @@
 export { default as HomeIcon } from './HomeIcon.jsx';
 export { default as SearchIcon } from './SearchIcon.jsx';
 export { default as ShopIcon } from './ShopIcon.jsx';
+export { default as MechanicIcon } from './MechanicIcon.jsx';
 export { default as CarDetailingIcon } from './CarDetailingIcon.jsx';
 export { default as FillingStationIcon } from './FillingStationIcon.jsx';
 export { default as BookmarkIcon } from './BookmarkIcon.jsx';
@@ -14,3 +15,4 @@ export { default as StarRatingIcon } from './StarRatingIcon.jsx';
 export { default as ArrowDownIcon } from './ArrowDownIcon.jsx';
 export { default as FilterIcon } from './FilterIcon.jsx';
 export { default as RadioButtonIcon } from './RadioButtonIcon.jsx';
+export { default as GearsLogoMark } from './GearsLogoMark.jsx';

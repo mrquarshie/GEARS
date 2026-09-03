@@ -4,7 +4,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import mockExtrasData from './mockExtras.json';
 import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { List, NavigationArrow, Gear, X, SealCheck, MagnifyingGlass } from '@phosphor-icons/react';
+import { List, NavigationArrow, X, SealCheck, MagnifyingGlass } from '@phosphor-icons/react';
 import {
   addDoc,
   collection,
@@ -42,7 +42,8 @@ import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
 import BusinessDashboard from './components/BusinessDashboard';
-import { CarDetailingIcon } from './components/icons';
+import { CarDetailingIcon, GearsLogoMark } from './components/icons';
+import { vibrateTap } from './utils/feedback';
 
 import authImgCar from './components/AuthImages/Car.png';
 import authImgSteer from './components/AuthImages/Steer.png';
@@ -249,6 +250,16 @@ function GoogleGLogo({ size = 18 }) {
   );
 }
 
+// Accounts that pitch/onboard businesses on their behalf — a listing created
+// while signed in as one of these goes live pre-verified (tier 1) instead of
+// merely claimed (tier 2), since Gears vetted it directly during the pitch.
+const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princeessandoh316@gmail.com'];
+
+// How often a signed-in user's live location gets persisted to their
+// Firestore doc for "nearby business" notifications — watchPosition fires
+// far more often than this, so writes are throttled to this interval.
+const LOCATION_WRITE_INTERVAL_MS = 10 * 60 * 1000;
+
 // Headline shown per sign-in reason, so the prompt explains why the user was
 // stopped instead of a generic message that doesn't match what they tapped.
 const AUTH_REASON_COPY = {
@@ -262,10 +273,12 @@ function AuthModal({ close, onSuccess, reason }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const headline = AUTH_REASON_COPY[reason] || 'Find trusted mechanics, anywhere in Ghana.';
   const isBusiness = reason === 'business';
 
   const loginWithGoogle = async () => {
+    vibrateTap();
     if (!firebaseReady || !auth) return setErrorMsg('Add your Firebase settings to .env first.');
     setLoading(true);
     setErrorMsg('');
@@ -312,6 +325,7 @@ function AuthModal({ close, onSuccess, reason }) {
   // it creates one.
   const submitBusinessAuth = async (e) => {
     e.preventDefault();
+    vibrateTap();
     if (!email || !password) return setErrorMsg('Enter an email and password.');
     if (!firebaseReady) {
       // No Firebase configured (local frontend work, no .env) — fall
@@ -351,13 +365,13 @@ function AuthModal({ close, onSuccess, reason }) {
           <X size={18} />
         </button>
 
-        <div className="auth-header-graphics">
+        <div className={`auth-header-graphics ${keyboardOpen ? 'keyboard-open' : ''}`}>
           <img className="auth-deco auth-deco-big" src={authImgCar} alt="" />
           <img className="auth-deco auth-deco-top-center" src={authImgSteer} alt="" />
           <img className="auth-deco auth-deco-top-right" src={authImgEngine} alt="" />
           <img className="auth-deco auth-deco-bottom-left" src={authImgBattery} alt="" />
           <div className="auth-logo-box">
-            <Gear size={26} color="var(--lime)" weight="fill" className="logo-gear-spin" />
+            <GearsLogoMark size={26} color="var(--lime)" className="logo-gear-spin" />
           </div>
         </div>
 
@@ -371,18 +385,22 @@ function AuthModal({ close, onSuccess, reason }) {
               className="auth-email-form business-fields"
               onSubmit={submitBusinessAuth}
               onFocus={(e) => {
-                // Same "scroll the focused field into view" pattern the
-                // onboarding wizard already uses (MechanicModal's
-                // .business-fields onFocus) — the app already cancels the
-                // OS's own keyboard-pan behavior (see the visualViewport
-                // effects in App), so a plain page-shove would fight that;
-                // this scrolls just the one field into the space the
-                // shrunk (--vh-driven) modal still has.
+                // Used to also scrollIntoView the focused field, back when
+                // the header images stayed cramped in place on focus. Now
+                // that focusing a field hides them entirely (auth-header-
+                // graphics.keyboard-open below) there's already plenty of
+                // room without moving anything — scrolling on top of that
+                // just fought the keyboard's own layout, so it's gone.
                 if (!e.target.matches('input')) return;
-                const field = e.target;
-                setTimeout(() => {
-                  field.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                }, 300);
+                setKeyboardOpen(true);
+              }}
+              onBlur={(e) => {
+                // Only counts as "closed" once focus actually leaves the
+                // form — tabbing from Email to Password blurs one input
+                // and immediately focuses the other, and relatedTarget
+                // still points inside the form at that instant.
+                if (e.currentTarget.contains(e.relatedTarget)) return;
+                setKeyboardOpen(false);
               }}
             >
               <label>Email
@@ -602,7 +620,7 @@ function BusinessTypeIcon({ type }) {
   return <BizTypeGearIcon />;
 }
 
-function MechanicModal({ close, submit, initialData, onFinish }) {
+function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
   const initialType = useMemo(() => {
     if (!initialData) return 'mechanic';
     if (initialData.specialty === 'Fuel Station') return 'fuel';
@@ -760,6 +778,7 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
 
   const send = async (e) => {
     e.preventDefault();
+    vibrateTap();
     if (step === 'type') {
       setStep('info');
       return;
@@ -926,7 +945,7 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
                 <input id="add-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder={typeConfig.namePlaceholder} />
               </label>
               <label>Business Contact
-                <input id="add-phone" required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+233 24 000 0000" />
+                <input id="add-phone" required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+233" />
               </label>
               <label>Opening Days
                 <select required value={openingDays} onChange={(e) => setOpeningDays(e.target.value)}>
@@ -946,7 +965,7 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
                   <option value="By appointment">By appointment</option>
                 </select>
               </label>
-              <label>About Your Business <span>{about.length} / 150</span>
+              <label>About Your Business <span>{about.length}<span className="field-count-total"> / 150</span></span>
                 <textarea maxLength={150} value={about} onChange={(e) => setAbout(e.target.value)} placeholder={typeConfig.aboutPlaceholder} />
               </label>
             </div>
@@ -1025,20 +1044,27 @@ function MechanicModal({ close, submit, initialData, onFinish }) {
 
       {/* Layered on top of the still-mounted wizard (dimmed behind it) rather
           than replacing it, so this shows over whatever step the owner was
-          on — not whatever happens to be behind the whole modal. Tier 2 here
-          matches "Profile Claimed": self-onboarded listings are claimed but
-          not yet independently confirmed by Gears staff. */}
+          on — not whatever happens to be behind the whole modal. Tier shown
+          matches submitMechanic's actual claimed/verified split: self-onboarded
+          listings land on "Profile Claimed" (tier 2), admin-onboarded ones on
+          "Verified By Gears" (tier 1) since staff vetted it during the pitch. */}
       {showSuccess && (
         <div className="verification-sheet-overlay">
           <div className="verification-sheet">
             <div className="biz-success-icon">
-              <SealCheck size={44} weight="fill" color="var(--forest)" />
+              <SealCheck size={64} weight="fill" color="var(--forest)" />
             </div>
             <h3 className="biz-success-title">{typeConfig.successTitle}</h3>
-            <p className="biz-success-desc">
-              You've earned our <strong>Tier 2</strong> badge.<br />
-              Our Staff will contact you to complete your onboarding process.
-            </p>
+            {isAdmin ? (
+              <p className="biz-success-desc">
+                You've earned our <strong>Tier 1</strong> badge — verified by Gears.
+              </p>
+            ) : (
+              <p className="biz-success-desc">
+                You've earned our <strong>Tier 2</strong> badge.<br />
+                Our Staff will contact you to complete your onboarding process.
+              </p>
+            )}
             <div className="verification-sheet-footer">
               <button className="verification-sheet-btn" onClick={onFinish}>Got it</button>
             </div>
@@ -1093,6 +1119,12 @@ function App() {
     localStorage.setItem('gearsViewMode', mode);
   };
   const [userLocation, setUserLocation] = useState(null);
+  // Read inside the geolocation watch callback below instead of added as an
+  // effect dependency, so watchPosition doesn't get torn down and restarted
+  // (dropping location accuracy) every time sign-in state changes.
+  const currentUserRef = useRef(user);
+  useEffect(() => { currentUserRef.current = user; }, [user]);
+  const lastLocationWriteRef = useRef(0);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isLocatingScan, setIsLocatingScan] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
@@ -1138,7 +1170,10 @@ function App() {
 
   // Records the single most recent explicit action per mechanic (call,
   // bookmark, direction, rate) so cards can show "Called 2 min ago" etc.
+  // Doubles as the one choke point every one of those actions already
+  // passes through, so a vibration here covers all of them for free.
   const recordInteraction = (mechanicId, action) => {
+    vibrateTap();
     setRecentInteractions((prev) => {
       const next = { ...prev, [mechanicId]: { action, timestamp: Date.now() } };
       saveRecentInteractions(next);
@@ -1210,9 +1245,25 @@ function App() {
     if ("geolocation" in navigator) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
-          setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
           // If this is the very first time we get location, trigger a pan
           setMapPanTrigger(prev => prev === 0 ? 1 : prev);
+
+          // Persist a coarse location for nearby-business notifications.
+          // watchPosition fires far more often than this write is worth,
+          // so it's throttled — only a signed-in user has anywhere to read
+          // notifications from, so signed-out visitors are skipped entirely.
+          const signedInUser = currentUserRef.current;
+          const now = Date.now();
+          if (signedInUser && db && now - lastLocationWriteRef.current > LOCATION_WRITE_INTERVAL_MS) {
+            lastLocationWriteRef.current = now;
+            setDoc(
+              doc(db, 'users', signedInUser.uid),
+              { location: { lat: latitude, lng: longitude, updatedAt: new Date() } },
+              { merge: true },
+            ).catch(() => {});
+          }
         },
         (err) => {
           console.warn("Location error:", err);
@@ -1506,7 +1557,10 @@ function App() {
     if (!mechanic) return;
     const isSaved = savedMechanics.includes(mechanic.id);
 
-    // Play a short beep on save/unsave
+    // Play a short beep on save/unsave, plus a subtle vibration. Called
+    // directly here (not left to recordInteraction below) since unsaving
+    // doesn't go through that — only a fresh save does.
+    vibrateTap();
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -1584,7 +1638,19 @@ function App() {
     } else {
       // Self-onboarded listings start "claimed" (verification tier 2) since
       // the owner set it up themselves but Gears hasn't confirmed it yet.
-      const mechanic = { ...listing, specialty: listing.specialty || 'General repairs', rating: 'New', ratingCount: 0, ratingSum: 0, open: true, claimed: true };
+      // Admin-onboarded ones (pitch workflow) start verified (tier 1) instead,
+      // since Gears vetted the business directly while setting it up.
+      const isAdminOnboarded = ADMIN_EMAILS.includes(user?.email);
+      const mechanic = {
+        ...listing,
+        specialty: listing.specialty || 'General repairs',
+        rating: 'New',
+        ratingCount: 0,
+        ratingSum: 0,
+        open: true,
+        claimed: !isAdminOnboarded,
+        verified: isAdminOnboarded,
+      };
       if (useLocalBusiness) {
         mechanic.id = `local-business-${Date.now()}`;
       } else {
@@ -1664,6 +1730,9 @@ function App() {
         onSwitchBusiness={setActiveBusinessId}
         onUpdateLocation={handleUpdateBusinessLocation}
         onExit={() => setBusinessDashboardOpen(false)}
+        onSignOut={() => { signOut(auth); setUser(null); setBusinessDashboardOpen(false); }}
+        onAddBusiness={() => { setBusinessDashboardOpen(false); setModal('add'); }}
+        onViewProfile={() => { setBusinessDashboardOpen(false); handleSelectMechanic(myBusiness); }}
         show={show}
       />
     );
@@ -1686,6 +1755,7 @@ function App() {
         openAuth={() => setModal('auth')}
         onSignOut={() => { signOut(auth); setUser(null); handleSetViewMode('all'); show('Signed out'); }}
         onOpenBusiness={handleOpenBusiness}
+        myBusiness={myBusiness}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
         isSearchPanelOpen={isSearchPanelOpen}
@@ -1753,6 +1823,7 @@ function App() {
             recentInteractions={recentInteractions}
             onRecordInteraction={recordInteraction}
             onNotice={show}
+            onRate={(m) => setModal({ type: 'rate', mechanic: m })}
             hideOnDesktop={!!selectedMechanic}
               onUseMyLocation={() => {
                 if (navigator.geolocation) {
@@ -1794,6 +1865,7 @@ function App() {
             onOpenSidebar={() => setMobileSidebarOpen(true)}
             onSelectMechanic={handleSelectMechanic}
             mechanics={mechanics}
+            user={user}
           />
         )}
 
@@ -1862,6 +1934,7 @@ function App() {
           submit={submitMechanic}
           initialData={modal?.type === 'edit' ? modal.mechanic : null}
           onFinish={() => { setBusinessDashboardOpen(true); setModal(null); }}
+          isAdmin={ADMIN_EMAILS.includes(user?.email)}
         />
       )}
 
