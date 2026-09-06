@@ -33,12 +33,12 @@ service cloud.firestore {
         && (request.resource.data.verified != true || isAdminEmail());
 
       // Creator can update any field except "verified" (only an admin can
-      // flip that). Others can only update ratings via transaction.
-      allow update: if request.auth != null && (
-        (resource.data.createdBy == request.auth.uid
+      // flip that). Anyone can update ratings or analytics counter fields.
+      allow update: if (
+        (request.auth != null && resource.data.createdBy == request.auth.uid
           && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['verified'])
               || isAdminEmail())) ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'ratingCount', 'ratingSum']))
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'ratingCount', 'ratingSum', 'visitCount', 'callCount', 'bookmarkCount', 'searchCount']))
       );
 
       // Submitter can delete their own listing

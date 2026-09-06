@@ -30,6 +30,9 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
   };
 
   const initial = getInitial();
+  const userAlias = user
+    ? (user.displayName?.trim() || user.email?.split('@')[0] || 'User')
+    : null;
 
   const handleNavClick = (mode) => {
     setViewMode(mode);
@@ -142,7 +145,14 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             <div style={{ width: 44, height: 44 }} />
           ) : user ? (
             <>
-              <div className="auth-btn auth-btn--static" title={user.displayName || user.email}>
+              <div
+                className="sidebar-user-profile"
+                title={`${userAlias} — Click to view your saved places`}
+                onClick={() => handleNavClick('saved')}
+                style={{ cursor: 'pointer' }}
+                role="button"
+                tabIndex={0}
+              >
                 <div className="sidebar-avatar">
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="avatar" className="sidebar-avatar-img" referrerPolicy="no-referrer" />
@@ -150,7 +160,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
                     <span className="sidebar-avatar-letter">{initial}</span>
                   )}
                 </div>
-                <span className="nav-text">Profile</span>
+                <span className="nav-text sidebar-user-alias">{userAlias}</span>
               </div>
               <button className="auth-btn auth-btn--danger" onClick={() => { vibrateTap(); onSignOut(); setIsOpen(false); }} title="Log Out">
                 <SignOut size={22} />

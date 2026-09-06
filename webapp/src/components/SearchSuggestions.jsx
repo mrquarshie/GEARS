@@ -23,7 +23,10 @@ export function buildSuggestionMatches(mechanics, searchTerm, { limit = 8 } = {}
       const serviceName = typeof s === 'string' ? s : s.name;
       if (serviceName?.toLowerCase().includes(term)) uniqueMatches.set(serviceName, { type: 'Service', value: serviceName });
     });
-    (m.products || []).forEach(p => { if (p.name?.toLowerCase().includes(term)) uniqueMatches.set(p.name, { type: 'Product', value: p.name }); });
+    (m.products || []).forEach(p => {
+      const prodName = typeof p === 'string' ? p : p.name;
+      if (prodName?.toLowerCase().includes(term)) uniqueMatches.set(prodName, { type: 'Product', value: prodName });
+    });
     (m.fuelPrices || []).forEach(f => { if (f.type?.toLowerCase().includes(term)) uniqueMatches.set(f.type, { type: 'Fuel', value: f.type }); });
     (m.facilities || []).forEach(f => { if (f.toLowerCase?.().includes(term)) uniqueMatches.set(f, { type: 'Facility', value: f }); });
     if (m.phone?.toLowerCase().includes(term)) uniqueMatches.set(m.phone, { type: 'Phone', value: m.phone });

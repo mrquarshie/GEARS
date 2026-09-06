@@ -432,23 +432,23 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
 function BizHomeTab({ mechanic }) {
   const stats = [
-    { label: 'Visits', icon: Eye },
-    { label: 'Calls', icon: Phone },
-    { label: 'Searches', icon: MagnifyingGlass },
-    { label: 'Bookmarks', icon: BookmarkSimple },
+    { label: 'Visits', icon: Eye, value: mechanic?.visitCount ?? 0, note: 'Listing views' },
+    { label: 'Calls', icon: Phone, value: mechanic?.callCount ?? 0, note: 'Phone inquiries' },
+    { label: 'Searches', icon: MagnifyingGlass, value: mechanic?.searchCount ?? 0, note: 'Search impressions' },
+    { label: 'Bookmarks', icon: BookmarkSimple, value: mechanic?.bookmarkCount ?? 0, note: 'Saved by users' },
   ];
 
   return (
     <div className="biz-home-tab">
       <div className="biz-stats-grid">
-        {stats.map(({ label, icon: Icon }) => (
+        {stats.map(({ label, icon: Icon, value, note }) => (
           <div key={label} className="biz-stat-tile">
             <div className="biz-stat-tile-top">
               <Icon size={18} />
               <span>{label}</span>
             </div>
-            <strong>—</strong>
-            <span className="biz-stat-tile-note">Coming soon</span>
+            <strong>{Number(value).toLocaleString()}</strong>
+            <span className="biz-stat-tile-note">{note}</span>
           </div>
         ))}
       </div>

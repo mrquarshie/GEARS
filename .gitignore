@@ -34,3 +34,4 @@ ios/.symlinks/
 webapp/certs/
 webapp/dist/
 webapp/node_modules/
+.vercel
