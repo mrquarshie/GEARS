@@ -1,5 +1,10 @@
 [
   {
+    "internal": {
+      "leadNumber": 1,
+      "socialHandle": "https://vt.tiktok.com/ZSVUGeRWS/",
+      "status": "Discovery"
+    },
     "name": "Highest Auto Detailing",
     "logoUrl": null,
     "claimed": true,
@@ -51,6 +56,11 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 2,
+      "socialHandle": "https://www.tiktok.com/@kelvinquartey7",
+      "status": "Discovery"
+    },
     "name": "Kelvin Quartey",
     "logoUrl": null,
     "claimed": true,
@@ -89,6 +99,13 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 3,
+      "socialHandle": "https://cm-perf.github.io",
+      "status": "Discovery",
+      "email": "cmperformancegh@gmail.com",
+      "notes": "BMW specialist. Ghana-based but sells product worldwide. No phone or street address published — email only. Prices listed in USD, not GHS."
+    },
     "name": "CM Performance",
     "logoUrl": null,
     "claimed": true,
@@ -155,6 +172,15 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 4,
+      "socialHandle": "https://x.com/unclefiifii",
+      "status": "Discovery",
+      "email": "mensahchristian178@gmail.com",
+      "whatsapp": "0552487755",
+      "onlineStore": "Trancova Commerce storefront — has full catalog, cart, order/track/pay flow",
+      "notes": "Extracted from marketing flyers and store footer. Branding consistently reads 'UNCLE FII' (two words, no second 'fi') — sheet says 'Uncle Fiifi'. Contact name appears to be Christian Mensah, per email. No opening hours published anywhere. Coordinates below are area-level for Abossey Okai, not the actual container — needs a precise pin."
+    },
     "name": "Uncle Fii Spare Parts",
     "logoUrl": "/mock-media/leads/uncle-fii/logo/logo.jpg",
     "claimed": true,
@@ -218,6 +244,13 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 5,
+      "socialHandle": "https://snapchat.com/t/6MPlmzUC",
+      "status": "Discovery",
+      "website": "https://dtguyspro.com",
+      "notes": "Site is a client-side rendered PWA — fetch returns only the shell, no content. Everything below comes from meta tags. No location, phone, hours or prices are exposed without running the app. Offers BOTH mobile and drive-in service, plus retail products — three revenue lines, which affects how the listing should be structured."
+    },
     "name": "DT Guys Pro",
     "logoUrl": null,
     "claimed": true,
@@ -278,6 +311,18 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 6,
+      "socialHandle": "https://vt.tiktok.com/ZSVXWHCs2/",
+      "tiktokUsername": "@jaqautoparts2",
+      "status": "Discovery",
+      "source": "tiktok_profile",
+      "googlePlaceId": null,
+      "email": "jaqautoparts2@gmail.com",
+      "whatsapp": "0599931376",
+      "socialProof": "472 TikTok followers, 1,190 likes. Views steady in the 300–1,400 range across recent posts. Three pinned videos.",
+      "notes": "No Google Maps listing found — searched Ghana-wide and Accra. Bio gives phone and email but NO address or city, so location is entirely unknown. Content is driver-education (spark plug anatomy, morning checks, spotting faulty parts) rather than pure product promotion — closest in style to the content plan for Gears itself."
+    },
     "name": "JAQ Auto Parts",
     "logoUrl": "/mock-media/leads/jaq-auto-parts/logo/jaq-auto-parts-logo.jpeg",
     "claimed": true,
@@ -326,6 +371,15 @@
     "media": []
   },
   {
+    "internal": {
+      "leadNumber": 7,
+      "socialHandle": "https://vt.tiktok.com/ZSVXWL6NK/",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJGa8Cy2mZ3w8RTUulgrjCdWc",
+      "matchConfidence": "unconfirmed",
+      "notes": "Could not resolve the maps.app.goo.gl short link — Google blocks automated access. This is a name-search match, NOT a confirmed resolution of your link. Two flags: Google categorises it as 'manufacturer', not car_repair, and the address mixes Darkuman with Mallam (different Accra areas). Confirm the pin matches before publishing. Google rating at lookup: 3.8 from 6 reviews. One review names the owner as 'Flash'."
+    },
     "name": "Flash Motors Engineering Ltd",
     "logoUrl": null,
     "claimed": true,
@@ -361,6 +415,17 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 8,
+      "socialHandle": "https://vt.tiktok.com/ZSVXWuQH1/",
+      "tiktokUsername": "@safeplus_auto",
+      "status": "Discovery",
+      "source": "tiktok_profile + imported_gmaps",
+      "googlePlaceId": "ChIJjaxnXgCB3w8RfYCiKEvrMss",
+      "whatsapp": "0556374508",
+      "socialProof": "1,157 TikTok followers, 16K likes. Top video 22K plays. Actively posting.",
+      "notes": "Sheet name was 'Truck Spare Parts' — real name is SafePlus Truck Parts (Google lists it as 'Safe Plus Auto'; wall signage reads 'SAFE PLUS AUTO PARTS AND SER...'). Decide which name to display. Google has no phone or hours on the listing — phone below is from the TikTok bio. Google categorises them as auto_parts_store AND car_repair, and the signage suggests services too, so confirm whether they repair as well as sell."
+    },
     "name": "SafePlus Truck Parts",
     "logoUrl": null,
     "claimed": true,
@@ -413,6 +478,17 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 9,
+      "socialHandle": "https://vt.tiktok.com/ZSVXWFBHT/",
+      "tiktokUsername": "@ride3hub",
+      "status": "Discovery",
+      "source": "tiktok_profile",
+      "googlePlaceId": null,
+      "socialProof": "775 TikTok followers, 15.9K likes. Views per video are modest (200–1,200) despite the high like count.",
+      "classificationFlag": "UNRESOLVED — may not belong in the directory at all. See notes.",
+      "notes": "No Google Maps listing found. No phone, address or opening hours published anywhere. Bio reads 'Ride3 Transport / Logistics management', which is a fleet/delivery business, not a service provider. But the video content is key programming and immobilizer coding (Xhorse key tool, BMW CAS/EWS systems), diagnostics tablets, and motorcycles/tricycles being moved. Two readings: (a) a transport company that happens to post about maintaining its own fleet, or (b) a business doing both. Decide which before listing — if (a), this is a Phase 4 fleet CUSTOMER, not a Phase 1 supply-side listing."
+    },
     "name": "R3hub",
     "logoUrl": "/mock-media/leads/r3hub/logo/r3hub-logo.jpeg",
     "claimed": true,
@@ -451,6 +527,17 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 10,
+      "socialHandle": "https://vt.tiktok.com/ZSVXW9LBx/",
+      "tiktokUsername": "@bestchoice776",
+      "status": "Discovery",
+      "source": "tiktok_profile + imported_gmaps",
+      "googlePlaceId": "ChIJj3LXL7mZ2w8R4NFGxXtxi9c",
+      "matchConfidence": "confirmed",
+      "socialProof": "41.8K TikTok followers, 489.4K likes — by far the largest account in the lead list. Recent video views 336–4,852. Maintains a dedicated 'Car spraying' playlist.",
+      "notes": "Match confirmed: the Google listing's phone (+233 53 573 6253) is identical to the TikTok bio number. Google rating 5.0 from only 2 reviews — a tiny sample next to a 41.8K following, which is itself the pitch: their reputation lives on TikTok, not on Maps. CATEGORY CORRECTION: this is auto refinishing, spraying and bodywork, NOT detailing. The sheet had them under Detailer."
+    },
     "name": "Best Choice Auto Refinish",
     "logoUrl": null,
     "claimed": true,
@@ -511,6 +598,11 @@
     ]
   },
   {
+    "internal": {
+      "leadNumber": 11,
+      "socialHandle": "https://x.com/AnanzoJ",
+      "status": "Discovery"
+    },
     "name": "Washing Bay Promoter",
     "logoUrl": null,
     "claimed": true,
@@ -549,128 +641,5 @@
         "label": "Workshop (stock placeholder)"
       }
     ]
-  },
-  {
-    "name": "Goil Filling Station",
-    "lat": 5.5731,
-    "lng": -0.1998,
-    "phone": "0244123009",
-    "area": "Asafo, Kumasi",
-    "locationDetail": "Asafo, Kumasi (near Total station)",
-    "specialty": "Fuel Station",
-    "rating": "4.5",
-    "ratingCount": 120,
-    "ratingSum": 540,
-    "open": true,
-    "hours": "Mon-Sat · 7:00 AM – 6:00 PM",
-    "facilities": [
-      "Car Wash",
-      "ATM",
-      "Shop"
-    ],
-    "fuelPrices": [
-      {
-        "type": "Petrol",
-        "price": "14.65",
-        "unit": "L",
-        "color": "#dc2626"
-      },
-      {
-        "type": "Diesel",
-        "price": "15.08",
-        "unit": "L",
-        "color": "#2563eb"
-      },
-      {
-        "type": "LPG",
-        "price": "9.80",
-        "unit": "kg",
-        "color": "#ea580c"
-      }
-    ],
-    "reviews": [
-      {
-        "userName": "Yaw B.",
-        "value": 5,
-        "comment": "Never a long queue and pumps are always accurate.",
-        "date": "2026-06-10"
-      }
-    ]
-  },
-  {
-    "name": "Goil Spintex",
-    "lat": 5.628,
-    "lng": -0.121,
-    "phone": "0244123010",
-    "area": "Spintex Road, Accra",
-    "specialty": "Fuel Station",
-    "rating": "4.3",
-    "ratingCount": 97,
-    "ratingSum": 417,
-    "open": true,
-    "hours": "24 Hours",
-    "facilities": [
-      "ATM",
-      "Shop"
-    ],
-    "fuelPrices": [
-      {
-        "type": "Petrol",
-        "price": "14.65",
-        "unit": "L",
-        "color": "#dc2626"
-      },
-      {
-        "type": "Diesel",
-        "price": "15.08",
-        "unit": "L",
-        "color": "#2563eb"
-      }
-    ]
-  },
-  {
-    "name": "Total Energies Airport City",
-    "lat": 5.6052,
-    "lng": -0.1719,
-    "phone": "0244123011",
-    "area": "Airport City, Accra",
-    "specialty": "Fuel Station",
-    "rating": "4.6",
-    "ratingCount": 73,
-    "ratingSum": 336,
-    "open": true,
-    "hours": "24 Hours",
-    "facilities": [
-      "Car Wash",
-      "ATM",
-      "Shop",
-      "Air & Water"
-    ],
-    "fuelPrices": [
-      {
-        "type": "Petrol",
-        "price": "14.70",
-        "unit": "L",
-        "color": "#dc2626"
-      },
-      {
-        "type": "Diesel",
-        "price": "15.15",
-        "unit": "L",
-        "color": "#2563eb"
-      }
-    ]
-  },
-  {
-    "name": "Goil Ahodwo",
-    "lat": 6.669,
-    "lng": -1.618,
-    "phone": "0244123012",
-    "area": "Ahodwo, Kumasi",
-    "specialty": "Fuel Station",
-    "rating": "New",
-    "ratingCount": 0,
-    "ratingSum": 0,
-    "open": false
   }
 ]

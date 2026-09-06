@@ -1566,6 +1566,13 @@ body {
   font-size: 18px;
   font-weight: 400;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.card-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .card-badges {
@@ -2019,6 +2026,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.detail-hero-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .detail-hero-avatar-letter {
@@ -4390,7 +4403,13 @@ body {
     right: 12px;
     bottom: 12px;
     width: auto;
-    height: calc(var(--vh, 1vh) * 90);
+    /* Stable height (not the reactive --vh) — --vh also tracks Safari's
+       toolbar collapsing/expanding during touch-scroll, not just the
+       keyboard, which was making this sheet grow while a finger was
+       actively scrolling the list and shrink back the moment it lifted,
+       re-hiding whatever card had just scrolled into view. See the #root
+       comment above for the general rationale. */
+    height: 90vh;
     /* Max height when fully expanded */
     border-radius: 28px;
     z-index: 1000;
@@ -4426,6 +4445,13 @@ body {
 
   .list-title {
     padding-top: 0;
+  }
+
+  /* Extra bottom clearance so the last card can scroll clear of the home
+     indicator/browser chrome instead of settling flush with the sheet's
+     bottom edge. */
+  .mechanic-cards {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Mechanic Detail Panel Mobile Override */
@@ -5168,7 +5194,8 @@ body {
   flex-shrink: 0;
 }
 
-.item-sheet-image img {
+.item-sheet-image img,
+.item-sheet-image video {
   width: 100%;
   height: 100%;
   object-fit: cover;

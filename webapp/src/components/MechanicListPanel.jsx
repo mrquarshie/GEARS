@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft, ArrowRight, X, Wrench } from '@phosphor-icons/react';
+import { Target, ArrowLeft, ArrowRight, X, Wrench, Envelope } from '@phosphor-icons/react';
 import {
   BookmarkIcon,
   CallIcon,
@@ -554,13 +554,21 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
             <p className="detail-collapsed-area">{directionPeekTarget.area}{directionPeekTarget.distance ? ` · ${directionPeekTarget.distance}` : ''}</p>
           </div>
           <div className="detail-collapsed-actions">
-            {directionPeekTarget.phone && (
+            {directionPeekTarget.phone ? (
               <button
                 className="detail-collapsed-call"
                 aria-label="Call"
                 onClick={() => { window.location.href = `tel:${directionPeekTarget.phone.replace(/\s+/g, '')}`; }}
               >
                 <CallIcon size={16} />
+              </button>
+            ) : directionPeekTarget.email && (
+              <button
+                className="detail-collapsed-call"
+                aria-label="Email"
+                onClick={() => { window.location.href = `mailto:${directionPeekTarget.email}`; }}
+              >
+                <Envelope size={16} />
               </button>
             )}
             <button
@@ -982,6 +990,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                     mechanicName: p.mechanicName,
                     mechanicId: p.mechanicId,
                     mechanicPhone: mechanics.find(m => m.id === p.mechanicId)?.phone,
+                    mechanicEmail: mechanics.find(m => m.id === p.mechanicId)?.email,
                   });
                 }}>
                   <div className="popular-product-image" style={{ background: hashToColor(p.name || '') }}>
@@ -1157,7 +1166,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                       <>
                         <div className="card-body">
                           <div className="card-badges-row">
-                            <div className="card-avatar">{m.name.charAt(0).toUpperCase()}</div>
+                            <div className="card-avatar">
+                              {m.logoUrl ? <img src={m.logoUrl} alt={m.name} className="card-avatar-img" /> : m.name.charAt(0).toUpperCase()}
+                            </div>
                             <div className="card-badges">
                               {m.distance && (
                                 <div className="card-badge-pill">
@@ -1251,13 +1262,23 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                             <LocationIcon size={16} />
                             <span className="card-action-label">Direction</span>
                           </button>
-                          <button
-                            className="card-bottom-action"
-                            onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; onRecordInteraction?.(m.id, 'call'); }}
-                          >
-                            <CallIcon size={16} />
-                            <span>Call</span>
-                          </button>
+                          {m.phone ? (
+                            <button
+                              className="card-bottom-action"
+                              onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${m.phone.replace(/\s+/g, '')}`; onRecordInteraction?.(m.id, 'call'); }}
+                            >
+                              <CallIcon size={16} />
+                              <span>Call</span>
+                            </button>
+                          ) : m.email && (
+                            <button
+                              className="card-bottom-action"
+                              onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${m.email}`; onRecordInteraction?.(m.id, 'email'); }}
+                            >
+                              <Envelope size={16} />
+                              <span>Email</span>
+                            </button>
+                          )}
                         </div>
                       </>
                     )}
@@ -1279,6 +1300,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
           item={productSheet.item}
           mechanicName={productSheet.mechanicName}
           mechanicPhone={productSheet.mechanicPhone}
+          mechanicEmail={productSheet.mechanicEmail}
           mechanicId={productSheet.mechanicId}
           onClose={() => setProductSheet(null)}
           onSelectShop={() => {
@@ -1295,7 +1317,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 function VerificationSheet({ tier, name, onClose }) {
   const config = {
     1: { title: 'Verified By Gears', desc: "Our team personally confirmed this business — we called or visited them, checked their contact details, and verified they're actively operating." },
-    2: { title: 'Profile Claimed', desc: "This business claimed and set up their own profile on Gears. We haven't independently confirmed every detail yet, but the owner is actively managing this listing." },
+    2: { title: 'Profile Set Up By Gears', desc: "We built this profile using publicly available business info as part of our outreach. The business hasn't confirmed yet whether they'd like to be listed on Gears." },
     3: { title: 'Not Yet Verified', desc: "This listing was found on public map data and hasn't been confirmed by Gears or claimed by the business yet." },
   };
   const { title, desc } = config[tier] || config[3];

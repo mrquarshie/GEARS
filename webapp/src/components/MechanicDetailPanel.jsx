@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo } from '@phosphor-icons/react';
+import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo, Envelope } from '@phosphor-icons/react';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
@@ -132,8 +132,15 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
   };
 
   const handleCallClick = () => {
+    if (!mechanic.phone) return;
     window.location.href = `tel:${mechanic.phone.replace(/\s+/g, '')}`;
     onRecordInteraction?.(mechanic.id, 'call');
+  };
+
+  const handleEmailClick = () => {
+    if (!mechanic.email) return;
+    window.location.href = `mailto:${mechanic.email}`;
+    onRecordInteraction?.(mechanic.id, 'email');
   };
 
   if (collapsed) {
@@ -144,13 +151,21 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
           <p className="detail-collapsed-area">{mechanic.area}{mechanic.distance ? ` · ${mechanic.distance}` : ''}</p>
         </div>
         <div className="detail-collapsed-actions">
-          {mechanic.phone && (
+          {mechanic.phone ? (
             <button
               className="detail-collapsed-call"
               aria-label="Call"
               onClick={() => { window.location.href = `tel:${mechanic.phone.replace(/\s+/g, '')}`; }}
             >
               <CallIcon size={16} />
+            </button>
+          ) : mechanic.email && (
+            <button
+              className="detail-collapsed-call"
+              aria-label="Email"
+              onClick={() => { window.location.href = `mailto:${mechanic.email}`; }}
+            >
+              <Envelope size={16} />
             </button>
           )}
           <button className="detail-collapsed-close" onClick={onClose} aria-label="Close">
@@ -182,7 +197,8 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
       "addressLocality": mechanic.area,
       "addressCountry": "GH"
     },
-    "telephone": mechanic.phone,
+    ...(mechanic.phone ? { "telephone": mechanic.phone } : {}),
+    ...(mechanic.email ? { "email": mechanic.email } : {}),
     "url": window.location.href
   };
 
@@ -192,7 +208,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
       <div className="mechanic-detail-panel">
         <Helmet>
           <title>{mechanic.name} - Mechanic in {mechanic.area} | Gears</title>
-          <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. Call ${mechanic.phone}.`} />
+          <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. ${mechanic.phone ? `Call ${mechanic.phone}.` : mechanic.email ? `Email ${mechanic.email}.` : ''}`} />
           <meta property="og:title" content={`${mechanic.name} | Gears`} />
           <meta property="og:description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}.`} />
           <meta property="og:image" content={`${window.location.origin}${getStaticShareImagePath(mechanic)}`} />
@@ -208,7 +224,11 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
 
         <div className="detail-hero">
           <div className="detail-hero-avatar">
-            <span className="detail-hero-avatar-letter">{mechanic.name.charAt(0).toUpperCase()}</span>
+            {mechanic.logoUrl ? (
+              <img src={mechanic.logoUrl} alt={mechanic.name} className="detail-hero-avatar-img" />
+            ) : (
+              <span className="detail-hero-avatar-letter">{mechanic.name.charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <h2 className="detail-hero-name">
             {mechanic.name}
@@ -275,10 +295,17 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
               <LocationIcon size={16} />
               <span className="card-action-label">Direction</span>
             </button>
-            <button className="bottom-action-btn" onClick={handleCallClick}>
-              <CallIcon size={16} />
-              <span>Call</span>
-            </button>
+            {mechanic.phone ? (
+              <button className="bottom-action-btn" onClick={handleCallClick}>
+                <CallIcon size={16} />
+                <span>Call</span>
+              </button>
+            ) : mechanic.email && (
+              <button className="bottom-action-btn" onClick={handleEmailClick}>
+                <Envelope size={16} />
+                <span>Email</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -287,6 +314,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
             item={detailSheetItem}
             mechanicName={mechanic.name}
             mechanicPhone={mechanic.phone}
+            mechanicEmail={mechanic.email}
             mechanicId={mechanic.id}
             mechanicSpecialty={mechanic.specialty}
             onClose={() => setDetailSheetItem(null)}
@@ -330,7 +358,7 @@ function OverviewTab({ mechanic, category, onRate }) {
         <PhoneIcon size={16} />
         <div className="info-row-content">
           <span className="info-row-label">Contact</span>
-          <p className="info-row-value">{mechanic.phone || 'Not provided'}</p>
+          <p className="info-row-value">{mechanic.phone || mechanic.email || 'Not provided'}</p>
         </div>
       </div>
 
@@ -386,7 +414,7 @@ function ReviewsTab({ mechanicId, mechanic, fallbackReviews }) {
 
   if (loading) return <div className="tab-content"><p className="empty-tab-text">Loading reviews...</p></div>;
 
-  const avg = mechanic.rating !== 'New' ? Number(mechanic.rating).toFixed(1) : null;
+  const avg = mechanic.rating && mechanic.rating !== 'New' ? Number(mechanic.rating).toFixed(1) : null;
   const count = mechanic.ratingCount || 0;
 
   return (
@@ -585,7 +613,7 @@ function servicePriceLabel(price) {
 
 const ORDER_WHATSAPP_NUMBER = '0559488201';
 
-export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mechanicSpecialty, onClose, onSelectShop }) {
+export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicEmail, mechanicId, mechanicSpecialty, onClose, onSelectShop }) {
   const isService = item.type === 'service';
   const bg = isService ? '#EDE9FE' : '#F9F1C2';
   const accent = isService ? '#9747FF' : '#FF9500';
@@ -606,6 +634,16 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mecha
     : `Hi! I'd like to order "${name}"${priceClause}${shopClause}. Is it available?${linkClause}`;
   const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
 
+  // Businesses with no phone (see MechanicDetailPanel's Call/Email split)
+  // aren't reachable through the shared GEARS WhatsApp order line either —
+  // route their orders straight to their own inbox instead.
+  const useEmailOrder = !mechanicPhone && !!mechanicEmail;
+  const mailtoSubject = isService ? `Service request: ${name}` : `Order request: ${name}`;
+  const mailtoBody = isService
+    ? `Hi! I'd like to request the "${name}" service${priceClause}. Could you let me know availability and pricing?${linkClause}`
+    : `Hi! I'd like to order "${name}"${priceClause}. Is it available?${linkClause}`;
+  const mailtoHref = `mailto:${mechanicEmail}?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
+
   return (
     <div className="item-sheet-overlay" onClick={onClose}>
       <div className="item-sheet" onClick={(e) => e.stopPropagation()}>
@@ -614,7 +652,9 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mecha
         </button>
 
         <div className="item-sheet-image" style={{ background: bg }}>
-          {resolvedImage ? (
+          {item.videoUrl ? (
+            <video key={item.videoUrl} src={item.videoUrl} poster={resolvedImage} controls muted playsInline />
+          ) : resolvedImage ? (
             <img src={resolvedImage} alt={name} />
           ) : (
             <div className="item-sheet-placeholder" style={{ background: hashToColor(name || '') }} />
@@ -651,10 +691,17 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicId, mecha
         </div>
 
         <div className="item-sheet-footer">
-          <a className="item-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
-            <WhatsappLogo size={20} weight="fill" />
-            Place Order Via WhatsApp
-          </a>
+          {useEmailOrder ? (
+            <a className="item-sheet-order-btn" href={mailtoHref}>
+              <Envelope size={20} weight="fill" />
+              {isService ? 'Request Via Email' : 'Order Via Email'}
+            </a>
+          ) : (
+            <a className="item-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+              <WhatsappLogo size={20} weight="fill" />
+              Place Order Via WhatsApp
+            </a>
+          )}
         </div>
       </div>
     </div>
@@ -701,7 +748,7 @@ function MediaLightbox({ items, startIndex, onClose }) {
         <button className="media-lightbox-close nav-pill nav-pill--sm" onClick={onClose} aria-label="Close"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg></button>
         <div className="media-lightbox-media" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {item.video ? (
-            <video key={item.video} src={item.video} poster={item.image} controls playsInline />
+            <video key={item.video} src={item.video} poster={item.image} controls muted playsInline />
           ) : item.image ? (
             <img src={item.image} alt={item.title || ''} />
           ) : (
