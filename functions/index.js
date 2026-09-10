@@ -1,9 +1,14 @@
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getAuth } = require('firebase-admin/auth');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
 
 initializeApp();
 const db = getFirestore();
+
+// Kept in sync with ADMIN_EMAILS in webapp/src/main.jsx and firestore.rules.
+const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princeessandoh316@gmail.com'];
 
 // v1: read the whole users collection and filter in memory. Firestore
 // can't range-filter on both lat and lng in one query without geohashing,
@@ -77,7 +82,7 @@ exports.onMechanicCreated = onDocumentCreated('mechanics/{mechanicId}', async (e
   });
 });
 
-async function notifyBookmarkersOfNewItem(mechanicId, itemId, itemName) {
+async function notifyBookmarkersOfNewItem(mechanicId, itemName) {
   const mechanicSnap = await db.collection('mechanics').doc(mechanicId).get();
   if (!mechanicSnap.exists) return;
   const mechanic = mechanicSnap.data();
@@ -85,26 +90,81 @@ async function notifyBookmarkersOfNewItem(mechanicId, itemId, itemName) {
   const bookmarkerUserIds = await findBookmarkerUserIds(mechanicId, mechanic.createdBy);
   if (bookmarkerUserIds.length === 0) return;
 
-  await writeNotifications(bookmarkerUserIds, `new-listing-${mechanicId}-${itemId}`, {
-    type: 'new-listing',
-    title: `${mechanic.name || 'A business you saved'} added something new`,
-    description: itemName ? `${itemName} was just added to their catalog.` : 'Check out their updated catalog.',
-    mechanicId,
-  });
+  // Rate-limiting via a time-bucketed notification id: without this, a
+  // business adding N products/services in a row would fan out N separate
+  // notifications per bookmarker. Bucketing by hour makes repeated adds
+  // within the window overwrite the same doc (idempotent, safe on retry)
+  // and increment an itemCount instead of stacking.
+  const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+  const bucket = Math.floor(Date.now() / RATE_LIMIT_WINDOW_MS);
+  const notificationId = `new-listing-${mechanicId}-${bucket}`;
+  const businessName = mechanic.name || 'A business you saved';
+
+  await Promise.all(
+    bookmarkerUserIds.map((uid) =>
+      db.runTransaction(async (tx) => {
+        const ref = db.collection('users').doc(uid).collection('notifications').doc(notificationId);
+        const snap = await tx.get(ref);
+        if (!snap.exists) {
+          tx.set(ref, {
+            type: 'new-listing',
+            title: `${businessName} added something new`,
+            description: itemName ? `${itemName} was just added to their catalog.` : 'Check out their updated catalog.',
+            mechanicId,
+            itemCount: 1,
+            read: false,
+            createdAt: FieldValue.serverTimestamp(),
+          });
+        } else {
+          const count = (snap.data().itemCount || 1) + 1;
+          tx.update(ref, {
+            description: `${businessName} added ${count} new items to their catalog.`,
+            itemCount: count,
+            read: false,
+          });
+        }
+      }),
+    ),
+  );
 }
 
-// A business adding several products/services in a row fires this once per
-// item, so a saved user gets one notification per item, not a single
-// digest — no batching/rate-limiting yet. Acceptable for now; revisit if
-// it turns out to be noisy in practice.
 exports.onProductCreated = onDocumentCreated('mechanics/{mechanicId}/products/{productId}', async (event) => {
   const product = event.data?.data();
   if (!product) return;
-  await notifyBookmarkersOfNewItem(event.params.mechanicId, event.params.productId, product.name);
+  await notifyBookmarkersOfNewItem(event.params.mechanicId, product.name);
 });
 
 exports.onServiceCreated = onDocumentCreated('mechanics/{mechanicId}/services/{serviceId}', async (event) => {
   const service = event.data?.data();
   if (!service) return;
-  await notifyBookmarkersOfNewItem(event.params.mechanicId, event.params.serviceId, service.name);
+  await notifyBookmarkersOfNewItem(event.params.mechanicId, service.name);
+});
+
+// Rotates a pitch business's placeholder Firebase account to the real
+// owner's email + password (Admin SDK — a client can't change another
+// account's email). Returns the uid + new email so the admin can relay the
+// credentials manually; actual delivery (email/SMS) is not wired up yet.
+exports.handoffBusinessAccount = onCall(async (request) => {
+  const callerEmail = request.auth?.token?.email || null;
+  if (!callerEmail || !ADMIN_EMAILS.includes(callerEmail)) {
+    throw new HttpsError('permission-denied', 'Only Gears admins can rotate business credentials.');
+  }
+
+  const { mechanicId, newEmail, newPassword } = request.data || {};
+  if (!mechanicId || !newEmail || !newPassword) {
+    throw new HttpsError('invalid-argument', 'mechanicId, newEmail, and newPassword are required.');
+  }
+
+  const mechanicSnap = await db.collection('mechanics').doc(mechanicId).get();
+  if (!mechanicSnap.exists) {
+    throw new HttpsError('not-found', 'No business with that id.');
+  }
+  const ownerUid = mechanicSnap.data().createdBy;
+  if (!ownerUid) {
+    throw new HttpsError('failed-precondition', 'That business has no owner account to rotate.');
+  }
+
+  await getAuth().updateUser(ownerUid, { email: newEmail, password: newPassword });
+
+  return { uid: ownerUid, email: newEmail };
 });
