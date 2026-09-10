@@ -2897,6 +2897,80 @@ body {
   color: var(--forest);
 }
 
+.business-custom-specialty {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.business-custom-specialty input {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: 1px solid #d8ddd9;
+  background: #fff;
+  color: #3f4843;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+}
+
+.business-custom-specialty input:focus {
+  border-color: var(--forest);
+}
+
+.business-custom-specialty > button {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 20px;
+  border: none;
+  background: var(--forest);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.business-custom-specialty > button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.business-custom-specialty-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.business-custom-specialty-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 8px 0 14px;
+  border-radius: 18px;
+  background: #f0fff5;
+  border: 1px solid var(--forest);
+  color: var(--forest);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.business-custom-specialty-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(20, 94, 66, 0.12);
+  color: var(--forest);
+  cursor: pointer;
+}
+
 .business-continue-btn {
   width: calc(100% - 30px);
   height: 52px;
@@ -3924,12 +3998,13 @@ body {
 }
 
 /* --- Sidebar user avatar --- */
-/* 108px: fully rounded regardless of size — the standard radius for a
-   person's own avatar everywhere in the app, as opposed to a business's
-   (.card-avatar, 8px — a rounded square, not a circle). */
+/* Fully rounded regardless of size — the standard radius for a person's own
+   avatar everywhere in the app, as opposed to a business's (.card-avatar,
+   8px — a rounded square, not a circle). Sized to match the business
+   thumbnail so the two Accounts entries line up; only the radius differs. */
 .sidebar-avatar {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: 108px;
   background: var(--forest);
   display: flex;
@@ -4303,7 +4378,7 @@ body {
     flex-direction: row;
     width: 100%;
     padding-left: 16px;
-    height: 40px;
+    height: 24px;
     gap: 10px;
     align-items: center;
     cursor: default;
@@ -4327,8 +4402,8 @@ body {
 
   /* Scale down avatar slightly in mobile drawer row */
   .sidebar-user-profile .sidebar-avatar {
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
   }
 

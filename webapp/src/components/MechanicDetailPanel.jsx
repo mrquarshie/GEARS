@@ -89,7 +89,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, onRequireAuth, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -177,14 +177,16 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
   }
 
   const category = getCategory(mechanic.specialty);
-  const hasProducts = (mechanic.products?.length || 0) > 0;
-  const hasServices = (mechanic.services?.length || 0) > 0;
 
+  // Products/Services are stored as subcollections (mechanics/{id}/products,
+  // /services), not on the doc, so their presence can't be inferred from the
+  // inline arrays. Always offer the tabs and let ListItemsTab show the empty
+  // state — otherwise items added from the business dashboard never surface.
   const tabs = category === 'detailer'
     ? ['Overview', 'Packages', 'Reviews', 'Media']
     : category === 'fuel'
       ? ['Overview', 'Fuel Prices', 'Reviews', 'Media']
-      : ['Overview', ...(hasProducts ? ['Products'] : []), ...(hasServices ? ['Services'] : []), 'Reviews', 'Media'];
+      : ['Overview', 'Products', 'Services', 'Reviews', 'Media'];
 
   const isCreator = user && user.uid === mechanic.createdBy;
 
@@ -263,9 +265,9 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         <div className="detail-scroll">
           <div className="detail-content">
             {activeTab === 'Overview' && <OverviewTab mechanic={mechanic} category={category} onRate={onRate} />}
-            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
-            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} />}
-            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} />}
+            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} onRequireAuth={onRequireAuth} />}
+            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} onRequireAuth={onRequireAuth} />}
+            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} onRequireAuth={onRequireAuth} />}
             {activeTab === 'Fuel Prices' && <FuelPricesTab fuelPrices={mechanic.fuelPrices} />}
             {activeTab === 'Media' && <MediaTab mechanicId={mechanic.id} user={user} fallbackMedia={mechanic.media} extraMedia={(mechanic.products || []).filter(p => p.imageUrl)} />}
             {activeTab === 'Reviews' && <ReviewsTab mechanicId={mechanic.id} mechanic={mechanic} fallbackReviews={mechanic.reviews} />}
@@ -481,7 +483,7 @@ function getDetailerPlaceholderImage(name) {
   return DETAILER_PLACEHOLDER_IMAGES[hashIndex(name || '', DETAILER_PLACEHOLDER_IMAGES.length)];
 }
 
-function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap }) {
+function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap, onRequireAuth }) {
   const [items, setItems] = useState(fallbackItems || []);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -500,6 +502,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    if (!user) { onRequireAuth?.(); return; }
     if (!name.trim() || !db) return;
     setSaving(true);
     try {
@@ -524,11 +527,16 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   const isGrid = layout === 'grid';
   const isCards = layout === 'cards';
 
+  const handleToggleForm = () => {
+    if (!user) { onRequireAuth?.(); return; }
+    setShowForm(!showForm);
+  };
+
   return (
     <div className="tab-content">
-      {user && db && (
+      {db && (
         <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-          <button className="primary" onClick={() => setShowForm(!showForm)} style={{ padding: '6px 12px', fontSize: '13px' }}>
+          <button className="primary" onClick={handleToggleForm} style={{ padding: '6px 12px', fontSize: '13px' }}>
             <Plus size={14} /> Add {itemName}
           </button>
         </div>

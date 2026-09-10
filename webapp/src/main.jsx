@@ -260,13 +260,49 @@ const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princ
 // far more often than this, so writes are throttled to this interval.
 const LOCATION_WRITE_INTERVAL_MS = 10 * 60 * 1000;
 
+// How often the mechanics list refetches so a business onboarded (or edited)
+// after the initial load still shows up without a hard refresh (§4). A timer
+// + tab-focus refetch, not a live onSnapshot listener — predictable read
+// costs, and this degree of staleness is acceptable for now.
+const MECHANICS_REFRESH_MS = 2 * 60 * 1000;
+
+// Single-query page size for the mechanics list. Firestore caps a single
+// query at 1000 docs; real pagination is deferred until the business count
+// makes it necessary (was previously 100).
+const MECHANICS_PAGE_SIZE = 1000;
+
 // Headline shown per sign-in reason, so the prompt explains why the user was
 // stopped instead of a generic message that doesn't match what they tapped.
 const AUTH_REASON_COPY = {
   bookmark: 'Sign up to bookmark a mechanic shop or retailer.',
   rate: 'Sign up to rate and review.',
   business: 'Sign up to list and manage your business.',
+  catalog: 'Sign up to add products and services.',
 };
+
+// Mirror the signed-in user's basic details into localStorage. Firebase's
+// browserLocalPersistence (see firebase.js) already persists the auth token
+// across reloads; this stores the readable details too so the session (and
+// avatar/alias) survive a refresh until the user explicitly signs out.
+const AUTH_USER_KEY = 'gearsAuthUser';
+
+function persistAuthUser(u) {
+  if (!u) return;
+  try {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({
+      uid: u.uid,
+      email: u.email || '',
+      displayName: u.displayName || '',
+      photoURL: u.photoURL || '',
+    }));
+  } catch (e) {
+    console.warn('Failed to persist auth user:', e);
+  }
+}
+
+function clearAuthUser() {
+  try { localStorage.removeItem(AUTH_USER_KEY); } catch (e) {}
+}
 
 function AuthModal({ close, onSuccess, reason }) {
   const [loading, setLoading] = useState(false);
@@ -496,7 +532,7 @@ const BUSINESS_TYPES = {
     aboutPlaceholder: 'Describe the repairs and vehicle services you offer',
     locationHint: 'Place the pin at your garage or workshop.',
     icon: 'gear',
-    specialtiesIntro: 'Pick the repairs you specialize in. Customers search by these, so accurate choices help the right people find your garage.',
+    specialtiesIntro: 'Customers search by these, so accurate choices help the right people find your garage.',
     specialties: [
       'General Repairs', 'Auto Repairs', 'Diagnostics', 'Auto-Electrical', 'Engine Repair',
       'Brakes', 'Suspension', 'Transmission', 'Oil Change', 'Wheel Alignment', 'AC Repair',
@@ -647,6 +683,7 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
   const [flyToTrigger, setFlyToTrigger] = useState(0);
   const [specialtySearchActive, setSpecialtySearchActive] = useState(false);
   const [specialtySearchQuery, setSpecialtySearchQuery] = useState('');
+  const [customSpecialty, setCustomSpecialty] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const hasSetDefaultLocationRef = useRef(false);
   const locationSearchRequestIdRef = useRef(0);
@@ -750,6 +787,16 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
     setSelectedSpecialties((current) =>
       current.includes(item) ? current.filter((value) => value !== item) : [...current, item],
     );
+  };
+
+  const addCustomSpecialty = () => {
+    const value = customSpecialty.trim();
+    if (!value) return;
+    const formatted = value.charAt(0).toUpperCase() + value.slice(1);
+    if (!selectedSpecialties.includes(formatted)) {
+      setSelectedSpecialties((current) => [...current, formatted]);
+    }
+    setCustomSpecialty('');
   };
 
   const buildListing = () => ({
@@ -998,6 +1045,39 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
           {step === 'specialties' && (
             <div className="business-specialties-step">
               <p>{typeConfig.specialtiesIntro}</p>
+              <div className="business-custom-specialty">
+                <input
+                  value={customSpecialty}
+                  onChange={(e) => setCustomSpecialty(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomSpecialty();
+                    }
+                  }}
+                  placeholder="Type a custom speciality"
+                  aria-label="Add a custom speciality"
+                />
+                <button type="button" onClick={addCustomSpecialty} disabled={!customSpecialty.trim()}>
+                  Add
+                </button>
+              </div>
+              {(() => {
+                const customSelected = selectedSpecialties.filter((item) => !typeConfig.specialties.includes(item));
+                if (customSelected.length === 0) return null;
+                return (
+                  <div className="business-custom-specialty-list">
+                    {customSelected.map((item) => (
+                      <span key={item} className="business-custom-specialty-chip">
+                        {item}
+                        <button type="button" onClick={() => toggleSpecialty(item)} aria-label={`Remove ${item}`}>
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
               {(() => {
                 const filteredSpecialties = typeConfig.specialties.filter((item) =>
                   item.toLowerCase().includes(specialtySearchQuery.trim().toLowerCase()),
@@ -1109,8 +1189,9 @@ function App() {
   const [savedMechanics, setSavedMechanics] = useState([]);
   const [viewMode, setViewMode] = useState(() => {
     const savedMode = localStorage.getItem('gearsViewMode');
+    const hasAuth = Boolean(auth && auth.currentUser);
+    if (savedMode === 'saved') return hasAuth ? 'saved' : 'all';
     if (savedMode) return savedMode;
-    const hasAuth = (auth && auth.currentUser) || Object.keys(localStorage).some(k => k.startsWith('firebase:authUser'));
     return hasAuth ? 'saved' : 'all';
   });
 
@@ -1124,6 +1205,8 @@ function App() {
   // (dropping location accuracy) every time sign-in state changes.
   const currentUserRef = useRef(user);
   useEffect(() => { currentUserRef.current = user; }, [user]);
+  const viewModeRef = useRef(viewMode);
+  useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
   const lastLocationWriteRef = useRef(0);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isLocatingScan, setIsLocatingScan] = useState(false);
@@ -1384,6 +1467,18 @@ function App() {
     }
 
     let unsubscribe = () => {};
+    let refreshInterval = null;
+
+    const loadMechanics = async () => {
+      try {
+        const result = await getDocs(query(collection(db, 'mechanics'), limit(MECHANICS_PAGE_SIZE)));
+        setAllMechanics(result.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (e) {
+        console.error('Failed to load mechanics:', e);
+      }
+    };
+
+    const onFocus = () => { if (!document.hidden) loadMechanics(); };
 
     const init = async () => {
       // Step 1: check if user just came back from signInWithRedirect
@@ -1407,6 +1502,7 @@ function App() {
         setUser(u);
         setAuthReady(true);
         if (u) {
+          persistAuthUser(u);
           const pending = sessionStorage.getItem('gearsPendingAuth');
           if (pending) {
             sessionStorage.removeItem('gearsPendingAuth');
@@ -1414,22 +1510,39 @@ function App() {
             show(`Welcome, ${alias}!`);
             handleSetViewMode('saved');
           }
+        } else {
+          clearAuthUser();
+          if (viewModeRef.current === 'saved') {
+            // Signed out (or never signed in) — the bookmarks view is
+            // meaningless without an account, so fall back to the home view
+            // instead of lingering on an empty "Saved" page.
+            handleSetViewMode('all');
+          }
         }
       });
 
       // Step 3: load mechanics data
       try {
-        const result = await getDocs(query(collection(db, 'mechanics'), limit(100)));
-        setAllMechanics(result.docs.map((d) => ({ id: d.id, ...d.data() })));
-      } catch (e) {
-        console.error(e);
+        await loadMechanics();
       } finally {
         setLoading(false);
       }
+
+      // Periodic refetch + refetch on tab focus/app resume, so a business
+      // added after the initial load — or past the old 100-doc cap — surfaces
+      // without a hard refresh.
+      refreshInterval = setInterval(loadMechanics, MECHANICS_REFRESH_MS);
+      document.addEventListener('visibilitychange', onFocus);
+      window.addEventListener('focus', onFocus);
     };
 
     init();
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (refreshInterval) clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const mechanics = useMemo(() => {
@@ -1730,7 +1843,7 @@ function App() {
         onSwitchBusiness={setActiveBusinessId}
         onUpdateLocation={handleUpdateBusinessLocation}
         onExit={() => setBusinessDashboardOpen(false)}
-        onSignOut={() => { signOut(auth); setUser(null); setBusinessDashboardOpen(false); }}
+        onSignOut={() => { signOut(auth); clearAuthUser(); setUser(null); setBusinessDashboardOpen(false); }}
         onAddBusiness={() => { setBusinessDashboardOpen(false); setModal('add'); }}
         onViewProfile={() => { setBusinessDashboardOpen(false); handleSelectMechanic(myBusiness); }}
         show={show}
@@ -1753,7 +1866,7 @@ function App() {
         viewMode={viewMode}
         setViewMode={handleSetViewMode}
         openAuth={() => setModal('auth')}
-        onSignOut={() => { signOut(auth); setUser(null); handleSetViewMode('all'); show('Signed out'); }}
+        onSignOut={() => { signOut(auth); clearAuthUser(); setUser(null); handleSetViewMode('all'); show('Signed out'); }}
         onOpenBusiness={handleOpenBusiness}
         myBusiness={myBusiness}
         isOpen={isMobileSidebarOpen}
@@ -1869,13 +1982,14 @@ function App() {
           />
         )}
 
-        <MechanicDetailPanel
+         <MechanicDetailPanel
            mechanic={selectedMechanic}
            onClose={handleCloseDetail}
            user={user}
            onEdit={(m) => setModal({ type: 'edit', mechanic: m })}
            onDelete={deleteMechanic}
            onRate={(m) => setModal({ type: 'rate', mechanic: m })}
+           onRequireAuth={() => setModal({ type: 'auth', reason: 'catalog' })}
            savedMechanics={savedMechanics}
            onToggleSave={toggleSave}
            onDirection={handleShowDirection}
@@ -1883,7 +1997,7 @@ function App() {
            onNotice={show}
            initialItemQuery={pendingItemQuery}
            onInitialItemHandled={() => setPendingItemQuery(null)}
-        />
+         />
       </div>
 
       {notice && <div className="toast" role="status">{notice}</div>}

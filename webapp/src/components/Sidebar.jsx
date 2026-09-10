@@ -129,7 +129,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
               onClick={() => { vibrateTap(); onOpenBusiness(); setIsOpen(false); }}
             >
               <div className="card-avatar sidebar-business-avatar">{myBusiness.name?.charAt(0)?.toUpperCase() || '?'}</div>
-              <span className="nav-text">{myBusiness.name} · View Business</span>
+              <span className="nav-text">{myBusiness.name}</span>
             </button>
           ) : (
             <button
@@ -142,7 +142,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             </button>
           )}
           {!authReady ? (
-            <div style={{ width: 44, height: 44 }} />
+            <div style={{ width: 32, height: 32 }} />
           ) : user ? (
             <>
               <div
