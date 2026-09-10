@@ -277,7 +277,6 @@ const AUTH_REASON_COPY = {
   bookmark: 'Sign up to bookmark a mechanic shop or retailer.',
   rate: 'Sign up to rate and review.',
   business: 'Sign up to list and manage your business.',
-  catalog: 'Sign up to add products and services.',
 };
 
 // Mirror the signed-in user's basic details into localStorage. Firebase's
@@ -1989,7 +1988,7 @@ function App() {
            onEdit={(m) => setModal({ type: 'edit', mechanic: m })}
            onDelete={deleteMechanic}
            onRate={(m) => setModal({ type: 'rate', mechanic: m })}
-           onRequireAuth={() => setModal({ type: 'auth', reason: 'catalog' })}
+           isAdmin={ADMIN_EMAILS.includes(user?.email)}
            savedMechanics={savedMechanics}
            onToggleSave={toggleSave}
            onDirection={handleShowDirection}

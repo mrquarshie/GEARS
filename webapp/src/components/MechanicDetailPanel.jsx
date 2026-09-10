@@ -89,7 +89,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, onRequireAuth, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -265,9 +265,9 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         <div className="detail-scroll">
           <div className="detail-content">
             {activeTab === 'Overview' && <OverviewTab mechanic={mechanic} category={category} onRate={onRate} />}
-            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} onRequireAuth={onRequireAuth} />}
-            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} onRequireAuth={onRequireAuth} />}
-            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} onRequireAuth={onRequireAuth} />}
+            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} isAdmin={isAdmin} />}
+            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} isAdmin={isAdmin} />}
+            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} isAdmin={isAdmin} />}
             {activeTab === 'Fuel Prices' && <FuelPricesTab fuelPrices={mechanic.fuelPrices} />}
             {activeTab === 'Media' && <MediaTab mechanicId={mechanic.id} user={user} fallbackMedia={mechanic.media} extraMedia={(mechanic.products || []).filter(p => p.imageUrl)} />}
             {activeTab === 'Reviews' && <ReviewsTab mechanicId={mechanic.id} mechanic={mechanic} fallbackReviews={mechanic.reviews} />}
@@ -483,7 +483,7 @@ function getDetailerPlaceholderImage(name) {
   return DETAILER_PLACEHOLDER_IMAGES[hashIndex(name || '', DETAILER_PLACEHOLDER_IMAGES.length)];
 }
 
-function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap, onRequireAuth }) {
+function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap, isAdmin }) {
   const [items, setItems] = useState(fallbackItems || []);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -502,7 +502,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!user) { onRequireAuth?.(); return; }
+    if (!user) return;
     if (!name.trim() || !db) return;
     setSaving(true);
     try {
@@ -527,16 +527,11 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   const isGrid = layout === 'grid';
   const isCards = layout === 'cards';
 
-  const handleToggleForm = () => {
-    if (!user) { onRequireAuth?.(); return; }
-    setShowForm(!showForm);
-  };
-
   return (
     <div className="tab-content">
-      {db && (
+      {isAdmin && db && (
         <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-          <button className="primary" onClick={handleToggleForm} style={{ padding: '6px 12px', fontSize: '13px' }}>
+          <button className="primary" onClick={() => setShowForm(!showForm)} style={{ padding: '6px 12px', fontSize: '13px' }}>
             <Plus size={14} /> Add {itemName}
           </button>
         </div>
