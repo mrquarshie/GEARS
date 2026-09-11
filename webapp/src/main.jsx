@@ -1171,6 +1171,16 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return d;
 }
 
+// Which category page a mechanic belongs to. 'all' (the Home page) means
+// "mechanic" specifically — fuel stations, detailers, and shops each only
+// show on their own dedicated page, never mixed into Home.
+function categoryForMechanic(m) {
+  if (m.specialty === 'Car Detailing') return 'detailers';
+  if (m.specialty === 'Fuel Station') return 'fuel';
+  if (['Shop', 'Parts Shop', 'Auto Parts', 'Car Parts'].includes(m.specialty)) return 'shop';
+  return 'all';
+}
+
 // ---------------------------------------------------------------------------
 // Main App
 // ---------------------------------------------------------------------------
@@ -1574,12 +1584,10 @@ function App() {
 
     if (viewMode === 'saved') {
       list = list.filter(m => savedMechanics.includes(m.id));
-    } else if (viewMode === 'detailers') {
-      list = list.filter(m => m.specialty === 'Car Detailing');
-    } else if (viewMode === 'fuel') {
-      list = list.filter(m => m.specialty === 'Fuel Station');
-    } else if (viewMode === 'shop') {
-      list = list.filter(m => ['Shop', 'Parts Shop', 'Auto Parts'].includes(m.specialty));
+    } else if (['all', 'detailers', 'fuel', 'shop'].includes(viewMode)) {
+      // Home ('all') means mechanics specifically — fuel/detailers/shop
+      // each only ever show on their own dedicated page.
+      list = list.filter(m => categoryForMechanic(m) === viewMode);
     }
     
     // Sort by distance if location available
@@ -1606,14 +1614,6 @@ function App() {
   }, [allMechanics, searchedArea, viewMode, savedMechanics, userLocation]);
 
   const show = (message) => { setNotice(message); setTimeout(() => setNotice(''), 3500); };
-
-  // Which category page (viewMode) a mechanic belongs to.
-  const categoryForMechanic = (m) => {
-    if (m.specialty === 'Car Detailing') return 'detailers';
-    if (m.specialty === 'Fuel Station') return 'fuel';
-    if (['Shop', 'Parts Shop', 'Auto Parts', 'Car Parts'].includes(m.specialty)) return 'shop';
-    return 'all';
-  };
 
   // Does `term` match anything (name/specialty/services/etc — NOT area/location,
   // those are handled separately as a location search) within `category`?
@@ -1893,23 +1893,11 @@ function App() {
         {/* Mobile floating map controls */}
         <div className="mobile-map-controls">
           <button
-            className={`mobile-hamburger${user ? ' mobile-hamburger--authed' : ''}`}
+            className="mobile-hamburger"
             aria-label="Menu"
             onClick={() => setMobileSidebarOpen(true)}
           >
-            {user ? (
-              <div className="mobile-header-avatar">
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName || 'avatar'} className="mobile-header-avatar-img" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className="mobile-header-avatar-initial">
-                    {(user.displayName?.trim() || user.email || 'U')[0].toUpperCase()}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <List size={20} />
-            )}
+            <List size={20} />
           </button>
           <div className="mobile-map-actions">
             <button className="map-action-btn" aria-label="Locate Me" onClick={() => setMapPanTrigger(Date.now())}>
