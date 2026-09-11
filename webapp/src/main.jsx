@@ -1817,11 +1817,11 @@ function App() {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const businessOwnerId = user?.uid || localBusinessOwnerId;
-  // Bypassing real multi-account auth for now — this just filters whatever
-  // already carries the current owner id. The backend piece (letting one
-  // login legitimately manage several business docs) is separate follow-up
-  // work; this only builds the switcher UI on top of it.
-  const myBusinesses = allMechanics.filter((m) => m.createdBy === businessOwnerId);
+  // Everything the signed-in user manages: listings they own directly
+  // (createdBy) plus listings they onboarded on a business's behalf
+  // (onboardedBy — the §3.3 pitch flow, where the listing's owner account is
+  // a placeholder that gets handed off later).
+  const myBusinesses = allMechanics.filter((m) => m.createdBy === businessOwnerId || m.onboardedBy === businessOwnerId);
   const myBusiness = myBusinesses.find((m) => m.id === activeBusinessId) || myBusinesses[0] || null;
 
   const handleOpenBusiness = () => {
@@ -2016,7 +2016,7 @@ function App() {
               // Returning business account (e.g. one an admin already set up
               // and handed off) — skip the onboarding wizard and go straight
               // to their dashboard instead of the "add business" flow.
-              const existingBusiness = u && allMechanics.find((m) => m.createdBy === u.uid);
+              const existingBusiness = u && allMechanics.find((m) => m.createdBy === u.uid || m.onboardedBy === u.uid);
               if (existingBusiness) {
                 setModal(null);
                 setBusinessDashboardOpen(true);

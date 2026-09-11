@@ -495,7 +495,12 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
     if (!db || !mechanicId) return;
     const q = query(collection(db, `mechanics/${mechanicId}/${collectionName}`));
     const unsub = onSnapshot(q, (snap) => {
-      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const subItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // Live subcollection wins when it has content; otherwise keep the
+      // inline array on the doc (seeded/pitch leads store items inline, not
+      // in subcollections) so items don't flash then disappear on an empty
+      // subcollection.
+      setItems(subItems.length > 0 ? subItems : (fallbackItems || []));
     });
     return unsub;
   }, [mechanicId, collectionName]);
@@ -821,7 +826,8 @@ function MediaTab({ mechanicId, user, fallbackMedia, extraMedia }) {
     if (!db || !mechanicId) return;
     const q = query(collection(db, `mechanics/${mechanicId}/media`));
     const unsub = onSnapshot(q, (snap) => {
-      setMedia(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const subMedia = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setMedia(subMedia.length > 0 ? subMedia : (fallbackMedia || []));
     });
     return unsub;
   }, [mechanicId]);

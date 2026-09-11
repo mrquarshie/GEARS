@@ -34,6 +34,13 @@ const FORCE = process.argv.includes('--force');
 const STAFF_EMAIL = 'gears-staff@gears-ghana.com';
 const STAFF_PASSWORD = 'Gears@2026';
 
+// The admin account that onboards these businesses on Gears' behalf. Every
+// listing gets `onboardedBy` = this uid so it shows up in that admin's
+// business switcher/dashboard, even though `createdBy` stays the business's
+// own placeholder account (handed off later). Keep in sync with the admin's
+// Firebase Auth uid (princeessandoh316@gmail.com).
+const ADMIN_UID = 'JY9zFP6sgXP9euC58dGVVglKvpa2';
+
 function isPlaceholder(value) {
   return typeof value !== 'string' || value.trim() === '' || value.includes('TODO');
 }
@@ -100,6 +107,7 @@ async function main() {
       claimed: true,
       verified: false,
       createdBy: staffUid,
+      onboardedBy: ADMIN_UID,
       source: 'fuel-import',
       createdAt: serverTimestamp(),
     });
@@ -144,6 +152,7 @@ async function main() {
       claimed: true,
       verified: false,
       createdBy: uid,
+      onboardedBy: ADMIN_UID,
       source: 'pitch-import',
       createdAt: serverTimestamp(),
     });
