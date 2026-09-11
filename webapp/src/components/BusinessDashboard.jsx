@@ -12,19 +12,19 @@ import {
   ToggleRight,
   X,
   Eye,
-  Phone,
   MagnifyingGlass,
-  BookmarkSimple,
   ListPlus,
   Gear,
   QrCode,
   Check,
   CaretDown,
   CaretLeft,
-  ClockCounterClockwise,
+  CaretRight,
+  Question,
   Bell,
   SquaresFour,
   SignOut,
+  DotsThreeVertical,
 } from '@phosphor-icons/react';
 import { FillingStationIcon, CarDetailingIcon, ShopIcon, MechanicIcon, StarRatingIcon, GearsLogoMark } from './icons';
 import { db } from '../firebase';
@@ -222,7 +222,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
   const fixedCatalogKind = catalogKindFor(mechanic?.specialty);
 
-  const PAGE_TITLES = { home: 'Overview', catalog: 'Catalog', map: 'Map', media: 'Media' };
+  const PAGE_TITLES = { home: 'Home', catalog: 'Catalog', map: 'Map', media: 'Media' };
 
   const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
 
@@ -259,6 +259,22 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
             </button>
           ))}
         </nav>
+
+        {/* Desktop-only: the mobile header's avatar button (biz-header-avatar-btn)
+            opens this same profileMenuOpen popup, but that header is hidden at
+            this breakpoint — without this, there's no way to reach Sign Out on
+            desktop at all. */}
+        {user && (
+          <button type="button" className="biz-sidebar-profile" onClick={() => setProfileMenuOpen(true)}>
+            <div className="biz-sidebar-profile-avatar">
+              {(user.displayName?.trim() || user.email || '?').charAt(0).toUpperCase()}
+            </div>
+            <span className="biz-sidebar-profile-text">
+              <span className="biz-sidebar-profile-name">{user.displayName?.trim() || user.email?.split('@')[0] || 'Account'}</span>
+              <span className="biz-sidebar-profile-email">{user.email}</span>
+            </span>
+          </button>
+        )}
       </aside>
 
       <div className="biz-main">
@@ -279,14 +295,17 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
         {/* Desktop-only equivalent of the mobile header above. */}
         <div className="biz-topbar">
-          <span className="biz-topbar-crumb">{PAGE_TITLES[activeTab] || 'Home'}</span>
+          <span className="biz-topbar-crumb">
+            {PAGE_TITLES[activeTab] || 'Home'}
+            <CaretRight size={11} weight="bold" />
+          </span>
           <div className="biz-topbar-search">
             <MagnifyingGlass size={15} />
             <span>Search</span>
             <span className="biz-topbar-search-kbd">⌘K</span>
           </div>
           <div className="biz-topbar-actions">
-            <button className="biz-header-icon-btn" aria-label="History"><ClockCounterClockwise size={17} /></button>
+            <button className="biz-header-icon-btn" aria-label="Help"><Question size={17} /></button>
             <button className="biz-header-icon-btn" aria-label="Notifications"><Bell size={17} /></button>
             <button className="biz-header-icon-btn" aria-label="Apps"><SquaresFour size={17} /></button>
           </div>
@@ -430,32 +449,159 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
   );
 }
 
-function BizHomeTab({ mechanic }) {
-  const stats = [
-    { label: 'Visits', icon: Eye, value: mechanic?.visitCount ?? 0, note: 'Listing views' },
-    { label: 'Calls', icon: Phone, value: mechanic?.callCount ?? 0, note: 'Phone inquiries' },
-    { label: 'Searches', icon: MagnifyingGlass, value: mechanic?.searchCount ?? 0, note: 'Search impressions' },
-    { label: 'Bookmarks', icon: BookmarkSimple, value: mechanic?.bookmarkCount ?? 0, note: 'Saved by users' },
-  ];
+// Shared by BizHomeTab (a "Your Catalog" preview) and BizCatalogTab (the
+// full list) so both read from one Firestore subscription's worth of logic
+// instead of two copies drifting apart.
+function useCatalogItems(mechanic) {
+  const mechanicId = mechanic?.id;
+  const [subProducts, setSubProducts] = useState([]);
+  const [subServices, setSubServices] = useState([]);
+
+  useEffect(() => {
+    if (!db || !mechanicId) return;
+    const unsubProducts = onSnapshot(query(collection(db, `mechanics/${mechanicId}/products`)), (snap) => {
+      setSubProducts(snap.docs.map((d) => ({ id: d.id, collectionName: 'products', ...d.data() })));
+    });
+    const unsubServices = onSnapshot(query(collection(db, `mechanics/${mechanicId}/services`)), (snap) => {
+      setSubServices(snap.docs.map((d) => ({ id: d.id, collectionName: 'services', ...d.data() })));
+    });
+    return () => { unsubProducts(); unsubServices(); };
+  }, [mechanicId]);
+
+  const toggleStock = async (item) => {
+    if (!db || item._inline) return;
+    await updateDoc(doc(db, `mechanics/${mechanicId}/${item.collectionName}`, item.id), {
+      inStock: !(item.inStock !== false),
+    });
+  };
+
+  const handleDelete = async (item) => {
+    if (!db || item._inline) return;
+    await deleteDoc(doc(db, `mechanics/${mechanicId}/${item.collectionName}`, item.id));
+  };
+
+  // Pitch-import listings (seedLeads.mjs) store their catalog as inline
+  // `products`/`services` arrays on the mechanic doc itself — nothing ever
+  // gets written to these subcollections for them. Same gap as the
+  // consumer-facing detail panel had (see ListItemsTab). Fall back to the
+  // inline arrays, read-only (_inline: true — no real doc to toggle/delete),
+  // so an owner sees the same catalog a customer does instead of "nothing
+  // here" on their own dashboard.
+  const products = subProducts.length ? subProducts : (mechanic?.products || []).map((p, i) => ({ id: `inline-product-${i}`, collectionName: 'products', _inline: true, ...p }));
+  const services = subServices.length ? subServices : (mechanic?.services || []).map((s, i) => ({ id: `inline-service-${i}`, collectionName: 'services', _inline: true, ...s }));
+
+  return { items: [...products, ...services], toggleStock, handleDelete };
+}
+
+// Per-item Clicks/Searches/Chats/Bookmarks aren't tracked yet — only
+// business-level counters exist (mechanic.visitCount etc, see §2 of the
+// business-accounts doc). Shown at 0 rather than omitted so the card
+// layout matches the design now; wire these up if/when per-item tracking
+// gets built.
+const CATALOG_CARD_STAT_LABELS = ['Clicks', 'Searches', 'Chats', 'Bookmarks'];
+
+function CatalogItemCard({ item, onToggleStock, onDelete }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const inStock = item.inStock !== false;
 
   return (
-    <div className="biz-home-tab">
-      <div className="biz-stats-grid">
-        {stats.map(({ label, icon: Icon, value, note }) => (
-          <div key={label} className="biz-stat-tile">
-            <div className="biz-stat-tile-top">
-              <Icon size={18} />
-              <span>{label}</span>
-            </div>
-            <strong>{Number(value).toLocaleString()}</strong>
-            <span className="biz-stat-tile-note">{note}</span>
+    <div className="biz-item-card">
+      <div className="biz-item-card-top">
+        <div className="biz-item-card-thumb">
+          {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <ImageSquare size={20} />}
+        </div>
+        <div className="biz-item-card-info">
+          <strong>{item.name}</strong>
+          {item.price && <span className="biz-item-card-price">₵ {item.price}</span>}
+          <span className="biz-item-card-desc">{item.description || 'No description added'}</span>
+        </div>
+        {!item._inline && (
+          <div className="biz-item-card-menu-wrap">
+            <button type="button" className="biz-item-card-menu-btn" onClick={() => setMenuOpen((v) => !v)} aria-label="Item options">
+              <DotsThreeVertical size={18} weight="bold" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="biz-item-card-menu-scrim" onClick={() => setMenuOpen(false)} />
+                <div className="biz-item-card-menu">
+                  <button type="button" onClick={() => { setMenuOpen(false); onDelete(item); }}>
+                    <Trash size={15} /> Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="biz-item-card-stats">
+        {CATALOG_CARD_STAT_LABELS.map((label) => (
+          <div key={label} className="biz-item-card-stat">
+            <strong>0</strong>
+            <span>{label}</span>
           </div>
         ))}
       </div>
 
-      <div className="biz-info-card">
-        <h3>Listing details</h3>
-        {mechanic ? (
+      <div className="biz-item-card-footer">
+        {item._inline ? (
+          <span className="biz-stock-badge" title="Seeded before catalog management existed — not yet editable from here">Imported listing</span>
+        ) : (
+          <>
+            <span className={`biz-stock-badge ${inStock ? 'in' : 'out'}`}>{inStock ? 'In Stock' : 'Out of Stock'}</span>
+            <button
+              className={`biz-stock-toggle ${inStock ? 'on' : ''}`}
+              onClick={() => onToggleStock(item)}
+              title={inStock ? 'In stock' : 'Out of stock'}
+            >
+              {inStock ? <ToggleRight size={26} weight="fill" /> : <ToggleLeft size={26} />}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BizHomeTab({ mechanic }) {
+  const stats = [
+    { label: 'Visits', value: mechanic?.visitCount ?? 0 },
+    { label: 'Calls', value: mechanic?.callCount ?? 0 },
+    { label: 'Searches', value: mechanic?.searchCount ?? 0 },
+    { label: 'Bookmarks', value: mechanic?.bookmarkCount ?? 0 },
+  ];
+  const { items, toggleStock, handleDelete } = useCatalogItems(mechanic);
+  const previewItems = items.slice(0, 4);
+
+  return (
+    <div className="biz-home-tab">
+      <div className="biz-stats-bar">
+        {stats.map(({ label, value }) => (
+          <div key={label} className="biz-stats-bar-col">
+            <span className="biz-stats-bar-label">{label.toUpperCase()}</span>
+            <strong>{Number(value).toLocaleString()}</strong>
+          </div>
+        ))}
+      </div>
+
+      <div className="biz-home-section">
+        <h3 className="biz-home-section-title">Your Catalog</h3>
+        {previewItems.length > 0 ? (
+          <div className="biz-item-grid">
+            {previewItems.map((item) => (
+              <CatalogItemCard key={`${item.collectionName}-${item.id}`} item={item} onToggleStock={toggleStock} onDelete={handleDelete} />
+            ))}
+          </div>
+        ) : (
+          <p className="biz-empty-text" style={{ padding: 0, textAlign: 'left' }}>
+            {mechanic ? 'Nothing in your catalog yet — add a product or service to see it here.' : "You don't have a listing yet."}
+          </p>
+        )}
+      </div>
+
+      {mechanic && (
+        <div className="biz-info-card">
+          <h3>Listing details</h3>
           <dl>
             <dt>Area</dt>
             <dd>{mechanic.area || '—'}</dd>
@@ -464,10 +610,8 @@ function BizHomeTab({ mechanic }) {
             <dt>Category</dt>
             <dd>{mechanic.specialty || '—'}</dd>
           </dl>
-        ) : (
-          <p className="biz-empty-text" style={{ padding: 0, textAlign: 'left' }}>You don't have a listing yet.</p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -573,8 +717,7 @@ function AddPhotoTile({ onAdd, label = 'Add Photo' }) {
 }
 
 function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
-  const [products, setProducts] = useState([]);
-  const [services, setServices] = useState([]);
+  const { items, toggleStock, handleDelete: deleteItem } = useCatalogItems(mechanic);
   const [showForm, setShowForm] = useState(false);
   // Only meaningful for Fuel Station (or no listing yet) — every other
   // category has a single fixed kind, see `fixedKind` below.
@@ -611,19 +754,6 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
       onAddHandled?.();
     }
   }, [pendingAdd, onAddHandled]);
-
-  useEffect(() => {
-    if (!db || !mechanic?.id) return;
-    const unsubProducts = onSnapshot(query(collection(db, `mechanics/${mechanic.id}/products`)), (snap) => {
-      setProducts(snap.docs.map((d) => ({ id: d.id, collectionName: 'products', ...d.data() })));
-    });
-    const unsubServices = onSnapshot(query(collection(db, `mechanics/${mechanic.id}/services`)), (snap) => {
-      setServices(snap.docs.map((d) => ({ id: d.id, collectionName: 'services', ...d.data() })));
-    });
-    return () => { unsubProducts(); unsubServices(); };
-  }, [mechanic?.id]);
-
-  const items = [...products, ...services];
 
   const resetForm = () => {
     setName('');
@@ -669,16 +799,8 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
     }
   };
 
-  const toggleStock = async (item) => {
-    if (!db) return;
-    await updateDoc(doc(db, `mechanics/${mechanic.id}/${item.collectionName}`, item.id), {
-      inStock: !(item.inStock !== false),
-    });
-  };
-
   const handleDelete = async (item) => {
-    if (!db) return;
-    await deleteDoc(doc(db, `mechanics/${mechanic.id}/${item.collectionName}`, item.id));
+    await deleteItem(item);
     show?.('Removed.');
   };
 
@@ -879,29 +1001,9 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
         </div>
       )}
 
-      <div className="biz-catalog-list">
+      <div className="biz-item-grid">
         {items.map((item) => (
-          <div key={`${item.collectionName}-${item.id}`} className="biz-catalog-row">
-            <div className="biz-catalog-row-main">
-              <strong>{item.name}</strong>
-              <span className="biz-catalog-row-meta">
-                {item.collectionName === 'products' ? 'Product' : 'Service'}
-                {item.price ? ` · GH₵${item.price}` : ''}
-              </span>
-            </div>
-            <div className="biz-catalog-row-actions">
-              <button
-                className={`biz-stock-toggle ${item.inStock !== false ? 'on' : 'off'}`}
-                onClick={() => toggleStock(item)}
-                title={item.inStock !== false ? 'In stock' : 'Out of stock'}
-              >
-                {item.inStock !== false ? <ToggleRight size={26} weight="fill" /> : <ToggleLeft size={26} />}
-              </button>
-              <button className="biz-icon-btn" onClick={() => handleDelete(item)} title="Delete">
-                <Trash size={16} />
-              </button>
-            </div>
-          </div>
+          <CatalogItemCard key={`${item.collectionName}-${item.id}`} item={item} onToggleStock={toggleStock} onDelete={handleDelete} />
         ))}
       </div>
     </div>
@@ -963,7 +1065,7 @@ const MEDIA_SUGGESTIONS = [
 ];
 
 function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
-  const [media, setMedia] = useState([]);
+  const [subMedia, setSubMedia] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [url, setUrl] = useState('');
   const [label, setLabel] = useState('');
@@ -981,10 +1083,18 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   useEffect(() => {
     if (!db || !mechanic?.id) return;
     const unsub = onSnapshot(query(collection(db, `mechanics/${mechanic.id}/media`)), (snap) => {
-      setMedia(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setSubMedia(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
     return unsub;
   }, [mechanic?.id]);
+
+  // Same inline-array fallback as useCatalogItems, for the same reason:
+  // pitch-import listings (seedLeads.mjs) store media as an inline
+  // `media` array on the mechanic doc, keyed `url` not `imageUrl` —
+  // never written to this subcollection.
+  const media = subMedia.length
+    ? subMedia
+    : (mechanic?.media || []).map((m, i) => ({ id: `inline-media-${i}`, imageUrl: m.url, label: m.label, category: m.category, _inline: true }));
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -1011,7 +1121,7 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   };
 
   const handleDelete = async (item) => {
-    if (!db) return;
+    if (!db || item._inline) return;
     await deleteDoc(doc(db, `mechanics/${mechanic.id}/media`, item.id));
   };
 
@@ -1112,9 +1222,11 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
           <div key={item.id} className="biz-media-item">
             <div className="biz-media-cell">
               <img src={item.imageUrl} alt="" />
-              <button className="biz-media-delete" onClick={() => handleDelete(item)} aria-label="Delete">
-                <X size={14} weight="bold" />
-              </button>
+              {!item._inline && (
+                <button className="biz-media-delete" onClick={() => handleDelete(item)} aria-label="Delete">
+                  <X size={14} weight="bold" />
+                </button>
+              )}
             </div>
             {item.label && <span className="biz-media-item-label">{item.label}</span>}
           </div>

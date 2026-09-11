@@ -6171,6 +6171,66 @@ body {
     color: var(--forest);
   }
 
+  /* Pinned to the bottom of the 240px rail — the only desktop entry point
+     into the profile menu (View Profile / Account Settings / Sign Out),
+     since the mobile header's avatar trigger is hidden at this width. */
+  .biz-sidebar-profile {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .biz-sidebar-profile:hover {
+    background: #fafafa;
+  }
+
+  .biz-sidebar-profile-avatar {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--forest);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .biz-sidebar-profile-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .biz-sidebar-profile-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .biz-sidebar-profile-email {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .biz-topbar {
     display: flex;
     align-items: center;
@@ -6182,8 +6242,15 @@ body {
 
   .biz-topbar-crumb {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 13px;
     color: var(--muted);
+  }
+
+  .biz-topbar-crumb svg {
+    color: var(--border);
   }
 
   .biz-topbar-search {
@@ -6238,6 +6305,18 @@ body {
     top: 84px;
     left: 14px;
     width: 226px;
+  }
+
+  /* profileMenuOpen's only trigger used to be the mobile header avatar,
+     hidden at this width — so this was unreachable on desktop and this
+     override never got exercised. Now that .biz-sidebar-profile opens it
+     from the bottom of the rail, anchor there instead of inheriting the
+     switcher menu's top-left position above. */
+  .biz-menu--right {
+    top: auto;
+    bottom: 76px;
+    left: 14px;
+    right: auto;
   }
 }
 
@@ -6645,40 +6724,252 @@ body {
 }
 
 /* Home tab */
-.biz-stats-grid {
+/* One bordered card, 4 columns divided by rules — 2x2 on narrow screens
+   (labels like "BOOKMARKS" don't fit 4-across below ~640px), a single row
+   at desktop widths to match the design. */
+.biz-stats-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: white;
+  overflow: hidden;
   margin-bottom: 20px;
 }
 
-.biz-stat-tile {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
+.biz-stats-bar-col {
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
-.biz-stat-tile-top {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.biz-stats-bar-col:nth-child(2n) {
+  border-right: none;
+}
+
+.biz-stats-bar-col:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.biz-stats-bar-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: 700;
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
 }
 
-.biz-stat-tile strong {
-  font-size: 26px;
+.biz-stats-bar strong {
+  font-size: 24px;
   font-weight: 800;
   color: var(--ink);
 }
 
-.biz-stat-tile-note {
-  font-size: 11px;
+@media (min-width: 640px) {
+  .biz-stats-bar {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .biz-stats-bar-col {
+    border-bottom: none;
+  }
+
+  .biz-stats-bar-col:nth-child(2n) {
+    border-right: 1px solid var(--border);
+  }
+
+  .biz-stats-bar-col:last-child {
+    border-right: none;
+  }
+}
+
+.biz-home-section {
+  margin-bottom: 20px;
+}
+
+.biz-home-section-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Catalog item cards — shared by the "Your Catalog" preview on Home and
+   the full grid in the Catalog tab. */
+.biz-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.biz-item-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.biz-item-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.biz-item-card-thumb {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.biz-item-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.biz-item-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.biz-item-card-info strong {
+  font-size: 14px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.biz-item-card-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--forest);
+}
+
+.biz-item-card-desc {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.biz-item-card-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.biz-item-card-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+}
+
+.biz-item-card-menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+}
+
+.biz-item-card-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 6;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  min-width: 120px;
+}
+
+.biz-item-card-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #dc2626;
+  cursor: pointer;
+  text-align: left;
+}
+
+.biz-item-card-menu button:hover {
+  background: #fee2e2;
+}
+
+.biz-item-card-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+}
+
+.biz-item-card-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+
+.biz-item-card-stat:last-child {
+  border-right: none;
+}
+
+.biz-item-card-stat strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.biz-item-card-stat span {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.biz-item-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.biz-stock-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--forest) 12%, white);
+  color: var(--forest);
+}
+
+.biz-stock-badge.out {
+  background: #f3f4f6;
   color: var(--muted);
 }
 
@@ -7269,50 +7560,6 @@ body {
   cursor: not-allowed;
 }
 
-.biz-catalog-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.biz-catalog-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px 14px;
-}
-
-.biz-catalog-row-main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.biz-catalog-row-main strong {
-  font-size: 14px;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.biz-catalog-row-meta {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.biz-catalog-row-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .biz-stock-toggle {
   background: transparent;
   border: none;
@@ -7324,24 +7571,6 @@ body {
 
 .biz-stock-toggle.on {
   color: var(--forest);
-}
-
-.biz-icon-btn {
-  background: #f9fafb;
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.biz-icon-btn:hover {
-  background: #fee2e2;
-  color: #dc2626;
 }
 
 /* Map tab — full-bleed, same shell as the onboarding wizard's location step */
@@ -7390,6 +7619,13 @@ body {
   gap: 12px;
 }
 
+@media (min-width: 900px) {
+  .biz-media-grid,
+  .biz-media-empty-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 .biz-media-suggestion {
   position: relative;
   aspect-ratio: 1.1;
@@ -7414,14 +7650,23 @@ body {
 }
 
 .biz-media-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  position: relative;
 }
 
+/* Overlaid at the bottom-left of the photo, same placement as the
+   empty-state suggestion tiles (.biz-media-suggestion-label), rather than
+   a caption line below the image — a gradient scrim keeps it legible over
+   any photo brightness. */
 .biz-media-item-label {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 1;
   font-size: 12.5px;
-  color: var(--muted);
+  font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
 }
 
 .biz-media-cell {
@@ -7430,6 +7675,14 @@ body {
   border-radius: 16px;
   overflow: hidden;
   background: #f3f4f6;
+}
+
+.biz-media-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.38), transparent 55%);
+  pointer-events: none;
 }
 
 .biz-media-cell img {
