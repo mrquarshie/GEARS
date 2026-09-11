@@ -528,7 +528,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   // Calculate dynamic transform based on state and drag offset
   let transformBase = 'calc(100% - 150px)'; // minimized
-  if (sheetState === 'half') transformBase = '50vh';
+  if (sheetState === 'half') transformBase = '80vh';
   if (sheetState === 'expanded') transformBase = '240px';
 
   const isFullPage = isMobile && (viewMode === 'saved' || viewMode === 'history');
