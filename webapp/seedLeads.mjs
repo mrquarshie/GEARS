@@ -2,32 +2,25 @@
 // the demo fuel stations (src/mockExtras.json) into the live `mechanics`
 // Firestore collection, additively.
 //
-// Leads — each published lead gets its own placeholder Firebase account
-// (a "dummy" email + random password) so the listing is owned by a real
-// `createdBy` uid, the §3.3 pitch flow. The dummy creds are printed and
-// written to pitch-accounts.json for later handoff to the real business
-// (rotate via the `handoffBusinessAccount` Cloud Function, or relay as-is).
+// Each lead gets its own placeholder Firebase account using the generic
+// `accountEmail` / `accountPassword` fields in leadData.json (e.g.
+// <slug>@gears-ghana.com / Gears@2026), so the listing has a real `createdBy`
+// uid — the §3.3 pitch flow. Fuel stations share a single generic staff
+// account (gears-staff@gears-ghana.com).
 //
-// Fuel stations — curated brand listings (Goil/Total) owned by the admin
-// account doing the seeding, so createdBy = the admin's uid.
+// No admin sign-in is required: createUserWithEmailAndPassword creates each
+// account (and signs in as it) directly, which satisfies the "authenticated
+// write" requirement in firestore.rules. Run it as:
 //
-// Firestore rules require an authenticated write (firestore.rules create),
-// so this signs in with a real GEARS account first. Run it as:
+//   node seedLeads.mjs
 //
-//   SEED_EMAIL="you@example.com" SEED_PASSWORD="..." node seedLeads.mjs
-//
-// Credentials are read from your shell env — never hardcode them here or
-// paste them into chat.
-//
-// A lead is only published if it has real name/area/phone (no leftover
-// "TODO" placeholder text) and isn't explicitly flagged not to publish
-// (see internal.classificationFlag, e.g. R3hub). A business is also skipped
-// if a mechanic with the same phone (or email) already exists, so re-running
-// won't duplicate docs or accounts. Pass --force to publish everything
-// regardless (not recommended — see the printed skip reasons first).
+// Idempotent-ish: if an account already exists (re-run), it signs in with the
+// same credentials instead of failing. A business is skipped if a mechanic
+// with the same phone (or email) already exists. Pass --force to publish
+// leads with placeholder/TODO data anyway (not recommended).
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { readFileSync, writeFileSync } from 'fs';
 
@@ -38,6 +31,8 @@ const config = {
 };
 
 const FORCE = process.argv.includes('--force');
+const STAFF_EMAIL = 'gears-staff@gears-ghana.com';
+const STAFF_PASSWORD = 'Gears@2026';
 
 function isPlaceholder(value) {
   return typeof value !== 'string' || value.trim() === '' || value.includes('TODO');
@@ -54,31 +49,18 @@ function readiness(entry) {
   return reasons;
 }
 
-function slugify(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-
-// Dummy accounts alias the admin's own inbox (e.g. admin+pitch-<slug>@gmail.com),
-// so any Firebase email for that account lands with the admin for handoff.
-function dummyEmailFor(slug, adminEmail) {
-  const at = adminEmail.lastIndexOf('@');
-  const local = at === -1 ? adminEmail : adminEmail.slice(0, at);
-  const domain = at === -1 ? 'gmail.com' : adminEmail.slice(at + 1);
-  return `${local}+pitch-${slug}@${domain}`;
-}
-
-function generatePassword() {
-  return `Gears!${Math.random().toString(36).slice(2, 10)}A1`;
+async function getOrCreateAccountUid(auth, email, password) {
+  try {
+    return (await createUserWithEmailAndPassword(auth, email, password)).user.uid;
+  } catch (e) {
+    if (e.code === 'auth/email-already-in-use') {
+      return (await signInWithEmailAndPassword(auth, email, password)).user.uid;
+    }
+    throw e;
+  }
 }
 
 async function main() {
-  const email = process.env.SEED_EMAIL;
-  const password = process.env.SEED_PASSWORD;
-  if (!email || !password) {
-    console.error('Set SEED_EMAIL and SEED_PASSWORD in your shell before running this.');
-    process.exit(1);
-  }
-
   const leads = JSON.parse(readFileSync(new URL('./src/leads/leadData.json', import.meta.url)));
   const fuelStations = JSON.parse(readFileSync(new URL('./src/mockExtras.json', import.meta.url)))
     .filter((m) => m.specialty === 'Fuel Station');
@@ -96,14 +78,12 @@ async function main() {
     if (typeof data.email === 'string' && data.email.trim()) existingEmails.add(data.email.trim().toLowerCase());
   });
 
-  const adminUid = (await signInWithEmailAndPassword(auth, email, password)).user.uid;
-  console.log(`Signed in as ${email} (admin uid ${adminUid})`);
-
   const created = [];
   const skipped = [];
   const accounts = [];
 
-  // --- Fuel stations: curated brand listings owned by the admin account ---
+  // --- Fuel stations: curated brand listings, owned by one generic staff account ---
+  const staffUid = await getOrCreateAccountUid(auth, STAFF_EMAIL, STAFF_PASSWORD);
   for (const station of fuelStations) {
     const reasons = readiness(station);
     if (reasons.length && !FORCE) {
@@ -119,7 +99,7 @@ async function main() {
       ...station,
       claimed: true,
       verified: false,
-      createdBy: adminUid,
+      createdBy: staffUid,
       source: 'fuel-import',
       createdAt: serverTimestamp(),
     });
@@ -127,7 +107,7 @@ async function main() {
     if (phoneKey) existingPhones.add(phoneKey);
   }
 
-  // --- Leads: each gets a placeholder account so createdBy is a real uid ---
+  // --- Leads: each gets its own placeholder account from leadData.json ---
   for (const lead of leads) {
     const reasons = readiness(lead);
     if (reasons.length && !FORCE) {
@@ -142,18 +122,23 @@ async function main() {
       continue;
     }
 
-    const dummyEmail = dummyEmailFor(slugify(lead.name), email);
-    const dummyPassword = generatePassword();
-
-    let uid;
-    try {
-      uid = (await createUserWithEmailAndPassword(auth, dummyEmail, dummyPassword)).user.uid;
-    } catch (e) {
-      skipped.push({ name: lead.name, kind: 'lead', reasons: [`account creation failed: ${e.message}`] });
+    const accountEmail = lead.accountEmail;
+    const accountPassword = lead.accountPassword;
+    if (!accountEmail || !accountPassword) {
+      skipped.push({ name: lead.name, kind: 'lead', reasons: ['no accountEmail/accountPassword in leadData.json'] });
       continue;
     }
 
-    const { internal, ...publicData } = lead;
+    let uid;
+    try {
+      uid = await getOrCreateAccountUid(auth, accountEmail, accountPassword);
+    } catch (e) {
+      skipped.push({ name: lead.name, kind: 'lead', reasons: [`account error: ${e.message}`] });
+      continue;
+    }
+
+    // Strip the internal + credential fields so they never land on the doc.
+    const { internal, accountEmail: _e, accountPassword: _p, ...publicData } = lead;
     const docRef = await addDoc(collection(db, 'mechanics'), {
       ...publicData,
       claimed: true,
@@ -163,12 +148,9 @@ async function main() {
       createdAt: serverTimestamp(),
     });
     created.push({ name: lead.name, id: docRef.id });
-    accounts.push({ name: lead.name, mechanicId: docRef.id, uid, email: dummyEmail, password: dummyPassword });
+    accounts.push({ name: lead.name, mechanicId: docRef.id, uid, email: accountEmail, password: accountPassword });
     if (phoneKey) existingPhones.add(phoneKey);
     if (emailKey) existingEmails.add(emailKey);
-
-    // Sign out so the next createUserWithEmailAndPassword starts from scratch.
-    await signOut(auth);
   }
 
   console.log(`\nCreated ${created.length} mechanic doc(s):`);

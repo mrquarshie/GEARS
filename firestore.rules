@@ -30,10 +30,10 @@ service cloud.firestore {
         && request.resource.data.area.size() > 0
         && ((request.resource.data.phone is string && request.resource.data.phone.size() > 0)
             || (request.resource.data.email is string && request.resource.data.email.size() > 0))
-        && (request.resource.data.verified != true || isAdminEmail())
-        && (request.resource.data.lat == null || request.resource.data.lat is number)
-        && (request.resource.data.lng == null || request.resource.data.lng is number)
-        && (request.resource.data.specialties == null || request.resource.data.specialties is list);
+        && (!('verified' in request.resource.data) || request.resource.data.verified != true || isAdminEmail())
+        && (!('lat' in request.resource.data) || request.resource.data.lat == null || request.resource.data.lat is number)
+        && (!('lng' in request.resource.data) || request.resource.data.lng == null || request.resource.data.lng is number)
+        && (!('specialties' in request.resource.data) || request.resource.data.specialties == null || request.resource.data.specialties is list);
 
       // Creator can update any field except "verified" (only an admin can
       // flip that). Anyone can update ratings or analytics counter fields.
