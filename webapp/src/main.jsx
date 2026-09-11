@@ -1471,7 +1471,15 @@ function App() {
     const loadMechanics = async () => {
       try {
         const result = await getDocs(query(collection(db, 'mechanics'), limit(MECHANICS_PAGE_SIZE)));
-        setAllMechanics(result.docs.map((d) => ({ id: d.id, ...d.data() })));
+        // Temporarily hides tier-3 "Unverified" listings — ~25 generic,
+        // contentless OSM-scraped placeholder docs left over from before the
+        // pitch-lead work. Filtered here rather than deleted from Firestore
+        // so they're recoverable; remove this filter once they're either
+        // cleaned up for real or intentionally reintroduced.
+        const docs = result.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((m) => m.verified || m.claimed);
+        setAllMechanics(docs);
       } catch (e) {
         console.error('Failed to load mechanics:', e);
       }
@@ -1868,6 +1876,7 @@ function App() {
         onSignOut={() => { signOut(auth); clearAuthUser(); setUser(null); handleSetViewMode('all'); show('Signed out'); }}
         onOpenBusiness={handleOpenBusiness}
         myBusiness={myBusiness}
+        isAdmin={ADMIN_EMAILS.includes(user?.email)}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
         isSearchPanelOpen={isSearchPanelOpen}
