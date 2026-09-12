@@ -77,12 +77,16 @@ async function main() {
   const db = getFirestore(app);
 
   // Snapshot of what's already live, so a re-run doesn't duplicate anything.
+  // Placeholder values (e.g. a --force-published lead whose phone is still
+  // literally "TODO") are excluded — otherwise the first "TODO" phone/email
+  // seeded poisons this set and every later lead sharing that same
+  // placeholder gets wrongly skipped as a "duplicate".
   const existingPhones = new Set();
   const existingEmails = new Set();
   (await getDocs(collection(db, 'mechanics'))).forEach((d) => {
     const data = d.data();
-    if (typeof data.phone === 'string' && data.phone.trim()) existingPhones.add(data.phone.trim());
-    if (typeof data.email === 'string' && data.email.trim()) existingEmails.add(data.email.trim().toLowerCase());
+    if (!isPlaceholder(data.phone)) existingPhones.add(data.phone.trim());
+    if (!isPlaceholder(data.email)) existingEmails.add(data.email.trim().toLowerCase());
   });
 
   const created = [];
@@ -97,7 +101,7 @@ async function main() {
       skipped.push({ name: station.name, kind: 'fuel', reasons });
       continue;
     }
-    const phoneKey = typeof station.phone === 'string' && station.phone.trim() ? station.phone.trim() : null;
+    const phoneKey = !isPlaceholder(station.phone) ? station.phone.trim() : null;
     if (phoneKey && existingPhones.has(phoneKey)) {
       skipped.push({ name: station.name, kind: 'fuel', reasons: ['already exists (phone match)'] });
       continue;
@@ -123,8 +127,8 @@ async function main() {
       continue;
     }
 
-    const phoneKey = typeof lead.phone === 'string' && lead.phone.trim() ? lead.phone.trim() : null;
-    const emailKey = typeof lead.email === 'string' && lead.email.trim() ? lead.email.trim().toLowerCase() : null;
+    const phoneKey = !isPlaceholder(lead.phone) ? lead.phone.trim() : null;
+    const emailKey = !isPlaceholder(lead.email) ? lead.email.trim().toLowerCase() : null;
     if ((phoneKey && existingPhones.has(phoneKey)) || (emailKey && existingEmails.has(emailKey))) {
       skipped.push({ name: lead.name, kind: 'lead', reasons: ['already exists (phone/email match)'] });
       continue;
