@@ -5162,6 +5162,19 @@ body {
   padding: 8px;
 }
 
+/* .sidebar-overlay's only position/size rule used to live inside the
+   max-width:768px block below — meaning above that width (the business
+   dashboard's desktop sidebar switcher/profile popups) it had no fixed
+   positioning at all, so it never covered the viewport and a click
+   anywhere outside the dropdown just missed it instead of closing the
+   menu. Base rule here covers every width; the mobile block below still
+   overrides the background/blur for its stronger dimmed look. */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
 /* Universal overlay backdrop — shared by all modal/sheet backdrops. */
 .item-sheet-overlay,
 .media-lightbox-overlay,
@@ -6022,6 +6035,8 @@ body {
 @media (min-width: 960px) {
   .biz-dashboard {
     flex-direction: row;
+    background: #fff;
+    color: #000;
   }
 
   /* Extra .biz-dashboard specificity here isn't decorative — the base
@@ -6034,29 +6049,53 @@ body {
   }
 
   .biz-sidebar {
+    position: relative;
     display: flex;
     flex-direction: column;
-    width: 240px;
+    width: 257px;
     flex-shrink: 0;
-    padding: 20px 14px;
-    border-right: 1px solid var(--border);
-    gap: 22px;
+    padding: 28px 20px 22px;
+    border-right: none;
+    gap: 18px;
+    background: #FAFAFA;
+    overflow: hidden;
+  }
+
+  .biz-sidebar::before,
+  .biz-sidebar::after {
+    content: "";
+    position: absolute;
+    left: 1px;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+  }
+
+  .biz-sidebar::before {
+    top: 70px;
+  }
+
+  .biz-sidebar::after {
+    top: 121px;
   }
 
   .biz-sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 0 8px;
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--ink);
+    gap: 12px;
+    padding: 0;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    color: #000;
   }
 
   .biz-sidebar-brand-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 7px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     background: var(--forest);
     display: flex;
     align-items: center;
@@ -6069,16 +6108,17 @@ body {
     align-items: center;
     gap: 8px;
     width: 100%;
-    padding: 7px 8px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: white;
+    min-height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
     cursor: pointer;
     text-align: left;
   }
 
   .biz-sidebar-switcher:hover {
-    background: #fafafa;
+    background: rgba(244, 244, 244, 0.75);
   }
 
   .biz-sidebar-switcher-text {
@@ -6090,9 +6130,9 @@ body {
   }
 
   .biz-sidebar-switcher-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--ink);
+    color: rgba(0, 0, 0, 0.70);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -6102,51 +6142,93 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
-    color: var(--muted);
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.40);
   }
 
   .biz-sidebar-switcher-caret {
-    color: var(--muted);
+    color: rgba(0, 0, 0, 0.40);
     flex-shrink: 0;
   }
 
   .biz-sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 8px;
   }
 
   .biz-sidebar-nav .biz-tab-btn {
     flex-direction: row;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 11px;
     width: 100%;
-    height: 38px;
-    padding: 0 10px;
+    height: 28px;
+    padding: 6px;
     border-radius: 8px;
+    color: rgba(0, 0, 0, 0.50);
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .biz-sidebar-nav .biz-tab-btn svg {
+    width: 16px;
+    height: 16px;
   }
 
   .biz-sidebar-nav .biz-tab-btn span {
-    font-size: 13.5px;
+    font-size: 14px;
+    font-weight: 400;
   }
 
   .biz-sidebar-nav .biz-tab-btn.active {
     outline: none;
     box-shadow: none;
-    color: var(--forest);
+    color: #145E42;
+    background: #F4F4F4;
   }
 
-  /* Pinned to the bottom of the 240px rail — the only desktop entry point
+  .biz-sidebar-lower-nav {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+  }
+
+  .biz-sidebar-secondary-btn {
+    width: 100%;
+    height: 28px;
+    padding: 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(0, 0, 0, 0.40);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 11px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    text-align: left;
+  }
+
+  .biz-sidebar-secondary-btn:hover {
+    background: #F4F4F4;
+  }
+
+  /* Pinned near the bottom of the 217px rail — the only desktop entry point
      into the profile menu (View Profile / Account Settings / Sign Out),
      since the mobile header's avatar trigger is hidden at this width. */
   .biz-sidebar-profile {
-    margin-top: auto;
+    margin-top: 11px;
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
-    padding: 8px;
+    padding: 0 6px;
     border: none;
     border-radius: 10px;
     background: none;
@@ -6155,15 +6237,15 @@ body {
   }
 
   .biz-sidebar-profile:hover {
-    background: #fafafa;
+    background: #F4F4F4;
   }
 
   .biz-sidebar-profile-avatar {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
     border-radius: 50%;
-    background: var(--forest);
+    background: #4CA5FF;
     color: white;
     display: flex;
     align-items: center;
@@ -6181,17 +6263,17 @@ body {
   }
 
   .biz-sidebar-profile-name {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--ink);
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.80);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .biz-sidebar-profile-email {
-    font-size: 11px;
-    color: var(--muted);
+    font-size: 10px;
+    color: rgba(0, 0, 0, 0.40);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -6200,37 +6282,43 @@ body {
   .biz-topbar {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px 28px;
-    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    height: 68px;
+    padding: 27px 44px 0 35px;
+    border-bottom: none;
     flex-shrink: 0;
+    background: #fff;
   }
 
   .biz-topbar-crumb {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--muted);
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #000;
   }
 
   .biz-topbar-crumb svg {
-    color: var(--border);
+    width: 8px;
+    height: 8px;
+    color: rgba(0, 0, 0, 0.55);
   }
 
   .biz-topbar-search {
-    flex: 1;
-    max-width: 420px;
+    flex: 0 0 226px;
+    margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 8px;
-    height: 34px;
-    padding: 0 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--muted);
-    font-size: 13px;
+    gap: 7px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 24px;
+    background: #FAFAFA;
+    color: rgba(0, 0, 0, 0.40);
+    font-size: 14px;
   }
 
   .biz-topbar-search span:first-of-type {
@@ -6239,37 +6327,214 @@ body {
 
   .biz-topbar-search-kbd {
     flex-shrink: 0;
-    font-size: 11px;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1px 5px;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.40);
+    border: none;
+    border-radius: 0;
+    padding: 0;
   }
 
   .biz-topbar-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-left: auto;
+    gap: 10px;
+    margin-left: 0;
+  }
+
+  .biz-topbar-actions .biz-header-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: #FAFAFA;
+    color: rgba(0, 0, 0, 0.50);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .biz-topbar-actions .biz-header-icon-btn:hover {
+    background: #EFEFEF;
   }
 
   .biz-dashboard .biz-content {
     flex: 1;
     overflow-y: auto;
-    padding: 28px;
+    padding: 8px 44px 40px 35px;
+    background: #fff;
   }
 
   .biz-greeting {
     display: block;
-    margin: 0 0 20px;
-    font-size: 22px;
+    margin: 0 0 28px;
+    font-size: 24px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: #000;
+  }
+
+  .biz-dashboard .biz-home-tab {
+    display: block;
+  }
+
+  .biz-dashboard .biz-stats-bar {
+    height: 113px;
+    grid-template-columns: repeat(4, 1fr);
+    border: none;
+    border-radius: 16px;
+    background: #FAFAFA;
+    box-shadow: none;
+    margin: 0 0 58px;
+  }
+
+  .biz-dashboard .biz-stats-bar-col {
+    justify-content: flex-start;
+    gap: 24px;
+    padding: 24px 32px;
+    border-bottom: none;
+    border-right: 1px dashed rgba(0, 0, 0, 0.10);
+  }
+
+  .biz-dashboard .biz-stats-bar-col:nth-child(2n) {
+    border-right: 1px dashed rgba(0, 0, 0, 0.10);
+  }
+
+  .biz-dashboard .biz-stats-bar-col:last-child {
+    border-right: none;
+  }
+
+  .biz-dashboard .biz-stats-bar-label {
+    font-size: 14px;
+    letter-spacing: 0;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.50);
+  }
+
+  .biz-dashboard .biz-stats-bar strong {
+    font-size: 20px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: #000;
+  }
+
+  .biz-dashboard .biz-home-section {
+    margin: 0;
+  }
+
+  .biz-dashboard .biz-home-section-title {
+    margin: 0 0 16px;
+    font-size: 20px;
+    line-height: 1.2;
     font-weight: 700;
-    color: var(--ink);
+    color: #000;
+  }
+
+  .biz-dashboard .biz-item-grid {
+    grid-template-columns: repeat(auto-fill, 360px);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .biz-dashboard .biz-item-card {
+    width: 360px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(12, 12, 13, 0.05);
+  }
+
+  .biz-dashboard .biz-item-card-top {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .biz-dashboard .biz-item-card-thumb {
+    width: 47px;
+    height: 49px;
+    border-radius: 10px;
+    border: 1px solid #fff;
+    background: #F4F4F4;
+  }
+
+  .biz-dashboard .biz-item-card-info {
+    gap: 2px;
+  }
+
+  .biz-dashboard .biz-item-card-info strong {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+  }
+
+  .biz-dashboard .biz-item-card-price {
+    font-size: 16px;
+    font-weight: 500;
+    color: #34A853;
+  }
+
+  .biz-dashboard .biz-item-card-desc {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.40);
+  }
+
+  .biz-dashboard .biz-item-card-menu-btn {
+    color: rgba(0, 0, 0, 0.60);
+  }
+
+  .biz-dashboard .biz-item-card-stats {
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0;
+  }
+
+  .biz-dashboard .biz-item-card-stat {
+    min-height: 63px;
+    justify-content: center;
+    gap: 8px;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .biz-dashboard .biz-item-card-stat strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+  }
+
+  .biz-dashboard .biz-item-card-stat span {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.40);
+  }
+
+  .biz-dashboard .biz-item-card-footer {
+    min-height: 63px;
+    padding: 0 21px;
+    background: #FAFAFA;
+  }
+
+  .biz-dashboard .biz-stock-badge {
+    padding: 2px 8px 2px 6px;
+    border-radius: 16px;
+    border: 1px solid #ABEFC6;
+    background: #ECFDF3;
+    color: #067647;
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+  }
+
+  .biz-dashboard .biz-stock-toggle {
+    width: 50px;
+    height: 29px;
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .biz-dashboard .biz-info-card {
+    display: none;
   }
 
   .biz-menu {
     top: 84px;
-    left: 14px;
+    left: 20px;
     width: 226px;
   }
 
@@ -6280,8 +6545,8 @@ body {
      switcher menu's top-left position above. */
   .biz-menu--right {
     top: auto;
-    bottom: 76px;
-    left: 14px;
+    bottom: 74px;
+    left: 20px;
     right: auto;
   }
 }

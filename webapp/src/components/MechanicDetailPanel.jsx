@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo, Envelope } from '@phosphor-icons/react';
-import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, onSnapshot, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
 import {
@@ -483,6 +483,23 @@ function getDetailerPlaceholderImage(name) {
   return DETAILER_PLACEHOLDER_IMAGES[hashIndex(name || '', DETAILER_PLACEHOLDER_IMAGES.length)];
 }
 
+// Per-item click/chat counters, mirroring the mechanic-level analytics
+// pattern in main.jsx's recordAnalyticsCount (no auth required — same
+// no-auth-required field-restricted rule as the rating/analytics fields;
+// see firestore.rules). Only real subcollection docs have a stable `id` —
+// inline pitch-lead items (see ListItemsTab's fallback) don't, so this is
+// a no-op for those rather than writing to a made-up path.
+async function recordItemInteraction(mechanicId, collectionName, itemId, field) {
+  if (!db || !mechanicId || !itemId) return;
+  try {
+    await updateDoc(doc(db, `mechanics/${mechanicId}/${collectionName}`, itemId), {
+      [field]: increment(1),
+    });
+  } catch (e) {
+    console.warn(`Failed to record ${field} for item ${itemId}:`, e);
+  }
+}
+
 function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap, isAdmin }) {
   const [items, setItems] = useState(fallbackItems || []);
   const [showForm, setShowForm] = useState(false);
@@ -532,6 +549,11 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   const isGrid = layout === 'grid';
   const isCards = layout === 'cards';
 
+  const handleItemTap = (item, type) => {
+    recordItemInteraction(mechanicId, collectionName, item.id, 'clickCount');
+    onItemTap({ ...item, type, collectionName });
+  };
+
   return (
     <div className="tab-content">
       {isAdmin && db && (
@@ -559,7 +581,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
       {isGrid ? (
         <div className="product-grid">
           {items.map((item, i) => (
-            <ProductCard key={item.id || i} item={item} onClick={() => onItemTap({ ...item, type: 'product' })} />
+            <ProductCard key={item.id || i} item={item} onClick={() => handleItemTap(item, 'product')} />
           ))}
         </div>
       ) : isCards ? (
@@ -567,7 +589,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
           {items.map((item, i) => {
             const resolvedImage = item.imageUrl || (specialty === 'Car Detailing' ? getDetailerPlaceholderImage(item.name) : null);
             return (
-            <div key={item.id || i} className="service-card" onClick={() => onItemTap({ ...item, type: 'service' })}>
+            <div key={item.id || i} className="service-card" onClick={() => handleItemTap(item, 'service')}>
               <div
                 className="service-card-image"
                 style={{ background: resolvedImage ? undefined : hashToColor(item.name || '') }}
@@ -594,7 +616,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
       ) : (
         <div className="item-list">
           {items.map((item, i) => (
-            <div key={item.id || i} className="item-row" onClick={() => onItemTap({ ...item, type: collectionName })}>
+            <div key={item.id || i} className="item-row" onClick={() => handleItemTap(item, collectionName)}>
               <div className="item-row-main">
                 <strong>{item.name}</strong>
                 {item.description && <span className="item-row-description">{item.description}</span>}
@@ -700,12 +722,22 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicEmail, me
 
         <div className="item-sheet-footer">
           {useEmailOrder ? (
-            <a className="item-sheet-order-btn" href={mailtoHref}>
+            <a
+              className="item-sheet-order-btn"
+              href={mailtoHref}
+              onClick={() => recordItemInteraction(mechanicId, item.collectionName, item.id, 'chatCount')}
+            >
               <Envelope size={20} weight="fill" />
               {isService ? 'Request Via Email' : 'Order Via Email'}
             </a>
           ) : (
-            <a className="item-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+            <a
+              className="item-sheet-order-btn"
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => recordItemInteraction(mechanicId, item.collectionName, item.id, 'chatCount')}
+            >
               <WhatsappLogo size={20} weight="fill" />
               Place Order Via WhatsApp
             </a>

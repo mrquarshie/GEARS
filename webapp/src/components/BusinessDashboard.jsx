@@ -231,7 +231,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
       {/* Desktop-only: mobile uses the hamburger + bottom tab bar below instead. */}
       <aside className="biz-sidebar">
         <div className="biz-sidebar-brand">
-          <span className="biz-sidebar-brand-icon"><GearsLogoMark size={16} color="var(--lime)" /></span>
+          <span className="biz-sidebar-brand-icon"><GearsLogoMark size={24} color="var(--lime)" /></span>
           <span>Gears</span>
         </div>
 
@@ -259,6 +259,25 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
             </button>
           ))}
         </nav>
+
+        <div className="biz-sidebar-lower-nav">
+          <button
+            type="button"
+            className="biz-sidebar-secondary-btn"
+            onClick={() => { setShowAddSheet(false); setActiveTab('media'); }}
+          >
+            <ImageSquare size={14} />
+            <span>Uploads</span>
+          </button>
+          <button
+            type="button"
+            className="biz-sidebar-secondary-btn"
+            onClick={() => show?.('Coming soon')}
+          >
+            <Gear size={14} />
+            <span>Settings</span>
+          </button>
+        </div>
 
         {/* Desktop-only: the mobile header's avatar button (biz-header-avatar-btn)
             opens this same profileMenuOpen popup, but that header is hidden at
@@ -493,12 +512,18 @@ function useCatalogItems(mechanic) {
   return { items: [...products, ...services], toggleStock, handleDelete };
 }
 
-// Per-item Clicks/Searches/Chats/Bookmarks aren't tracked yet — only
-// business-level counters exist (mechanic.visitCount etc, see §2 of the
-// business-accounts doc). Shown at 0 rather than omitted so the card
-// layout matches the design now; wire these up if/when per-item tracking
-// gets built.
-const CATALOG_CARD_STAT_LABELS = ['Clicks', 'Searches', 'Chats', 'Bookmarks'];
+// Clicks/Chats are now real per-item counters (clickCount/chatCount on the
+// product/service doc — see recordItemInteraction in MechanicDetailPanel.jsx
+// and the matching firestore.rules branch). Searches/Bookmarks stay at 0:
+// only business-level equivalents exist for those (mechanic.searchCount /
+// bookmarkCount, see §2 of the business-accounts doc) — no per-item source
+// to read yet.
+const CATALOG_CARD_STATS = [
+  { label: 'Clicks', field: 'clickCount' },
+  { label: 'Searches', field: null },
+  { label: 'Chats', field: 'chatCount' },
+  { label: 'Bookmarks', field: null },
+];
 
 function CatalogItemCard({ item, onToggleStock, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -535,9 +560,9 @@ function CatalogItemCard({ item, onToggleStock, onDelete }) {
       </div>
 
       <div className="biz-item-card-stats">
-        {CATALOG_CARD_STAT_LABELS.map((label) => (
+        {CATALOG_CARD_STATS.map(({ label, field }) => (
           <div key={label} className="biz-item-card-stat">
-            <strong>0</strong>
+            <strong>{Number((field && item[field]) || 0).toLocaleString()}</strong>
             <span>{label}</span>
           </div>
         ))}
