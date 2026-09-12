@@ -117,6 +117,24 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
     onInitialItemHandled?.();
   }, [mechanic, initialItemQuery, onInitialItemHandled]);
 
+  // Live subcollection counts, purely to decide whether the Products/
+  // Services/Packages tab is worth showing at all — item content itself
+  // still lives in ListItemsTab's own subscription. Counts read as 0 until
+  // each snapshot resolves, so a listing whose only items live in the
+  // subcollection (no inline fallback) may have that tab pop in a moment
+  // after render — same async reveal ListItemsTab's own item list already
+  // does, just one level up.
+  const [subCounts, setSubCounts] = useState({ products: null, services: null, packages: null });
+  useEffect(() => {
+    if (!db || !mechanic?.id) { setSubCounts({ products: null, services: null, packages: null }); return; }
+    const unsubs = ['products', 'services', 'packages'].map((key) =>
+      onSnapshot(collection(db, `mechanics/${mechanic.id}/${key}`), (snap) => {
+        setSubCounts((prev) => ({ ...prev, [key]: snap.size }));
+      })
+    );
+    return () => unsubs.forEach((u) => u());
+  }, [mechanic?.id]);
+
   if (!mechanic) return null;
 
   const handleDirectionClick = () => {
@@ -178,15 +196,19 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
 
   const category = getCategory(mechanic.specialty);
 
-  // Products/Services are stored as subcollections (mechanics/{id}/products,
-  // /services), not on the doc, so their presence can't be inferred from the
-  // inline arrays. Always offer the tabs and let ListItemsTab show the empty
-  // state — otherwise items added from the business dashboard never surface.
+  // Products/Services/Packages are stored as subcollections
+  // (mechanics/{id}/products etc.), not on the doc, so their presence can't
+  // be inferred from the inline arrays alone — combine both. A Gears admin
+  // always gets the tab regardless (matches the "Add {itemName}" button's
+  // own isAdmin gate in ListItemsTab), so there's still a way to curate a
+  // listing that has nothing yet.
+  const hasItems = (key) => (subCounts[key] ?? 0) > 0 || (mechanic[key]?.length ?? 0) > 0 || isAdmin;
+
   const tabs = category === 'detailer'
-    ? ['Overview', 'Packages', 'Reviews', 'Media']
+    ? ['Overview', hasItems('packages') && 'Packages', 'Reviews', 'Media'].filter(Boolean)
     : category === 'fuel'
       ? ['Overview', 'Fuel Prices', 'Reviews', 'Media']
-      : ['Overview', 'Products', 'Services', 'Reviews', 'Media'];
+      : ['Overview', hasItems('products') && 'Products', hasItems('services') && 'Services', 'Reviews', 'Media'].filter(Boolean);
 
   const isCreator = user && user.uid === mechanic.createdBy;
 
