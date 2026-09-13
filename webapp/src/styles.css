@@ -1386,6 +1386,20 @@ body {
   cursor: pointer;
 }
 
+/* Two-action variant (e.g. FarDirectionSheet) — stacked instead of the
+   default single full-width button. */
+.verification-sheet-footer--split {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.verification-sheet-btn--secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
 /* Business-onboarding success card — reuses the verification-sheet shell
    (icon/card/footer/button) but with its own larger, higher-emphasis type,
    since this is a one-time celebratory screen, not a small info tooltip. */

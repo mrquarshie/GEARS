@@ -1181,6 +1181,37 @@ function categoryForMechanic(m) {
   return 'all';
 }
 
+// Above this, treat it as a different-city trip rather than a normal
+// in-city one — Accra and Kumasi metro areas themselves each run
+// 30-40km end to end, so this needs enough headroom not to trip on a
+// same-city listing on the far side of town.
+const FAR_DIRECTION_THRESHOLD_KM = 60;
+
+// Shown instead of routing straight away when a business turns out to be a
+// different-city trip from the user (see FAR_DIRECTION_THRESHOLD_KM) — reuses
+// the same bottom-sheet shell as VerificationSheet (MechanicListPanel.jsx),
+// just with two footer actions instead of one "Got it".
+function FarDirectionSheet({ mechanic, distanceKm, onClose, onViewAnyway, onFindNearby }) {
+  const cityLabel = mechanic?.area ? ` in ${mechanic.area}` : '';
+  return (
+    <div className="verification-sheet-overlay" onClick={onClose}>
+      <div className="verification-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="verification-sheet-icon">
+          <NavigationArrow size={44} weight="duotone" color="#145E42" />
+        </div>
+        <h3 className="verification-sheet-title">That's a long trip</h3>
+        <p className="verification-sheet-desc">
+          {mechanic?.name || 'This business'}{cityLabel} is about {Math.round(distanceKm)}km away, probably a different city, not a quick drive. Still want directions, or would finding something closer help more?
+        </p>
+        <div className="verification-sheet-footer verification-sheet-footer--split">
+          <button className="verification-sheet-btn" onClick={onFindNearby}>Find something nearby</button>
+          <button className="verification-sheet-btn verification-sheet-btn--secondary" onClick={onViewAnyway}>View directions anyway</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main App
 // ---------------------------------------------------------------------------
@@ -1221,6 +1252,12 @@ function App() {
   const [isLocatingScan, setIsLocatingScan] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
+  // Set instead of routing straight away when a business turns out to be
+  // much farther than a normal in-city trip (see FAR_DIRECTION_THRESHOLD_KM)
+  // — driving directions across cities (e.g. Accra to Kumasi) technically
+  // "work" but the OSRM route + map bounds fitting both points isn't a
+  // useful result, so ask first instead of just doing it.
+  const [farDirectionTarget, setFarDirectionTarget] = useState(null);
   const [recentInteractions, setRecentInteractions] = useState(loadRecentInteractions);
   const [businessDashboardOpen, setBusinessDashboardOpen] = useState(false);
   // Which of the signed-in owner's businesses is currently being managed —
@@ -1278,10 +1315,35 @@ function App() {
     }
   };
 
-  const handleShowDirection = (mechanic) => {
+  const handleShowDirection = (mechanic, { force = false } = {}) => {
     if (!mechanic) { setRouteTarget(null); return; }
     if (mechanic.lat == null || mechanic.lng == null) return;
+    if (!force && userLocation) {
+      const distKm = calculateDistance(userLocation.lat, userLocation.lng, mechanic.lat, mechanic.lng);
+      if (distKm != null && distKm > FAR_DIRECTION_THRESHOLD_KM) {
+        setFarDirectionTarget(mechanic);
+        return;
+      }
+    }
+    setFarDirectionTarget(null);
     setRouteTarget({ lat: mechanic.lat, lng: mechanic.lng });
+  };
+
+  // Shared by the "Use my location" banner/button and the far-away
+  // direction sheet's "Find something nearby" action.
+  const handleUseMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+          setMapPanTrigger(Date.now());
+        },
+        (err) => console.warn("Location error:", err),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      setMapPanTrigger(Date.now());
+    }
   };
 
   const handleSelectMechanic = (mechanic) => {
@@ -1934,20 +1996,7 @@ function App() {
             onNotice={show}
             onRate={(m) => setModal({ type: 'rate', mechanic: m })}
             hideOnDesktop={!!selectedMechanic}
-              onUseMyLocation={() => {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                      setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
-                      setMapPanTrigger(Date.now());
-                    },
-                    (err) => console.warn("Location error:", err),
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                  );
-                } else {
-                  setMapPanTrigger(Date.now());
-                }
-              }}
+              onUseMyLocation={handleUseMyLocation}
             onScanStateChange={setIsLocatingScan}
             onNavigateHome={() => setViewMode('all')}
             onOpenSidebar={() => setMobileSidebarOpen(true)}
@@ -2057,6 +2106,16 @@ function App() {
           onRated={handleRated}
           show={show}
           openAuth={() => setModal({ type: 'auth-for-rate', mechanic: modal.mechanic })}
+        />
+      )}
+
+      {farDirectionTarget && userLocation && (
+        <FarDirectionSheet
+          mechanic={farDirectionTarget}
+          distanceKm={calculateDistance(userLocation.lat, userLocation.lng, farDirectionTarget.lat, farDirectionTarget.lng)}
+          onClose={() => setFarDirectionTarget(null)}
+          onViewAnyway={() => handleShowDirection(farDirectionTarget, { force: true })}
+          onFindNearby={() => { setFarDirectionTarget(null); handleCloseDetail(); handleUseMyLocation(); }}
         />
       )}
     </div>
