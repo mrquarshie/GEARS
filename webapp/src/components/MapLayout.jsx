@@ -51,6 +51,15 @@ function getCoordinate(value) {
   return Number.isFinite(coordinate) ? coordinate : null;
 }
 
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -272,13 +281,27 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
   }, [selectedMechanic]);
 
   // Fetch the real road-network path between the user and the route target.
-  // Debounced: only fires if userLocation + routeTarget stay stable for 150ms,
-  // preventing rapid-fire API calls during map interaction.
+  // watchPosition's enableHighAccuracy GPS fires far more often than the
+  // user actually moves — each tick is a *new* userLocation object even
+  // when it drifted a few meters from noise, not real movement. Refetching
+  // on every one of those cancelled the in-flight request and restarted it;
+  // if GPS ticks arrived faster than a round trip to the public OSRM demo
+  // server (very plausible over mobile data), the fetch never got a chance
+  // to complete — the route would show on some taps and not others, purely
+  // depending on how the timing happened to line up. Only refetch when the
+  // target changes or the user has actually moved a meaningful distance.
+  const lastRouteFetchRef = useRef({ targetKey: null, origin: null });
   useEffect(() => {
     if (!userLocation || !routeTarget) {
       setRoutePath(null);
+      lastRouteFetchRef.current = { targetKey: null, origin: null };
       return;
     }
+
+    const targetKey = `${routeTarget.lat},${routeTarget.lng}`;
+    const { targetKey: lastTargetKey, origin: lastOrigin } = lastRouteFetchRef.current;
+    const movedFar = !lastOrigin || haversineKm(lastOrigin.lat, lastOrigin.lng, userLocation.lat, userLocation.lng) > 0.1;
+    if (targetKey === lastTargetKey && !movedFar) return;
 
     let cancelled = false;
     // Debounce — wait 150ms of stability before fetching
@@ -292,6 +315,7 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
           const coords = data?.routes?.[0]?.geometry?.coordinates;
           if (Array.isArray(coords) && coords.length > 0) {
             setRoutePath(coords.map(([lng, lat]) => [lat, lng]));
+            lastRouteFetchRef.current = { targetKey, origin: { lat: userLocation.lat, lng: userLocation.lng } };
           } else {
             setRoutePath(null);
           }
