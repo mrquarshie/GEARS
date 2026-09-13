@@ -1191,7 +1191,7 @@ const FAR_DIRECTION_THRESHOLD_KM = 60;
 // different-city trip from the user (see FAR_DIRECTION_THRESHOLD_KM) — reuses
 // the same bottom-sheet shell as VerificationSheet (MechanicListPanel.jsx),
 // just with two footer actions instead of one "Got it".
-function FarDirectionSheet({ mechanic, distanceKm, onClose, onViewAnyway, onFindNearby }) {
+function FarDirectionSheet({ mechanic, distanceKm, onClose, onFindNearby }) {
   const cityLabel = mechanic?.area ? ` in ${mechanic.area}` : '';
   return (
     <div className="verification-sheet-overlay" onClick={onClose}>
@@ -1201,13 +1201,12 @@ function FarDirectionSheet({ mechanic, distanceKm, onClose, onViewAnyway, onFind
         </div>
         <h3 className="verification-sheet-title">That's a long trip</h3>
         <p className="verification-sheet-desc">
-         <span 
+         <span
             style={{ fontWeight: 600, color:'black'}}
-         >{mechanic?.name || 'This business'}{cityLabel}</span>  is about {Math.round(distanceKm)}km away, probably a different city, not a quick drive. Still want directions, or would finding something closer help more?
+         >{mechanic?.name || 'This business'}{cityLabel}</span>  is about {Math.round(distanceKm)}km away, probably a different city, not a quick drive. Let's find something closer instead.
         </p>
-        <div className="verification-sheet-footer verification-sheet-footer--split">
+        <div className="verification-sheet-footer">
           <button className="verification-sheet-btn" onClick={onFindNearby}>Find something nearby</button>
-          <button className="verification-sheet-btn verification-sheet-btn--secondary" onClick={onViewAnyway}>View directions anyway</button>
         </div>
       </div>
     </div>
@@ -1258,12 +1257,6 @@ function App() {
   // as tapping the "Use my location" banner directly, not just the bare
   // geolocation fetch underneath it.
   const [scanRequestId, setScanRequestId] = useState(0);
-  // Bumped to collapse MechanicDetailPanel down to its peek bar on mobile
-  // so the route drawn underneath is actually visible — normally that
-  // happens inside the panel's own Direction-button click handler, but
-  // FarDirectionSheet's "View directions anyway" calls handleShowDirection
-  // directly from here, bypassing that handler entirely.
-  const [collapseDetailRequestId, setCollapseDetailRequestId] = useState(0);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
   // Set instead of routing straight away when a business turns out to be
@@ -1333,10 +1326,10 @@ function App() {
   // far-direction sheet intercepted it instead, so callers (e.g. the detail
   // panel's collapse-to-peek-bar behavior on mobile) know not to react as if
   // directions are now on screen.
-  const handleShowDirection = (mechanic, { force = false } = {}) => {
+  const handleShowDirection = (mechanic) => {
     if (!mechanic) { setRouteTarget(null); return false; }
     if (mechanic.lat == null || mechanic.lng == null) return false;
-    if (!force && userLocation) {
+    if (userLocation) {
       const distKm = calculateDistance(userLocation.lat, userLocation.lng, mechanic.lat, mechanic.lng);
       if (distKm != null && distKm > FAR_DIRECTION_THRESHOLD_KM) {
         setFarDirectionTarget(mechanic);
@@ -2062,7 +2055,6 @@ function App() {
            onNotice={show}
            initialItemQuery={pendingItemQuery}
            onInitialItemHandled={() => setPendingItemQuery(null)}
-           collapseRequestId={collapseDetailRequestId}
          />
       </div>
 
@@ -2135,7 +2127,6 @@ function App() {
           mechanic={farDirectionTarget}
           distanceKm={calculateDistance(userLocation.lat, userLocation.lng, farDirectionTarget.lat, farDirectionTarget.lng)}
           onClose={() => setFarDirectionTarget(null)}
-          onViewAnyway={() => { handleShowDirection(farDirectionTarget, { force: true }); setCollapseDetailRequestId(Date.now()); }}
           onFindNearby={() => { setFarDirectionTarget(null); handleCloseDetail(); setScanRequestId(Date.now()); }}
         />
       )}
