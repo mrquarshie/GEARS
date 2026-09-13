@@ -89,7 +89,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled, collapseRequestId }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -98,6 +98,17 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
     setActiveTab('Overview');
     setCollapsed(false);
   }, [mechanic?.id]);
+
+  // Lets something outside this panel (FarDirectionSheet's "View directions
+  // anyway", which calls handleShowDirection directly and so never goes
+  // through handleDirectionClick below) still collapse to the peek bar on
+  // mobile — otherwise the route drawn behind a still-expanded panel is
+  // invisible, which is exactly what "directions don't work" looks like.
+  useEffect(() => {
+    if (!collapseRequestId) return;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    if (isMobile) setCollapsed(true);
+  }, [collapseRequestId]);
 
   // Deep-link support: a shared WhatsApp order message links back to
   // `?mechanic=<id>&item=<name>&type=<product|service|package>`. Once that

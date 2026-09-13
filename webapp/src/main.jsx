@@ -1201,7 +1201,9 @@ function FarDirectionSheet({ mechanic, distanceKm, onClose, onViewAnyway, onFind
         </div>
         <h3 className="verification-sheet-title">That's a long trip</h3>
         <p className="verification-sheet-desc">
-          {mechanic?.name || 'This business'}{cityLabel} is about {Math.round(distanceKm)}km away, probably a different city, not a quick drive. Still want directions, or would finding something closer help more?
+         <span 
+            style={{ fontWeight: 600, color:'black'}}
+         >{mechanic?.name || 'This business'}{cityLabel}</span>  is about {Math.round(distanceKm)}km away, probably a different city, not a quick drive. Still want directions, or would finding something closer help more?
         </p>
         <div className="verification-sheet-footer verification-sheet-footer--split">
           <button className="verification-sheet-btn" onClick={onFindNearby}>Find something nearby</button>
@@ -1256,6 +1258,12 @@ function App() {
   // as tapping the "Use my location" banner directly, not just the bare
   // geolocation fetch underneath it.
   const [scanRequestId, setScanRequestId] = useState(0);
+  // Bumped to collapse MechanicDetailPanel down to its peek bar on mobile
+  // so the route drawn underneath is actually visible — normally that
+  // happens inside the panel's own Direction-button click handler, but
+  // FarDirectionSheet's "View directions anyway" calls handleShowDirection
+  // directly from here, bypassing that handler entirely.
+  const [collapseDetailRequestId, setCollapseDetailRequestId] = useState(0);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
   // Set instead of routing straight away when a business turns out to be
@@ -2054,6 +2062,7 @@ function App() {
            onNotice={show}
            initialItemQuery={pendingItemQuery}
            onInitialItemHandled={() => setPendingItemQuery(null)}
+           collapseRequestId={collapseDetailRequestId}
          />
       </div>
 
@@ -2126,7 +2135,7 @@ function App() {
           mechanic={farDirectionTarget}
           distanceKm={calculateDistance(userLocation.lat, userLocation.lng, farDirectionTarget.lat, farDirectionTarget.lng)}
           onClose={() => setFarDirectionTarget(null)}
-          onViewAnyway={() => handleShowDirection(farDirectionTarget, { force: true })}
+          onViewAnyway={() => { handleShowDirection(farDirectionTarget, { force: true }); setCollapseDetailRequestId(Date.now()); }}
           onFindNearby={() => { setFarDirectionTarget(null); handleCloseDetail(); setScanRequestId(Date.now()); }}
         />
       )}
