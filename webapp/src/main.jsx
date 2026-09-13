@@ -1250,6 +1250,12 @@ function App() {
   const lastLocationWriteRef = useRef(0);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isLocatingScan, setIsLocatingScan] = useState(false);
+  // Bumped to re-run MechanicListPanel's own handleScanLocation (the full
+  // scanning-animation + nearest-drive-time-bucket flow) from outside it —
+  // FarDirectionSheet's "Find something nearby" needs the same experience
+  // as tapping the "Use my location" banner directly, not just the bare
+  // geolocation fetch underneath it.
+  const [scanRequestId, setScanRequestId] = useState(0);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
   // Set instead of routing straight away when a business turns out to be
@@ -1315,18 +1321,23 @@ function App() {
     }
   };
 
+  // Returns whether a route actually started showing — false means the
+  // far-direction sheet intercepted it instead, so callers (e.g. the detail
+  // panel's collapse-to-peek-bar behavior on mobile) know not to react as if
+  // directions are now on screen.
   const handleShowDirection = (mechanic, { force = false } = {}) => {
-    if (!mechanic) { setRouteTarget(null); return; }
-    if (mechanic.lat == null || mechanic.lng == null) return;
+    if (!mechanic) { setRouteTarget(null); return false; }
+    if (mechanic.lat == null || mechanic.lng == null) return false;
     if (!force && userLocation) {
       const distKm = calculateDistance(userLocation.lat, userLocation.lng, mechanic.lat, mechanic.lng);
       if (distKm != null && distKm > FAR_DIRECTION_THRESHOLD_KM) {
         setFarDirectionTarget(mechanic);
-        return;
+        return false;
       }
     }
     setFarDirectionTarget(null);
     setRouteTarget({ lat: mechanic.lat, lng: mechanic.lng });
+    return true;
   };
 
   // Shared by the "Use my location" banner/button and the far-away
@@ -1998,6 +2009,7 @@ function App() {
             hideOnDesktop={!!selectedMechanic}
               onUseMyLocation={handleUseMyLocation}
             onScanStateChange={setIsLocatingScan}
+            scanRequestId={scanRequestId}
             onNavigateHome={() => setViewMode('all')}
             onOpenSidebar={() => setMobileSidebarOpen(true)}
           />
@@ -2115,7 +2127,7 @@ function App() {
           distanceKm={calculateDistance(userLocation.lat, userLocation.lng, farDirectionTarget.lat, farDirectionTarget.lng)}
           onClose={() => setFarDirectionTarget(null)}
           onViewAnyway={() => handleShowDirection(farDirectionTarget, { force: true })}
-          onFindNearby={() => { setFarDirectionTarget(null); handleCloseDetail(); handleUseMyLocation(); }}
+          onFindNearby={() => { setFarDirectionTarget(null); handleCloseDetail(); setScanRequestId(Date.now()); }}
         />
       )}
     </div>

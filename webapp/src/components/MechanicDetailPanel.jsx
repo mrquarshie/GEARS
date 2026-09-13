@@ -138,10 +138,13 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
   if (!mechanic) return null;
 
   const handleDirectionClick = () => {
-    onDirection(mechanic);
+    const showed = onDirection(mechanic);
     onRecordInteraction?.(mechanic.id, 'direction');
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-    if (isMobile) setCollapsed(true);
+    // A false return means the far-direction sheet intercepted this tap
+    // instead of actually routing — don't collapse behind it, there's
+    // nothing on the map yet to reveal.
+    if (isMobile && showed !== false) setCollapsed(true);
   };
 
   const handleShareClick = () => {

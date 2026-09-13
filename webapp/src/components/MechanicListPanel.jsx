@@ -220,7 +220,7 @@ function UnverifiedIcon({ size = 20 }) {
 // least this long so the loading/radar sequence is actually visible.
 const MIN_SCAN_MS = 3500;
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice, onRate }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, scanRequestId, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice, onRate }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -341,6 +341,34 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     setIsScanning(true);
     if (onUseMyLocation) onUseMyLocation();
   };
+
+  // Toggles the direction pin for a card. onDirection returns false when the
+  // far-direction sheet intercepted the tap instead of actually routing —
+  // in that case don't mark the card "active" or collapse the sheet, since
+  // nothing showed on the map to collapse toward.
+  const handleDirectionToggle = (m, { recordInteraction = false } = {}) => {
+    if (directionTargetId === m.id) {
+      setDirectionTargetId(null);
+      onDirection(null);
+      setDirectionPeek(false);
+      return;
+    }
+    const showed = onDirection(m);
+    setDirectionTargetId(showed === false ? null : m.id);
+    setDirectionPeek(isMobile && showed !== false);
+    if (recordInteraction && showed !== false) onRecordInteraction?.(m.id, 'direction');
+  };
+
+  // Lets something outside this panel (the far-direction sheet's "Find
+  // something nearby") trigger the exact same scanning flow as tapping the
+  // banner directly, instead of a bare geolocation fetch with none of the
+  // scanning animation or nearest-drive-time-bucket narrowing. Effect only
+  // re-fires when scanRequestId actually changes value (a fresh Date.now()
+  // each time), so this is a no-op on every other re-render.
+  useEffect(() => {
+    if (scanRequestId) handleScanLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanRequestId]);
 
   const displayedMechanics = useMemo(() => {
     let list;
@@ -1150,7 +1178,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           </div>
                           <button
                             className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); setDirectionPeek(isMobile && !!nextId); }}
+                            onClick={(e) => { e.stopPropagation(); handleDirectionToggle(m); }}
                           >
                             <LocationIcon size={16} />
                             <span className="card-action-label">Direction</span>
@@ -1257,7 +1285,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           </div>
                           <button
                             className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); const nextId = directionTargetId === m.id ? null : m.id; setDirectionTargetId(nextId); onDirection(nextId ? m : null); setDirectionPeek(isMobile && !!nextId); if (nextId) onRecordInteraction?.(m.id, 'direction'); }}
+                            onClick={(e) => { e.stopPropagation(); handleDirectionToggle(m, { recordInteraction: true }); }}
                           >
                             <LocationIcon size={16} />
                             <span className="card-action-label">Direction</span>
