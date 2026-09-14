@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { Analytics } from '@vercel/analytics/react';
 import mockExtrasData from './mockExtras.json';
 import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
@@ -1956,5 +1957,6 @@ function App() {
 createRoot(document.getElementById('root')).render(
   <HelmetProvider>
     <App />
+    <Analytics />
   </HelmetProvider>
 );
