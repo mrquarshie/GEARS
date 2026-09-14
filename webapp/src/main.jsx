@@ -5,7 +5,7 @@ import { Analytics } from '@vercel/analytics/react';
 import mockExtrasData from './mockExtras.json';
 import { loadRecentInteractions, saveRecentInteractions } from './recentInteractions';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { List, NavigationArrow, X, SealCheck, MagnifyingGlass } from '@phosphor-icons/react';
+import { List, NavigationArrow, X, SealCheck, MagnifyingGlass, Storefront, WhatsappLogo } from '@phosphor-icons/react';
 import {
   addDoc,
   collection,
@@ -43,7 +43,7 @@ import MechanicDetailPanel from './components/MechanicDetailPanel';
 import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
 import BusinessDashboard from './components/BusinessDashboard';
-import { CarDetailingIcon, GearsLogoMark } from './components/icons';
+import { CarDetailingIcon, GearsLogoMark, CallIcon } from './components/icons';
 import { vibrateTap } from './utils/feedback';
 
 import authImgCar from './components/AuthImages/Car.png';
@@ -302,6 +302,43 @@ function persistAuthUser(u) {
 
 function clearAuthUser() {
   try { localStorage.removeItem(AUTH_USER_KEY); } catch (e) {}
+}
+
+// Non-admin users who tap "Become a Business" are routed here instead of the
+// onboarding wizard — Gears verifies every business first, so they reach out
+// for enquiry/verification before anything goes live.
+const BUSINESS_CONTACT_PHONE = '+233 59 578 5158';
+const BUSINESS_CONTACT_DIGITS = '233595785158';
+
+function BusinessContactSheet({ close }) {
+  const whatsappHref = `https://wa.me/${BUSINESS_CONTACT_DIGITS}?text=${encodeURIComponent('Hi Gears! I want to list my business on the app.')}`;
+  return (
+    <div className="overlay business-contact-overlay" role="dialog" aria-modal="true" onClick={close}>
+      <div className="business-contact-sheet" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="auth-close" onClick={close} aria-label="Close">
+          <X size={18} />
+        </button>
+        <div className="business-contact-icon"><Storefront size={30} weight="bold" /></div>
+        <h2>Become a Business</h2>
+        <p className="business-contact-copy">
+          Every business is verified before it goes live. Reach us on WhatsApp or call for enquiry and verification — we'll get you set up.
+        </p>
+        <a
+          className="business-contact-btn business-contact-btn--whatsapp"
+          href={whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <WhatsappLogo size={20} weight="fill" />
+          <span>Chat with us on WhatsApp</span>
+        </a>
+        <a className="business-contact-btn business-contact-btn--call" href={`tel:+${BUSINESS_CONTACT_DIGITS}`}>
+          <CallIcon size={20} />
+          <span>Call {BUSINESS_CONTACT_PHONE}</span>
+        </a>
+      </div>
+    </div>
+  );
 }
 
 function AuthModal({ close, onSuccess, reason }) {
@@ -1555,7 +1592,17 @@ function App() {
 
     const loadMechanics = async () => {
       try {
-        const result = await getDocs(query(collection(db, 'mechanics'), limit(MECHANICS_PAGE_SIZE)));
+        const currentUser = currentUserRef.current;
+        const isAdmin = currentUser && ADMIN_EMAILS.includes(currentUser.email);
+        let result;
+        if (currentUser && !isAdmin) {
+          // Signed in as a business (non-admin) — Firestore rules only let a
+          // business read its own listing(s), so query by owner instead of a
+          // full collection scan (which the rules would deny outright).
+          result = await getDocs(query(collection(db, 'mechanics'), where('createdBy', '==', currentUser.uid)));
+        } else {
+          result = await getDocs(query(collection(db, 'mechanics'), limit(MECHANICS_PAGE_SIZE)));
+        }
         // Temporarily hides tier-3 "Unverified" listings — ~25 generic,
         // contentless OSM-scraped placeholder docs left over from before the
         // pitch-lead work. Filtered here rather than deleted from Firestore
@@ -1591,6 +1638,7 @@ function App() {
 
       // Step 2: subscribe to ongoing auth changes (fires immediately with current user)
       unsubscribe = onAuthStateChanged(auth, (u) => {
+        currentUserRef.current = u; // keep the ref fresh before the reload below
         setUser(u);
         setAuthReady(true);
         if (u) {
@@ -1611,6 +1659,9 @@ function App() {
             handleSetViewMode('all');
           }
         }
+        // The readable mechanic set depends on auth state (anonymous/admin
+        // see everything, a business only its own), so refetch on change.
+        loadMechanics();
       });
 
       // Step 3: load mechanics data
@@ -1913,7 +1964,13 @@ function App() {
       setBusinessDashboardOpen(true);
       return;
     }
-    setModal({ type: 'auth', reason: 'business' });
+    // Admin accounts onboard businesses directly (the pitch flow). Everyone
+    // else is routed to a "contact us" sheet for enquiry/verification.
+    if (ADMIN_EMAILS.includes(user?.email)) {
+      setModal({ type: 'auth', reason: 'business' });
+    } else {
+      setModal({ type: 'business-contact' });
+    }
   };
 
   if (businessDashboardOpen) {
@@ -1928,6 +1985,7 @@ function App() {
         onSignOut={() => { signOut(auth); clearAuthUser(); setUser(null); setBusinessDashboardOpen(false); }}
         onAddBusiness={() => { setBusinessDashboardOpen(false); setModal('add'); }}
         onViewProfile={() => { setBusinessDashboardOpen(false); handleSelectMechanic(myBusiness); }}
+        onEdit={() => { setBusinessDashboardOpen(false); setModal({ type: 'edit', mechanic: myBusiness }); }}
         show={show}
       />
     );
@@ -2014,6 +2072,7 @@ function App() {
             scanRequestId={scanRequestId}
             onNavigateHome={() => setViewMode('all')}
             onOpenSidebar={() => setMobileSidebarOpen(true)}
+            loading={loading}
           />
         )}
 
@@ -2098,6 +2157,11 @@ function App() {
           show={show}
           reason="rate"
         />
+      )}
+
+      {/* Become a Business — enquiry/verification sheet for non-admins */}
+      {modal?.type === 'business-contact' && (
+        <BusinessContactSheet close={() => setModal(null)} />
       )}
 
       {/* Add / Edit mechanic modal */}

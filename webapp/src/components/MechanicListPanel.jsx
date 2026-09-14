@@ -220,7 +220,7 @@ function UnverifiedIcon({ size = 20 }) {
 // least this long so the loading/radar sequence is actually visible.
 const MIN_SCAN_MS = 3500;
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, scanRequestId, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice, onRate }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, scanRequestId, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice, onRate, loading }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -430,7 +430,8 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   const sortedMechanics = useMemo(() => {
     if (viewMode === 'history') return displayedMechanics; // already sorted by recency
-    return [...displayedMechanics].sort((a, b) => getVerificationTier(a) - getVerificationTier(b));
+    // Closest first; listings without a resolved distance sink to the bottom.
+    return [...displayedMechanics].sort((a, b) => (a._rawDist ?? Infinity) - (b._rawDist ?? Infinity));
   }, [displayedMechanics, viewMode]);
 
   const activeFilterCount = selectedFilters.services.length + selectedFilters.availability.length + (selectedFilters.distance ? 1 : 0) + (selectedFilters.rating ? 1 : 0);
@@ -711,14 +712,12 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           setShowSuggestions(true);
                         }}
                         onPointerDown={(e) => {
-                          if (isMobile && onOpenSearch) {
-                            // Hand off to the full-screen search overlay instead of
-                            // expanding the sheet in place.
-                            e.preventDefault();
-                            onOpenSearch();
-                            return;
-                          }
-                          if (isMobile && sheetState !== 'expanded') {
+                          if (!isMobile) return;
+                          // Don't let the browser focus the field (which would
+                          // flash the keyboard before the overlay opens); the
+                          // full-screen search overlay owns input on mobile.
+                          e.preventDefault();
+                          if (sheetState !== 'expanded') {
                             if (panelRef.current) {
                               panelRef.current.style.transition = 'none';
                               panelRef.current.style.transform = 'translateY(240px)';
@@ -726,6 +725,12 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                             setSheetState('expanded');
                             setDragOffset(0);
                           }
+                        }}
+                        onClick={() => {
+                          // Open the overlay only on a completed tap — a scroll
+                          // that happens to start on the search bar shouldn't
+                          // trigger it.
+                          if (isMobile && onOpenSearch) onOpenSearch();
                         }}
                         onFocus={() => {
                           if (searchTerm) setShowSuggestions(true);
@@ -1042,7 +1047,33 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         )}
 
         <div className="mechanic-cards">
-          {(viewMode === 'saved' || viewMode === 'history') && sortedMechanics.length === 0 ? (
+          {loading ? (
+            <>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div key={i} className="mechanic-card loading-skeleton-card" aria-hidden="true">
+                  <div className="card-body">
+                    <div className="card-badges-row">
+                      <div className="skeleton-block" style={{ width: 32, height: 32, borderRadius: 8 }} />
+                      <div className="card-badges">
+                        <div className="skeleton-block" style={{ width: 56, height: 22, borderRadius: 24 }} />
+                        <div className="skeleton-block" style={{ width: 56, height: 22, borderRadius: 24 }} />
+                      </div>
+                    </div>
+                    <div className="skeleton-block" style={{ width: '70%', height: 16, borderRadius: 24 }} />
+                    <div className="skeleton-block" style={{ width: '42%', height: 12, borderRadius: 24 }} />
+                    <div className="skeleton-block" style={{ width: 96, height: 22, borderRadius: 16 }} />
+                  </div>
+                  <div className="card-bottom-bar">
+                    <div className="card-bottom-left">
+                      <div className="skeleton-block" style={{ width: 36, height: 36, borderRadius: 12 }} />
+                      <div className="card-bottom-divider" />
+                    </div>
+                    <div className="skeleton-block" style={{ width: 104, height: 36, borderRadius: 12 }} />
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (viewMode === 'saved' || viewMode === 'history') && sortedMechanics.length === 0 ? (
             <div className="bookmarks-empty">
               <div className="bookmarks-empty-cards">
                 <div

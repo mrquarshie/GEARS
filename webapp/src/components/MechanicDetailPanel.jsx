@@ -89,7 +89,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled, variant = 'customer' }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -231,8 +231,8 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
 
   return (
     <>
-      <div className="mechanic-detail-overlay" onClick={onClose}></div>
-      <div className="mechanic-detail-panel">
+      <div className={`mechanic-detail-overlay ${variant === 'business' ? 'mechanic-detail-overlay--business' : ''}`} onClick={onClose}></div>
+      <div className={`mechanic-detail-panel ${variant === 'business' ? 'mechanic-detail-panel--business' : ''}`}>
         <Helmet>
           <title>{mechanic.name} - Mechanic in {mechanic.area} | Gears</title>
           <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. ${mechanic.phone ? `Call ${mechanic.phone}.` : mechanic.email ? `Email ${mechanic.email}.` : ''}`} />
@@ -248,6 +248,10 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         <button className="close-panel-btn" onClick={onClose} aria-label="Close">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
         </button>
+
+        {variant === 'business' && (
+          <div className="detail-business-heading">View Business Profile</div>
+        )}
 
         <div className="detail-hero">
           <div className="detail-hero-avatar">
@@ -300,40 +304,54 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         </div>
 
         <div className="detail-bottom-bar">
-          <div className="detail-bottom-left">
-            <button
-              className="bottom-icon-btn"
-              onClick={() => onToggleSave(mechanic)}
-              aria-label="Save"
-            >
-              <BookmarkIcon size={20} state={savedMechanics.includes(mechanic.id) ? 'filled' : 'default'} color={savedMechanics.includes(mechanic.id) ? 'var(--forest)' : 'currentColor'} />
-            </button>
-            <button className="bottom-icon-btn" onClick={() => onRate(mechanic)} aria-label="Rate">
-              <RateIcon size={20} />
-            </button>
-            <button className="bottom-icon-btn" onClick={handleShareClick} aria-label="Share">
-              <ShareIcon size={20} />
-            </button>
-            {/* <div className="detail-bottom-divider"></div> */}
-          </div>
+          {variant === 'business' ? (
+            <>
+              <div className="detail-bottom-left" />
+              <div className="detail-bottom-right">
+                <button className="bottom-action-btn" onClick={() => onEdit(mechanic)}>
+                  <Pencil size={16} />
+                  <span>Edit</span>
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="detail-bottom-left">
+                <button
+                  className="bottom-icon-btn"
+                  onClick={() => onToggleSave(mechanic)}
+                  aria-label="Save"
+                >
+                  <BookmarkIcon size={20} state={savedMechanics.includes(mechanic.id) ? 'filled' : 'default'} color={savedMechanics.includes(mechanic.id) ? 'var(--forest)' : 'currentColor'} />
+                </button>
+                <button className="bottom-icon-btn" onClick={() => onRate(mechanic)} aria-label="Rate">
+                  <RateIcon size={20} />
+                </button>
+                <button className="bottom-icon-btn" onClick={handleShareClick} aria-label="Share">
+                  <ShareIcon size={20} />
+                </button>
+                {/* <div className="detail-bottom-divider"></div> */}
+              </div>
 
-          <div className="detail-bottom-right">
-            <button className="bottom-action-btn" onClick={handleDirectionClick}>
-              <LocationIcon size={16} />
-              <span className="card-action-label">Direction</span>
-            </button>
-            {mechanic.phone ? (
-              <button className="bottom-action-btn" onClick={handleCallClick}>
-                <CallIcon size={16} />
-                <span>Call</span>
-              </button>
-            ) : mechanic.email && (
-              <button className="bottom-action-btn" onClick={handleEmailClick}>
-                <Envelope size={16} />
-                <span>Email</span>
-              </button>
-            )}
-          </div>
+              <div className="detail-bottom-right">
+                <button className="bottom-action-btn" onClick={handleDirectionClick}>
+                  <LocationIcon size={16} />
+                  <span className="card-action-label">Direction</span>
+                </button>
+                {mechanic.phone ? (
+                  <button className="bottom-action-btn" onClick={handleCallClick}>
+                    <CallIcon size={16} />
+                    <span>Call</span>
+                  </button>
+                ) : mechanic.email && (
+                  <button className="bottom-action-btn" onClick={handleEmailClick}>
+                    <Envelope size={16} />
+                    <span>Email</span>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {detailSheetItem && (

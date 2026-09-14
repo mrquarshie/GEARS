@@ -1147,6 +1147,33 @@ body {
   color: var(--ink);
 }
 
+/* --- Loading skeleton cards (shown while mechanics fetch) --- */
+.skeleton-block {
+  background: #ececee;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.skeleton-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.loading-skeleton-card {
+  pointer-events: none;
+}
+
 .bookmarks-empty-bookmark-btn {
   width: 36px;
   height: 36px;
@@ -1974,6 +2001,37 @@ body {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* Business profile variant — dimmed overlay + centered panel */
+.mechanic-detail-overlay--business {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  backdrop-filter: blur(4px) saturate(80%);
+  -webkit-backdrop-filter: blur(4px) saturate(80%);
+}
+
+.mechanic-detail-panel--business {
+  z-index: 10001;
+}
+
+.detail-business-heading {
+  padding: 20px 24px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+@media (min-width: 769px) {
+  .mechanic-detail-panel--business {
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -3835,6 +3893,86 @@ body {
   padding: 0 !important;
   font-size: 18px !important;
   z-index: 10;
+}
+
+/* --- Become a Business — enquiry/verification bottom sheet --- */
+.business-contact-overlay {
+  place-items: end center;
+}
+
+.business-contact-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 28px 28px 0 0;
+  padding: 30px 24px calc(28px + env(safe-area-inset-bottom, 0px));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.12);
+  animation: business-contact-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes business-contact-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.business-contact-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--forest);
+  color: var(--lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.business-contact-sheet h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.business-contact-copy {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.business-contact-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.business-contact-btn--whatsapp {
+  background: #25d366;
+  color: #fff;
+}
+
+.business-contact-btn--call {
+  background: var(--forest);
+  color: #fff;
 }
 
 .auth-header-graphics {
@@ -5891,6 +6029,8 @@ body {
   background: white;
   box-shadow: var(--dropdown-shadow);
   padding: 8px;
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
 }
 
 /* Profile menu hangs off the header's avatar button on the right instead
@@ -5908,6 +6048,11 @@ body {
   border-radius: 8px;
   gap: 12px;
   color: var(--ink);
+}
+
+.biz-menu .nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .biz-menu .nav-text {
@@ -5955,6 +6100,8 @@ body {
   flex-direction: column;
   gap: 2px;
   margin-bottom: 4px;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .biz-account-row {
@@ -6058,7 +6205,8 @@ body {
     border-right: none;
     gap: 18px;
     background: #FAFAFA;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .biz-sidebar::before,
@@ -6219,9 +6367,10 @@ body {
     background: #F4F4F4;
   }
 
-  /* Pinned near the bottom of the 217px rail — the only desktop entry point
-     into the profile menu (View Profile / Account Settings / Sign Out),
-     since the mobile header's avatar trigger is hidden at this width. */
+  /* Sits just below Uploads/Settings, which are themselves pinned to the
+     bottom via .biz-sidebar-lower-nav's margin-top:auto — so this (and the
+     profile menu it opens: View Profile / Account Settings / Log Out) is the
+     bottom-most entry point on desktop. */
   .biz-sidebar-profile {
     margin-top: 11px;
     display: flex;
@@ -6352,6 +6501,43 @@ body {
 
   .biz-topbar-actions .biz-header-icon-btn:hover {
     background: #EFEFEF;
+  }
+
+  /* Desktop "New" button + dropdown (mobile uses the bottom-sheet FAB instead). */
+  .biz-topbar-new-wrap {
+    position: relative;
+  }
+
+  .biz-topbar-new-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--forest);
+    color: var(--lime);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .biz-topbar-new-btn:hover {
+    filter: brightness(1.06);
+  }
+
+  .biz-desktop-add-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 288px;
+    background: #fff;
+    border: var(--dropdown-border);
+    border-radius: var(--dropdown-radius);
+    box-shadow: var(--dropdown-shadow);
+    padding: 4px 0;
+    z-index: 10005;
   }
 
   .biz-dashboard .biz-content {
@@ -6792,6 +6978,67 @@ body {
   color: rgba(0, 0, 0, 0.50);
 }
 
+/* Log out business account — confirmation modal */
+.biz-logout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.biz-logout-card {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.biz-logout-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.biz-logout-card p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.biz-logout-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.biz-logout-actions button {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.biz-logout-cancel {
+  background: #f4f4f4;
+  color: var(--ink);
+}
+
+.biz-logout-confirm {
+  background: #ff3b30;
+  color: #fff;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -6809,10 +7056,18 @@ body {
   text-align: center;
 }
 
+.biz-catalog-tab {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 .biz-catalog-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  flex: 1;
   gap: 24px;
   padding: 12px 8px 32px;
   text-align: center;
@@ -7143,12 +7398,20 @@ body {
   background: none;
   border: none;
   font-size: 13px;
-  color: #dc2626;
+  color: var(--ink);
   cursor: pointer;
   text-align: left;
 }
 
 .biz-item-card-menu button:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.biz-item-card-menu button.biz-item-card-menu-danger {
+  color: #dc2626;
+}
+
+.biz-item-card-menu button.biz-item-card-menu-danger:hover {
   background: #fee2e2;
 }
 
@@ -7390,6 +7653,35 @@ body {
   flex-direction: column;
 }
 
+.biz-catalog-page-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop: the add/edit form is a centered modal over a dimmed backdrop
+   (mobile keeps the full-page flow above). */
+@media (min-width: 769px) {
+  .biz-catalog-page {
+    background: rgba(0, 0, 0, 0.4);
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .biz-catalog-page-card {
+    flex: none;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--cream);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
+}
+
 .biz-catalog-page-header {
   display: flex;
   align-items: center;
@@ -7401,10 +7693,29 @@ body {
 }
 
 .biz-catalog-page-header h1 {
+  flex: 1;
   margin: 0;
   font-size: 18px;
   font-weight: 800;
   color: var(--ink);
+}
+
+.biz-catalog-page-close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f4f4f2;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.biz-catalog-page-close:hover {
+  background: #e9e9e6;
 }
 
 .biz-catalog-page-form {

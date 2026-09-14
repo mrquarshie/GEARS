@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query } from 'firebase/firestore';
 import { LocationPicker, TILE_URL, TILE_SUBDOMAINS, TILE_ATTRIBUTION, getMechanicCategory } from './MapLayout';
+import MechanicDetailPanel from './MechanicDetailPanel';
 import {
   List,
   ArrowsLeftRight,
@@ -25,6 +26,9 @@ import {
   SquaresFour,
   SignOut,
   DotsThreeVertical,
+  Pencil,
+  Power,
+  Copy,
 } from '@phosphor-icons/react';
 import { FillingStationIcon, CarDetailingIcon, ShopIcon, MechanicIcon, StarRatingIcon, GearsLogoMark } from './icons';
 import { db } from '../firebase';
@@ -202,7 +206,49 @@ function timeGreeting() {
   return 'Good Evening';
 }
 
-export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, onSignOut, onAddBusiness, onViewProfile, show }) {
+// The three "add" options (product / service / upload), shared by the mobile
+// bottom sheet and the desktop "New" dropdown so the copy stays in one place.
+function BizAddOptions({ fixedCatalogKind, onSelect, tabIndex }) {
+  return (
+    <>
+      {fixedCatalogKind ? (
+        <button className="biz-add-option" onClick={() => onSelect(fixedCatalogKind.kind === 'products' ? 'product' : 'service')} tabIndex={tabIndex}>
+          {fixedCatalogKind.kind === 'products' ? <ListPlus size={20} className="biz-add-option-icon" /> : <Gear size={20} className="biz-add-option-icon" />}
+          <div className="biz-add-option-text">
+            <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">{fixedCatalogKind.label}</span></span>
+            <span className="biz-add-option-sub">{fixedCatalogKind.kind === 'products' ? 'List an item customers can order' : 'Add a service you offer'}</span>
+          </div>
+        </button>
+      ) : (
+        <>
+          <button className="biz-add-option" onClick={() => onSelect('product')} tabIndex={tabIndex}>
+            <ListPlus size={20} className="biz-add-option-icon" />
+            <div className="biz-add-option-text">
+              <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Product</span></span>
+              <span className="biz-add-option-sub">List an item customers can order</span>
+            </div>
+          </button>
+          <button className="biz-add-option" onClick={() => onSelect('service')} tabIndex={tabIndex}>
+            <Gear size={20} className="biz-add-option-icon" />
+            <div className="biz-add-option-text">
+              <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Service</span></span>
+              <span className="biz-add-option-sub">Add a service you offer</span>
+            </div>
+          </button>
+        </>
+      )}
+      <button className="biz-add-option" onClick={() => onSelect('media')} tabIndex={tabIndex}>
+        <ImageSquare size={20} className="biz-add-option-icon" />
+        <div className="biz-add-option-text">
+          <span className="biz-add-option-title"><span className="regular">Upload An </span><span className="bold">Image</span><span className="regular"> Or </span><span className="bold">Video</span></span>
+          <span className="biz-add-option-sub">Showcase your work with photos or videos</span>
+        </div>
+      </button>
+    </>
+  );
+}
+
+export default function BusinessDashboard({ user, mechanic, businesses, onSwitchBusiness, onUpdateLocation, onExit, onSignOut, onAddBusiness, onViewProfile, onEdit, show }) {
   const [activeTab, setActiveTab] = useState('home');
   // Split into two menus to match the hamburger vs. avatar triggers: the
   // hamburger (and the desktop sidebar switcher) is purely about switching
@@ -212,6 +258,8 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(null); // 'product' | 'service' | 'media'
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleAddOption = (kind) => {
     vibrateTap();
@@ -281,8 +329,8 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
 
         {/* Desktop-only: the mobile header's avatar button (biz-header-avatar-btn)
             opens this same profileMenuOpen popup, but that header is hidden at
-            this breakpoint — without this, there's no way to reach Sign Out on
-            desktop at all. */}
+            this breakpoint — without this, there's no way to reach the profile
+            menu (Exit Business / View Profile / Account Settings) on desktop. */}
         {user && (
           <button type="button" className="biz-sidebar-profile" onClick={() => setProfileMenuOpen(true)}>
             <div className="biz-sidebar-profile-avatar">
@@ -324,6 +372,16 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
             <span className="biz-topbar-search-kbd">⌘K</span>
           </div>
           <div className="biz-topbar-actions">
+            <div className="biz-topbar-new-wrap">
+              <button className="biz-topbar-new-btn" onClick={() => setShowAddSheet((v) => !v)}>
+                <Plus size={15} weight="bold" /> New
+              </button>
+              {showAddSheet && (
+                <div className="biz-desktop-add-menu">
+                  <BizAddOptions fixedCatalogKind={fixedCatalogKind} onSelect={handleAddOption} tabIndex={0} />
+                </div>
+              )}
+            </div>
             <button className="biz-header-icon-btn" aria-label="Help"><Question size={17} /></button>
             <button className="biz-header-icon-btn" aria-label="Notifications"><Bell size={17} /></button>
             <button className="biz-header-icon-btn" aria-label="Apps"><SquaresFour size={17} /></button>
@@ -375,7 +433,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
         {profileMenuOpen && <div className="sidebar-overlay" onClick={() => setProfileMenuOpen(false)}></div>}
         {profileMenuOpen && (
           <div className="biz-menu biz-menu--right">
-            <button className="nav-btn" onClick={() => { vibrateTap(); setProfileMenuOpen(false); onViewProfile?.(); }}>
+            <button className="nav-btn" onClick={() => { vibrateTap(); setProfileMenuOpen(false); setProfileOpen(true); }}>
               <Eye size={20} />
               <span className="nav-text">View Profile</span>
             </button>
@@ -384,9 +442,9 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
               <span className="nav-text">Account Settings</span>
             </button>
             <div className="biz-menu-divider"></div>
-            <button className="nav-btn biz-menu-danger" onClick={() => { vibrateTap(); setProfileMenuOpen(false); onSignOut?.(); }}>
+            <button className="nav-btn biz-menu-danger" onClick={() => { vibrateTap(); setProfileMenuOpen(false); setLogoutConfirmOpen(true); }}>
               <SignOut size={20} />
-              <span className="nav-text">Sign Out</span>
+              <span className="nav-text">Log out business account</span>
             </button>
           </div>
         )}
@@ -394,7 +452,7 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
         <div className={`biz-content ${activeTab === 'map' ? 'biz-content--map' : ''}`}>
           {activeTab === 'home' && <h2 className="biz-greeting">{timeGreeting()}, {firstName}</h2>}
           {activeTab === 'home' && <BizHomeTab mechanic={mechanic} />}
-          {activeTab === 'catalog' && <BizCatalogTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} />}
+          {activeTab === 'catalog' && <BizCatalogTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} onOpenAddSheet={() => setShowAddSheet(true)} />}
           {activeTab === 'map' && <BizMapTab mechanic={mechanic} onUpdateLocation={onUpdateLocation} show={show} />}
           {activeTab === 'media' && <BizMediaTab mechanic={mechanic} user={user} show={show} pendingAdd={pendingAdd} onAddHandled={() => setPendingAdd(null)} />}
         </div>
@@ -414,40 +472,8 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
           </nav>
 
           <div className={`biz-add-sheet ${showAddSheet ? 'open' : ''}`} aria-hidden={!showAddSheet}>
-          {fixedCatalogKind ? (
-            <button className="biz-add-option" onClick={() => handleAddOption(fixedCatalogKind.kind === 'products' ? 'product' : 'service')} tabIndex={showAddSheet ? 0 : -1}>
-              {fixedCatalogKind.kind === 'products' ? <ListPlus size={20} className="biz-add-option-icon" /> : <Gear size={20} className="biz-add-option-icon" />}
-              <div className="biz-add-option-text">
-                <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">{fixedCatalogKind.label}</span></span>
-                <span className="biz-add-option-sub">{fixedCatalogKind.kind === 'products' ? 'List an item customers can order' : 'Add a service you offer'}</span>
-              </div>
-            </button>
-          ) : (
-            <>
-              <button className="biz-add-option" onClick={() => handleAddOption('product')} tabIndex={showAddSheet ? 0 : -1}>
-                <ListPlus size={20} className="biz-add-option-icon" />
-                <div className="biz-add-option-text">
-                  <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Product</span></span>
-                  <span className="biz-add-option-sub">List an item customers can order</span>
-                </div>
-              </button>
-              <button className="biz-add-option" onClick={() => handleAddOption('service')} tabIndex={showAddSheet ? 0 : -1}>
-                <Gear size={20} className="biz-add-option-icon" />
-                <div className="biz-add-option-text">
-                  <span className="biz-add-option-title"><span className="regular">Add New </span><span className="bold">Service</span></span>
-                  <span className="biz-add-option-sub">Add a service you offer</span>
-                </div>
-              </button>
-            </>
-          )}
-          <button className="biz-add-option" onClick={() => handleAddOption('media')} tabIndex={showAddSheet ? 0 : -1}>
-            <ImageSquare size={20} className="biz-add-option-icon" />
-            <div className="biz-add-option-text">
-              <span className="biz-add-option-title"><span className="regular">Upload An </span><span className="bold">Image</span><span className="regular"> Or </span><span className="bold">Video</span></span>
-              <span className="biz-add-option-sub">Showcase your work with photos or videos</span>
-            </div>
-          </button>
-        </div>
+            <BizAddOptions fixedCatalogKind={fixedCatalogKind} onSelect={handleAddOption} tabIndex={showAddSheet ? 0 : -1} />
+          </div>
 
         <button
           className={`biz-add-fab ${showAddSheet ? 'open' : ''}`}
@@ -464,6 +490,36 @@ export default function BusinessDashboard({ user, mechanic, businesses, onSwitch
           aria-hidden={!showAddSheet}
         ></div>
       </div>
+
+      {logoutConfirmOpen && (
+        <div className="biz-logout-overlay" onClick={() => setLogoutConfirmOpen(false)} role="dialog" aria-modal="true">
+          <div className="biz-logout-card" onClick={(e) => e.stopPropagation()}>
+            <h3>Log out of business account?</h3>
+            <p>You'll be signed out of the app.</p>
+            <div className="biz-logout-actions">
+              <button type="button" className="biz-logout-cancel" onClick={() => setLogoutConfirmOpen(false)}>Cancel</button>
+              <button type="button" className="biz-logout-confirm" onClick={() => { setLogoutConfirmOpen(false); onSignOut?.(); }}>Log out</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {profileOpen && (
+        <MechanicDetailPanel
+          mechanic={mechanic}
+          onClose={() => setProfileOpen(false)}
+          user={user}
+          onEdit={() => { setProfileOpen(false); onEdit?.(); }}
+          onDelete={() => {}}
+          onRate={() => {}}
+          savedMechanics={[]}
+          onToggleSave={() => {}}
+          onDirection={() => {}}
+          onRecordInteraction={() => {}}
+          onNotice={show}
+          variant="business"
+        />
+      )}
     </div>
   );
 }
@@ -499,6 +555,16 @@ function useCatalogItems(mechanic) {
     await deleteDoc(doc(db, `mechanics/${mechanicId}/${item.collectionName}`, item.id));
   };
 
+  const duplicateItem = async (item) => {
+    if (!db || item._inline) return;
+    const { id, _inline, collectionName, clickCount, chatCount, createdAt, ...rest } = item;
+    await addDoc(collection(db, `mechanics/${mechanicId}/${collectionName}`), {
+      ...rest,
+      inStock: true,
+      createdAt: new Date().toISOString(),
+    });
+  };
+
   // Pitch-import listings (seedLeads.mjs) store their catalog as inline
   // `products`/`services` arrays on the mechanic doc itself — nothing ever
   // gets written to these subcollections for them. Same gap as the
@@ -509,7 +575,7 @@ function useCatalogItems(mechanic) {
   const products = subProducts.length ? subProducts : (mechanic?.products || []).map((p, i) => ({ id: `inline-product-${i}`, collectionName: 'products', _inline: true, ...p }));
   const services = subServices.length ? subServices : (mechanic?.services || []).map((s, i) => ({ id: `inline-service-${i}`, collectionName: 'services', _inline: true, ...s }));
 
-  return { items: [...products, ...services], toggleStock, handleDelete };
+  return { items: [...products, ...services], toggleStock, handleDelete, duplicateItem };
 }
 
 // Clicks/Chats are now real per-item counters (clickCount/chatCount on the
@@ -525,7 +591,7 @@ const CATALOG_CARD_STATS = [
   { label: 'Bookmarks', field: null },
 ];
 
-function CatalogItemCard({ item, onToggleStock, onDelete }) {
+function CatalogItemCard({ item, onToggleStock, onDelete, onEdit, onDuplicate }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const inStock = item.inStock !== false;
 
@@ -549,7 +615,18 @@ function CatalogItemCard({ item, onToggleStock, onDelete }) {
               <>
                 <div className="biz-item-card-menu-scrim" onClick={() => setMenuOpen(false)} />
                 <div className="biz-item-card-menu">
-                  <button type="button" onClick={() => { setMenuOpen(false); onDelete(item); }}>
+                  <button type="button" onClick={() => { setMenuOpen(false); onToggleStock(item); }}>
+                    <Power size={15} /> {inStock ? 'Disable' : 'Enable'}
+                  </button>
+                  {onEdit && (
+                    <button type="button" onClick={() => { setMenuOpen(false); onEdit(item); }}>
+                      <Pencil size={15} /> Edit
+                    </button>
+                  )}
+                  <button type="button" onClick={() => { setMenuOpen(false); onDuplicate(item); }}>
+                    <Copy size={15} /> Duplicate
+                  </button>
+                  <button type="button" className="biz-item-card-menu-danger" onClick={() => { setMenuOpen(false); onDelete(item); }}>
                     <Trash size={15} /> Delete
                   </button>
                 </div>
@@ -614,7 +691,7 @@ function BizHomeTab({ mechanic }) {
         {previewItems.length > 0 ? (
           <div className="biz-item-grid">
             {previewItems.map((item) => (
-              <CatalogItemCard key={`${item.collectionName}-${item.id}`} item={item} onToggleStock={toggleStock} onDelete={handleDelete} />
+          <CatalogItemCard key={`${item.collectionName}-${item.id}`} item={item} onToggleStock={toggleStock} onDelete={handleDelete} />
             ))}
           </div>
         ) : (
@@ -741,8 +818,8 @@ function AddPhotoTile({ onAdd, label = 'Add Photo' }) {
   );
 }
 
-function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
-  const { items, toggleStock, handleDelete: deleteItem } = useCatalogItems(mechanic);
+function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled, onOpenAddSheet }) {
+  const { items, toggleStock, handleDelete: deleteItem, duplicateItem } = useCatalogItems(mechanic);
   const [showForm, setShowForm] = useState(false);
   // Only meaningful for Fuel Station (or no listing yet) — every other
   // category has a single fixed kind, see `fixedKind` below.
@@ -757,6 +834,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
   const [previewTab, setPreviewTab] = useState('details'); // 'details' | 'listing'
   const [saving, setSaving] = useState(false);
   const [emptyStateStep, setEmptyStateStep] = useState(0);
+  const [editingItem, setEditingItem] = useState(null);
 
   const fixedKind = catalogKindFor(mechanic?.specialty);
   const kind = fixedKind ? fixedKind.kind : manualKind;
@@ -790,6 +868,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
     setPreviewing(false);
     setPreviewTab('details');
     setShowForm(false);
+    setEditingItem(null);
   };
 
   const handlePreview = (e) => {
@@ -806,22 +885,44 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
     if (!db || !mechanic?.id) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, `mechanics/${mechanic.id}/${kind}`), {
+      const payload = {
         name: name.trim(),
         description: description.trim(),
         price: price.trim(),
         ...(photos.length ? { imageUrl: photos[0], images: photos } : {}),
         inStock: true,
         addedBy: user.uid,
-        createdAt: new Date().toISOString(),
-      });
+      };
+      if (editingItem) {
+        await updateDoc(doc(db, `mechanics/${mechanic.id}/${kind}`, editingItem.id), payload);
+        show?.(`${kindLabel} updated!`);
+      } else {
+        await addDoc(collection(db, `mechanics/${mechanic.id}/${kind}`), {
+          ...payload,
+          createdAt: new Date().toISOString(),
+        });
+        show?.(`${kindLabel} published!`);
+      }
       resetForm();
-      show?.(`${kindLabel} published!`);
     } catch (err) {
       console.error(err);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = (item) => {
+    setEditingItem(item);
+    setName(item.name || '');
+    setDescription(item.description || '');
+    setPrice(item.price || '');
+    setPhotoUrls(item.images?.length ? item.images : (item.imageUrl ? [item.imageUrl] : []));
+    setPhotosError(false);
+    setActivePhoto(0);
+    setPreviewing(false);
+    setPreviewTab('details');
+    setManualKind(item.collectionName);
+    setShowForm(true);
   };
 
   const handleDelete = async (item) => {
@@ -845,20 +946,15 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
       {showForm && !previewing && (
         <div className="biz-catalog-page">
+          <div className="biz-catalog-page-card">
           <div className="biz-catalog-page-header">
-            <button type="button" className="biz-back-btn" onClick={resetForm} aria-label="Close">
-              <CaretLeft size={20} />
+            <h1>{editingItem ? `Edit ${kindLabel}` : `Add New ${kindLabel}`}</h1>
+            <button type="button" className="biz-catalog-page-close" onClick={resetForm} aria-label="Close">
+              <X size={20} />
             </button>
-            <h1>Add New {kindLabel}</h1>
           </div>
           <form className="biz-catalog-page-form" onSubmit={handlePreview}>
             <div className="biz-catalog-page-body business-fields">
-              {!fixedKind && (
-                <div className="biz-catalog-form-kind">
-                  <button type="button" className={kind === 'products' ? 'active' : ''} onClick={() => setManualKind('products')}>Product</button>
-                  <button type="button" className={kind === 'services' ? 'active' : ''} onClick={() => setManualKind('services')}>Service</button>
-                </div>
-              )}
               <label>Title
                 <input required placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
               </label>
@@ -897,6 +993,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
               <button type="submit" className="biz-preview-publish-btn">Preview</button>
             </div>
           </form>
+          </div>
         </div>
       )}
 
@@ -976,7 +1073,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
             <div className="biz-preview-footer">
               <button type="button" className="biz-preview-publish-btn" onClick={handlePublish} disabled={saving}>
-                {saving ? 'Publishing…' : 'Publish'}
+                {saving ? 'Saving…' : editingItem ? 'Save Changes' : 'Publish'}
               </button>
             </div>
           </div>
@@ -1019,7 +1116,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
           <p className="biz-catalog-empty-heading">
             List your products and services to show up in more customer searches.
           </p>
-          <button type="button" className="biz-catalog-empty-btn" onClick={() => setShowForm(true)}>
+          <button type="button" className="biz-catalog-empty-btn" onClick={onOpenAddSheet}>
             <Plus size={24} weight="bold" />
             Add Your First {kindLabel}
           </button>
@@ -1028,7 +1125,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
 
       <div className="biz-item-grid">
         {items.map((item) => (
-          <CatalogItemCard key={`${item.collectionName}-${item.id}`} item={item} onToggleStock={toggleStock} onDelete={handleDelete} />
+          <CatalogItemCard key={`${item.collectionName}-${item.id}`} item={item} onToggleStock={toggleStock} onDelete={handleDelete} onEdit={handleEdit} onDuplicate={duplicateItem} />
         ))}
       </div>
     </div>

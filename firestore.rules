@@ -10,12 +10,23 @@ service cloud.firestore {
         ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princeessandoh316@gmail.com'];
     }
 
+    // Who may read a given mechanic doc: anonymous browsers (search is free),
+    // super admins (the whole directory), or the business that owns it. A
+    // signed-in business must NOT see the rest of the directory — only its
+    // own listing(s), matched on createdBy (and onboardedBy for admins).
+    function canReadMechanic(doc) {
+      return request.auth == null
+        || isAdminEmail()
+        || ('createdBy' in doc && doc.createdBy == request.auth.uid)
+        || ('onboardedBy' in doc && doc.onboardedBy == request.auth.uid);
+    }
+
     // ---------------------------------------------------------------
     // Mechanics collection
     // ---------------------------------------------------------------
     match /mechanics/{mechanicId} {
-      // Anyone can browse mechanics (search is always free)
-      allow read: if true;
+      // Anonymous browsers, super admins, and the owning business can read.
+      allow read: if canReadMechanic(resource.data);
 
       // Only authenticated users can submit a new mechanic
       // Validates required fields are non-empty strings
@@ -52,8 +63,7 @@ service cloud.firestore {
       // Ratings sub-collection: one document per user per mechanic
       // ---------------------------------------------------------------
       match /ratings/{userId} {
-        // Anyone can read ratings (useful for showing counts later)
-        allow read: if true;
+        allow read: if canReadMechanic(get(/databases/$(database)/documents/mechanics/$(mechanicId)).data);
 
         // A user can only write their own rating document
         allow write: if request.auth != null
@@ -67,7 +77,7 @@ service cloud.firestore {
       // Products, Services, Media sub-collections
       // ---------------------------------------------------------------
       match /products/{productId} {
-        allow read: if true;
+        allow read: if canReadMechanic(get(/databases/$(database)/documents/mechanics/$(mechanicId)).data);
         allow write: if request.auth != null;
         // Per-item click/chat counters — same no-auth-required,
         // field-restricted pattern as the mechanic-level analytics
@@ -75,12 +85,12 @@ service cloud.firestore {
         allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clickCount', 'chatCount']);
       }
       match /services/{serviceId} {
-        allow read: if true;
+        allow read: if canReadMechanic(get(/databases/$(database)/documents/mechanics/$(mechanicId)).data);
         allow write: if request.auth != null;
         allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clickCount', 'chatCount']);
       }
       match /media/{mediaId} {
-        allow read: if true;
+        allow read: if canReadMechanic(get(/databases/$(database)/documents/mechanics/$(mechanicId)).data);
         allow write: if request.auth != null;
       }
       // Detailer package bundles — same shape as products/services, just
@@ -88,7 +98,7 @@ service cloud.firestore {
       // denied (a detailer's own dashboard could never publish a package
       // to their public listing).
       match /packages/{packageId} {
-        allow read: if true;
+        allow read: if canReadMechanic(get(/databases/$(database)/documents/mechanics/$(mechanicId)).data);
         allow write: if request.auth != null;
         allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clickCount', 'chatCount']);
       }
