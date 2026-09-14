@@ -2,3 +2,5 @@
 .env*
 node_modules/
 dist/
+pitch-accounts.json
+BUSINESS_DIRECTORY.md

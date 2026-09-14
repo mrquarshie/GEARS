@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo, Envelope } from '@phosphor-icons/react';
-import { collection, addDoc, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, onSnapshot, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
 import {
@@ -89,7 +89,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -117,13 +117,34 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
     onInitialItemHandled?.();
   }, [mechanic, initialItemQuery, onInitialItemHandled]);
 
+  // Live subcollection counts, purely to decide whether the Products/
+  // Services/Packages tab is worth showing at all — item content itself
+  // still lives in ListItemsTab's own subscription. Counts read as 0 until
+  // each snapshot resolves, so a listing whose only items live in the
+  // subcollection (no inline fallback) may have that tab pop in a moment
+  // after render — same async reveal ListItemsTab's own item list already
+  // does, just one level up.
+  const [subCounts, setSubCounts] = useState({ products: null, services: null, packages: null });
+  useEffect(() => {
+    if (!db || !mechanic?.id) { setSubCounts({ products: null, services: null, packages: null }); return; }
+    const unsubs = ['products', 'services', 'packages'].map((key) =>
+      onSnapshot(collection(db, `mechanics/${mechanic.id}/${key}`), (snap) => {
+        setSubCounts((prev) => ({ ...prev, [key]: snap.size }));
+      })
+    );
+    return () => unsubs.forEach((u) => u());
+  }, [mechanic?.id]);
+
   if (!mechanic) return null;
 
   const handleDirectionClick = () => {
-    onDirection(mechanic);
+    const showed = onDirection(mechanic);
     onRecordInteraction?.(mechanic.id, 'direction');
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-    if (isMobile) setCollapsed(true);
+    // A false return means the far-direction sheet intercepted this tap
+    // instead of actually routing — don't collapse behind it, there's
+    // nothing on the map yet to reveal.
+    if (isMobile && showed !== false) setCollapsed(true);
   };
 
   const handleShareClick = () => {
@@ -177,14 +198,20 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
   }
 
   const category = getCategory(mechanic.specialty);
-  const hasProducts = (mechanic.products?.length || 0) > 0;
-  const hasServices = (mechanic.services?.length || 0) > 0;
+
+  // Products/Services/Packages are stored as subcollections
+  // (mechanics/{id}/products etc.), not on the doc, so their presence can't
+  // be inferred from the inline arrays alone — combine both. A Gears admin
+  // always gets the tab regardless (matches the "Add {itemName}" button's
+  // own isAdmin gate in ListItemsTab), so there's still a way to curate a
+  // listing that has nothing yet.
+  const hasItems = (key) => (subCounts[key] ?? 0) > 0 || (mechanic[key]?.length ?? 0) > 0 || isAdmin;
 
   const tabs = category === 'detailer'
-    ? ['Overview', 'Packages', 'Reviews', 'Media']
+    ? ['Overview', hasItems('packages') && 'Packages', 'Reviews', 'Media'].filter(Boolean)
     : category === 'fuel'
       ? ['Overview', 'Fuel Prices', 'Reviews', 'Media']
-      : ['Overview', ...(hasProducts ? ['Products'] : []), ...(hasServices ? ['Services'] : []), 'Reviews', 'Media'];
+      : ['Overview', hasItems('products') && 'Products', hasItems('services') && 'Services', 'Reviews', 'Media'].filter(Boolean);
 
   const isCreator = user && user.uid === mechanic.createdBy;
 
@@ -263,9 +290,9 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
         <div className="detail-scroll">
           <div className="detail-content">
             {activeTab === 'Overview' && <OverviewTab mechanic={mechanic} category={category} onRate={onRate} />}
-            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} />}
-            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} />}
-            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} />}
+            {activeTab === 'Products' && <ListItemsTab mechanicId={mechanic.id} collectionName="products" user={user} itemName="Product" fallbackItems={mechanic.products} layout="grid" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} onItemTap={setDetailSheetItem} isAdmin={isAdmin} />}
+            {activeTab === 'Services' && <ListItemsTab mechanicId={mechanic.id} collectionName="services" user={user} itemName="Service" fallbackItems={mechanic.services} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} isAdmin={isAdmin} />}
+            {activeTab === 'Packages' && <ListItemsTab mechanicId={mechanic.id} collectionName="packages" user={user} itemName="Package" fallbackItems={mechanic.packages} layout="cards" mechanicPhone={mechanic.phone} mechanicName={mechanic.name} specialty={mechanic.specialty} onItemTap={setDetailSheetItem} isAdmin={isAdmin} />}
             {activeTab === 'Fuel Prices' && <FuelPricesTab fuelPrices={mechanic.fuelPrices} />}
             {activeTab === 'Media' && <MediaTab mechanicId={mechanic.id} user={user} fallbackMedia={mechanic.media} extraMedia={(mechanic.products || []).filter(p => p.imageUrl)} />}
             {activeTab === 'Reviews' && <ReviewsTab mechanicId={mechanic.id} mechanic={mechanic} fallbackReviews={mechanic.reviews} />}
@@ -481,7 +508,24 @@ function getDetailerPlaceholderImage(name) {
   return DETAILER_PLACEHOLDER_IMAGES[hashIndex(name || '', DETAILER_PLACEHOLDER_IMAGES.length)];
 }
 
-function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap }) {
+// Per-item click/chat counters, mirroring the mechanic-level analytics
+// pattern in main.jsx's recordAnalyticsCount (no auth required — same
+// no-auth-required field-restricted rule as the rating/analytics fields;
+// see firestore.rules). Only real subcollection docs have a stable `id` —
+// inline pitch-lead items (see ListItemsTab's fallback) don't, so this is
+// a no-op for those rather than writing to a made-up path.
+async function recordItemInteraction(mechanicId, collectionName, itemId, field) {
+  if (!db || !mechanicId || !itemId) return;
+  try {
+    await updateDoc(doc(db, `mechanics/${mechanicId}/${collectionName}`, itemId), {
+      [field]: increment(1),
+    });
+  } catch (e) {
+    console.warn(`Failed to record ${field} for item ${itemId}:`, e);
+  }
+}
+
+function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItems, layout = 'list', mechanicPhone, mechanicName, specialty, onItemTap, isAdmin }) {
   const [items, setItems] = useState(fallbackItems || []);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -493,13 +537,19 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
     if (!db || !mechanicId) return;
     const q = query(collection(db, `mechanics/${mechanicId}/${collectionName}`));
     const unsub = onSnapshot(q, (snap) => {
-      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const subItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // Live subcollection wins when it has content; otherwise keep the
+      // inline array on the doc (seeded/pitch leads store items inline, not
+      // in subcollections) so items don't flash then disappear on an empty
+      // subcollection.
+      setItems(subItems.length > 0 ? subItems : (fallbackItems || []));
     });
     return unsub;
   }, [mechanicId, collectionName]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    if (!user) return;
     if (!name.trim() || !db) return;
     setSaving(true);
     try {
@@ -524,9 +574,14 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
   const isGrid = layout === 'grid';
   const isCards = layout === 'cards';
 
+  const handleItemTap = (item, type) => {
+    recordItemInteraction(mechanicId, collectionName, item.id, 'clickCount');
+    onItemTap({ ...item, type, collectionName });
+  };
+
   return (
     <div className="tab-content">
-      {user && db && (
+      {isAdmin && db && (
         <div style={{ marginBottom: '16px', textAlign: 'right' }}>
           <button className="primary" onClick={() => setShowForm(!showForm)} style={{ padding: '6px 12px', fontSize: '13px' }}>
             <Plus size={14} /> Add {itemName}
@@ -551,7 +606,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
       {isGrid ? (
         <div className="product-grid">
           {items.map((item, i) => (
-            <ProductCard key={item.id || i} item={item} onClick={() => onItemTap({ ...item, type: 'product' })} />
+            <ProductCard key={item.id || i} item={item} onClick={() => handleItemTap(item, 'product')} />
           ))}
         </div>
       ) : isCards ? (
@@ -559,7 +614,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
           {items.map((item, i) => {
             const resolvedImage = item.imageUrl || (specialty === 'Car Detailing' ? getDetailerPlaceholderImage(item.name) : null);
             return (
-            <div key={item.id || i} className="service-card" onClick={() => onItemTap({ ...item, type: 'service' })}>
+            <div key={item.id || i} className="service-card" onClick={() => handleItemTap(item, 'service')}>
               <div
                 className="service-card-image"
                 style={{ background: resolvedImage ? undefined : hashToColor(item.name || '') }}
@@ -586,7 +641,7 @@ function ListItemsTab({ mechanicId, collectionName, user, itemName, fallbackItem
       ) : (
         <div className="item-list">
           {items.map((item, i) => (
-            <div key={item.id || i} className="item-row" onClick={() => onItemTap({ ...item, type: collectionName })}>
+            <div key={item.id || i} className="item-row" onClick={() => handleItemTap(item, collectionName)}>
               <div className="item-row-main">
                 <strong>{item.name}</strong>
                 {item.description && <span className="item-row-description">{item.description}</span>}
@@ -692,12 +747,22 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicEmail, me
 
         <div className="item-sheet-footer">
           {useEmailOrder ? (
-            <a className="item-sheet-order-btn" href={mailtoHref}>
+            <a
+              className="item-sheet-order-btn"
+              href={mailtoHref}
+              onClick={() => recordItemInteraction(mechanicId, item.collectionName, item.id, 'chatCount')}
+            >
               <Envelope size={20} weight="fill" />
               {isService ? 'Request Via Email' : 'Order Via Email'}
             </a>
           ) : (
-            <a className="item-sheet-order-btn" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+            <a
+              className="item-sheet-order-btn"
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => recordItemInteraction(mechanicId, item.collectionName, item.id, 'chatCount')}
+            >
               <WhatsappLogo size={20} weight="fill" />
               Place Order Via WhatsApp
             </a>
@@ -818,7 +883,8 @@ function MediaTab({ mechanicId, user, fallbackMedia, extraMedia }) {
     if (!db || !mechanicId) return;
     const q = query(collection(db, `mechanics/${mechanicId}/media`));
     const unsub = onSnapshot(q, (snap) => {
-      setMedia(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const subMedia = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setMedia(subMedia.length > 0 ? subMedia : (fallbackMedia || []));
     });
     return unsub;
   }, [mechanicId]);

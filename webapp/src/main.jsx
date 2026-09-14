@@ -261,6 +261,17 @@ const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princ
 // far more often than this, so writes are throttled to this interval.
 const LOCATION_WRITE_INTERVAL_MS = 10 * 60 * 1000;
 
+// How often the mechanics list refetches so a business onboarded (or edited)
+// after the initial load still shows up without a hard refresh (§4). A timer
+// + tab-focus refetch, not a live onSnapshot listener — predictable read
+// costs, and this degree of staleness is acceptable for now.
+const MECHANICS_REFRESH_MS = 2 * 60 * 1000;
+
+// Single-query page size for the mechanics list. Firestore caps a single
+// query at 1000 docs; real pagination is deferred until the business count
+// makes it necessary (was previously 100).
+const MECHANICS_PAGE_SIZE = 1000;
+
 // Headline shown per sign-in reason, so the prompt explains why the user was
 // stopped instead of a generic message that doesn't match what they tapped.
 const AUTH_REASON_COPY = {
@@ -268,6 +279,30 @@ const AUTH_REASON_COPY = {
   rate: 'Sign up to rate and review.',
   business: 'Sign up to list and manage your business.',
 };
+
+// Mirror the signed-in user's basic details into localStorage. Firebase's
+// browserLocalPersistence (see firebase.js) already persists the auth token
+// across reloads; this stores the readable details too so the session (and
+// avatar/alias) survive a refresh until the user explicitly signs out.
+const AUTH_USER_KEY = 'gearsAuthUser';
+
+function persistAuthUser(u) {
+  if (!u) return;
+  try {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({
+      uid: u.uid,
+      email: u.email || '',
+      displayName: u.displayName || '',
+      photoURL: u.photoURL || '',
+    }));
+  } catch (e) {
+    console.warn('Failed to persist auth user:', e);
+  }
+}
+
+function clearAuthUser() {
+  try { localStorage.removeItem(AUTH_USER_KEY); } catch (e) {}
+}
 
 function AuthModal({ close, onSuccess, reason }) {
   const [loading, setLoading] = useState(false);
@@ -497,7 +532,7 @@ const BUSINESS_TYPES = {
     aboutPlaceholder: 'Describe the repairs and vehicle services you offer',
     locationHint: 'Place the pin at your garage or workshop.',
     icon: 'gear',
-    specialtiesIntro: 'Pick the repairs you specialize in. Customers search by these, so accurate choices help the right people find your garage.',
+    specialtiesIntro: 'Customers search by these, so accurate choices help the right people find your garage.',
     specialties: [
       'General Repairs', 'Auto Repairs', 'Diagnostics', 'Auto-Electrical', 'Engine Repair',
       'Brakes', 'Suspension', 'Transmission', 'Oil Change', 'Wheel Alignment', 'AC Repair',
@@ -648,6 +683,7 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
   const [flyToTrigger, setFlyToTrigger] = useState(0);
   const [specialtySearchActive, setSpecialtySearchActive] = useState(false);
   const [specialtySearchQuery, setSpecialtySearchQuery] = useState('');
+  const [customSpecialty, setCustomSpecialty] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const hasSetDefaultLocationRef = useRef(false);
   const locationSearchRequestIdRef = useRef(0);
@@ -751,6 +787,16 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
     setSelectedSpecialties((current) =>
       current.includes(item) ? current.filter((value) => value !== item) : [...current, item],
     );
+  };
+
+  const addCustomSpecialty = () => {
+    const value = customSpecialty.trim();
+    if (!value) return;
+    const formatted = value.charAt(0).toUpperCase() + value.slice(1);
+    if (!selectedSpecialties.includes(formatted)) {
+      setSelectedSpecialties((current) => [...current, formatted]);
+    }
+    setCustomSpecialty('');
   };
 
   const buildListing = () => ({
@@ -999,6 +1045,39 @@ function MechanicModal({ close, submit, initialData, onFinish, isAdmin }) {
           {step === 'specialties' && (
             <div className="business-specialties-step">
               <p>{typeConfig.specialtiesIntro}</p>
+              <div className="business-custom-specialty">
+                <input
+                  value={customSpecialty}
+                  onChange={(e) => setCustomSpecialty(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomSpecialty();
+                    }
+                  }}
+                  placeholder="Type a custom speciality"
+                  aria-label="Add a custom speciality"
+                />
+                <button type="button" onClick={addCustomSpecialty} disabled={!customSpecialty.trim()}>
+                  Add
+                </button>
+              </div>
+              {(() => {
+                const customSelected = selectedSpecialties.filter((item) => !typeConfig.specialties.includes(item));
+                if (customSelected.length === 0) return null;
+                return (
+                  <div className="business-custom-specialty-list">
+                    {customSelected.map((item) => (
+                      <span key={item} className="business-custom-specialty-chip">
+                        {item}
+                        <button type="button" onClick={() => toggleSpecialty(item)} aria-label={`Remove ${item}`}>
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
               {(() => {
                 const filteredSpecialties = typeConfig.specialties.filter((item) =>
                   item.toLowerCase().includes(specialtySearchQuery.trim().toLowerCase()),
@@ -1093,6 +1172,48 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return d;
 }
 
+// Which category page a mechanic belongs to. 'all' (the Home page) means
+// "mechanic" specifically — fuel stations, detailers, and shops each only
+// show on their own dedicated page, never mixed into Home.
+function categoryForMechanic(m) {
+  if (m.specialty === 'Car Detailing') return 'detailers';
+  if (m.specialty === 'Fuel Station') return 'fuel';
+  if (['Shop', 'Parts Shop', 'Auto Parts', 'Car Parts'].includes(m.specialty)) return 'shop';
+  return 'all';
+}
+
+// Above this, treat it as a different-city trip rather than a normal
+// in-city one — Accra and Kumasi metro areas themselves each run
+// 30-40km end to end, so this needs enough headroom not to trip on a
+// same-city listing on the far side of town.
+const FAR_DIRECTION_THRESHOLD_KM = 60;
+
+// Shown instead of routing straight away when a business turns out to be a
+// different-city trip from the user (see FAR_DIRECTION_THRESHOLD_KM) — reuses
+// the same bottom-sheet shell as VerificationSheet (MechanicListPanel.jsx),
+// just with two footer actions instead of one "Got it".
+function FarDirectionSheet({ mechanic, distanceKm, onClose, onFindNearby }) {
+  const cityLabel = mechanic?.area ? ` in ${mechanic.area}` : '';
+  return (
+    <div className="verification-sheet-overlay" onClick={onClose}>
+      <div className="verification-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="verification-sheet-icon">
+          <NavigationArrow size={44} weight="duotone" color="#145E42" />
+        </div>
+        <h3 className="verification-sheet-title">That's a long trip</h3>
+        <p className="verification-sheet-desc">
+         <span
+            style={{ fontWeight: 600, color:'black'}}
+         >{mechanic?.name || 'This business'}{cityLabel}</span>  is about {Math.round(distanceKm)}km away, probably a different city, not a quick drive. Let's find something closer instead.
+        </p>
+        <div className="verification-sheet-footer">
+          <button className="verification-sheet-btn" onClick={onFindNearby}>Find something nearby</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main App
 // ---------------------------------------------------------------------------
@@ -1110,8 +1231,9 @@ function App() {
   const [savedMechanics, setSavedMechanics] = useState([]);
   const [viewMode, setViewMode] = useState(() => {
     const savedMode = localStorage.getItem('gearsViewMode');
+    const hasAuth = Boolean(auth && auth.currentUser);
+    if (savedMode === 'saved') return hasAuth ? 'saved' : 'all';
     if (savedMode) return savedMode;
-    const hasAuth = (auth && auth.currentUser) || Object.keys(localStorage).some(k => k.startsWith('firebase:authUser'));
     return hasAuth ? 'saved' : 'all';
   });
 
@@ -1125,11 +1247,25 @@ function App() {
   // (dropping location accuracy) every time sign-in state changes.
   const currentUserRef = useRef(user);
   useEffect(() => { currentUserRef.current = user; }, [user]);
+  const viewModeRef = useRef(viewMode);
+  useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
   const lastLocationWriteRef = useRef(0);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isLocatingScan, setIsLocatingScan] = useState(false);
+  // Bumped to re-run MechanicListPanel's own handleScanLocation (the full
+  // scanning-animation + nearest-drive-time-bucket flow) from outside it —
+  // FarDirectionSheet's "Find something nearby" needs the same experience
+  // as tapping the "Use my location" banner directly, not just the bare
+  // geolocation fetch underneath it.
+  const [scanRequestId, setScanRequestId] = useState(0);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [routeTarget, setRouteTarget] = useState(null);
+  // Set instead of routing straight away when a business turns out to be
+  // much farther than a normal in-city trip (see FAR_DIRECTION_THRESHOLD_KM)
+  // — driving directions across cities (e.g. Accra to Kumasi) technically
+  // "work" but the OSRM route + map bounds fitting both points isn't a
+  // useful result, so ask first instead of just doing it.
+  const [farDirectionTarget, setFarDirectionTarget] = useState(null);
   const [recentInteractions, setRecentInteractions] = useState(loadRecentInteractions);
   const [businessDashboardOpen, setBusinessDashboardOpen] = useState(false);
   // Which of the signed-in owner's businesses is currently being managed —
@@ -1187,10 +1323,40 @@ function App() {
     }
   };
 
+  // Returns whether a route actually started showing — false means the
+  // far-direction sheet intercepted it instead, so callers (e.g. the detail
+  // panel's collapse-to-peek-bar behavior on mobile) know not to react as if
+  // directions are now on screen.
   const handleShowDirection = (mechanic) => {
-    if (!mechanic) { setRouteTarget(null); return; }
-    if (mechanic.lat == null || mechanic.lng == null) return;
+    if (!mechanic) { setRouteTarget(null); return false; }
+    if (mechanic.lat == null || mechanic.lng == null) return false;
+    if (userLocation) {
+      const distKm = calculateDistance(userLocation.lat, userLocation.lng, mechanic.lat, mechanic.lng);
+      if (distKm != null && distKm > FAR_DIRECTION_THRESHOLD_KM) {
+        setFarDirectionTarget(mechanic);
+        return false;
+      }
+    }
+    setFarDirectionTarget(null);
     setRouteTarget({ lat: mechanic.lat, lng: mechanic.lng });
+    return true;
+  };
+
+  // Shared by the "Use my location" banner/button and the far-away
+  // direction sheet's "Find something nearby" action.
+  const handleUseMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+          setMapPanTrigger(Date.now());
+        },
+        (err) => console.warn("Location error:", err),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      setMapPanTrigger(Date.now());
+    }
   };
 
   const handleSelectMechanic = (mechanic) => {
@@ -1385,6 +1551,26 @@ function App() {
     }
 
     let unsubscribe = () => {};
+    let refreshInterval = null;
+
+    const loadMechanics = async () => {
+      try {
+        const result = await getDocs(query(collection(db, 'mechanics'), limit(MECHANICS_PAGE_SIZE)));
+        // Temporarily hides tier-3 "Unverified" listings — ~25 generic,
+        // contentless OSM-scraped placeholder docs left over from before the
+        // pitch-lead work. Filtered here rather than deleted from Firestore
+        // so they're recoverable; remove this filter once they're either
+        // cleaned up for real or intentionally reintroduced.
+        const docs = result.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((m) => m.verified || m.claimed);
+        setAllMechanics(docs);
+      } catch (e) {
+        console.error('Failed to load mechanics:', e);
+      }
+    };
+
+    const onFocus = () => { if (!document.hidden) loadMechanics(); };
 
     const init = async () => {
       // Step 1: check if user just came back from signInWithRedirect
@@ -1408,6 +1594,7 @@ function App() {
         setUser(u);
         setAuthReady(true);
         if (u) {
+          persistAuthUser(u);
           const pending = sessionStorage.getItem('gearsPendingAuth');
           if (pending) {
             sessionStorage.removeItem('gearsPendingAuth');
@@ -1415,22 +1602,39 @@ function App() {
             show(`Welcome, ${alias}!`);
             handleSetViewMode('saved');
           }
+        } else {
+          clearAuthUser();
+          if (viewModeRef.current === 'saved') {
+            // Signed out (or never signed in) — the bookmarks view is
+            // meaningless without an account, so fall back to the home view
+            // instead of lingering on an empty "Saved" page.
+            handleSetViewMode('all');
+          }
         }
       });
 
       // Step 3: load mechanics data
       try {
-        const result = await getDocs(query(collection(db, 'mechanics'), limit(100)));
-        setAllMechanics(result.docs.map((d) => ({ id: d.id, ...d.data() })));
-      } catch (e) {
-        console.error(e);
+        await loadMechanics();
       } finally {
         setLoading(false);
       }
+
+      // Periodic refetch + refetch on tab focus/app resume, so a business
+      // added after the initial load — or past the old 100-doc cap — surfaces
+      // without a hard refresh.
+      refreshInterval = setInterval(loadMechanics, MECHANICS_REFRESH_MS);
+      document.addEventListener('visibilitychange', onFocus);
+      window.addEventListener('focus', onFocus);
     };
 
     init();
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (refreshInterval) clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const mechanics = useMemo(() => {
@@ -1455,12 +1659,10 @@ function App() {
 
     if (viewMode === 'saved') {
       list = list.filter(m => savedMechanics.includes(m.id));
-    } else if (viewMode === 'detailers') {
-      list = list.filter(m => m.specialty === 'Car Detailing');
-    } else if (viewMode === 'fuel') {
-      list = list.filter(m => m.specialty === 'Fuel Station');
-    } else if (viewMode === 'shop') {
-      list = list.filter(m => ['Shop', 'Parts Shop', 'Auto Parts'].includes(m.specialty));
+    } else if (['all', 'detailers', 'fuel', 'shop'].includes(viewMode)) {
+      // Home ('all') means mechanics specifically — fuel/detailers/shop
+      // each only ever show on their own dedicated page.
+      list = list.filter(m => categoryForMechanic(m) === viewMode);
     }
     
     // Sort by distance if location available
@@ -1487,14 +1689,6 @@ function App() {
   }, [allMechanics, searchedArea, viewMode, savedMechanics, userLocation]);
 
   const show = (message) => { setNotice(message); setTimeout(() => setNotice(''), 3500); };
-
-  // Which category page (viewMode) a mechanic belongs to.
-  const categoryForMechanic = (m) => {
-    if (m.specialty === 'Car Detailing') return 'detailers';
-    if (m.specialty === 'Fuel Station') return 'fuel';
-    if (['Shop', 'Parts Shop', 'Auto Parts', 'Car Parts'].includes(m.specialty)) return 'shop';
-    return 'all';
-  };
 
   // Does `term` match anything (name/specialty/services/etc — NOT area/location,
   // those are handled separately as a location search) within `category`?
@@ -1706,11 +1900,11 @@ function App() {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const businessOwnerId = user?.uid || localBusinessOwnerId;
-  // Bypassing real multi-account auth for now — this just filters whatever
-  // already carries the current owner id. The backend piece (letting one
-  // login legitimately manage several business docs) is separate follow-up
-  // work; this only builds the switcher UI on top of it.
-  const myBusinesses = allMechanics.filter((m) => m.createdBy === businessOwnerId);
+  // Everything the signed-in user manages: listings they own directly
+  // (createdBy) plus listings they onboarded on a business's behalf
+  // (onboardedBy — the §3.3 pitch flow, where the listing's owner account is
+  // a placeholder that gets handed off later).
+  const myBusinesses = allMechanics.filter((m) => m.createdBy === businessOwnerId || m.onboardedBy === businessOwnerId);
   const myBusiness = myBusinesses.find((m) => m.id === activeBusinessId) || myBusinesses[0] || null;
 
   const handleOpenBusiness = () => {
@@ -1731,7 +1925,7 @@ function App() {
         onSwitchBusiness={setActiveBusinessId}
         onUpdateLocation={handleUpdateBusinessLocation}
         onExit={() => setBusinessDashboardOpen(false)}
-        onSignOut={() => { signOut(auth); setUser(null); setBusinessDashboardOpen(false); }}
+        onSignOut={() => { signOut(auth); clearAuthUser(); setUser(null); setBusinessDashboardOpen(false); }}
         onAddBusiness={() => { setBusinessDashboardOpen(false); setModal('add'); }}
         onViewProfile={() => { setBusinessDashboardOpen(false); handleSelectMechanic(myBusiness); }}
         show={show}
@@ -1754,9 +1948,10 @@ function App() {
         viewMode={viewMode}
         setViewMode={handleSetViewMode}
         openAuth={() => setModal('auth')}
-        onSignOut={() => { signOut(auth); setUser(null); handleSetViewMode('all'); show('Signed out'); }}
+        onSignOut={() => { signOut(auth); clearAuthUser(); setUser(null); handleSetViewMode('all'); show('Signed out'); }}
         onOpenBusiness={handleOpenBusiness}
         myBusiness={myBusiness}
+        isAdmin={ADMIN_EMAILS.includes(user?.email)}
         isOpen={isMobileSidebarOpen}
         setIsOpen={setMobileSidebarOpen}
         isSearchPanelOpen={isSearchPanelOpen}
@@ -1773,23 +1968,11 @@ function App() {
         {/* Mobile floating map controls */}
         <div className="mobile-map-controls">
           <button
-            className={`mobile-hamburger${user ? ' mobile-hamburger--authed' : ''}`}
+            className="mobile-hamburger"
             aria-label="Menu"
             onClick={() => setMobileSidebarOpen(true)}
           >
-            {user ? (
-              <div className="mobile-header-avatar">
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName || 'avatar'} className="mobile-header-avatar-img" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className="mobile-header-avatar-initial">
-                    {(user.displayName?.trim() || user.email || 'U')[0].toUpperCase()}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <List size={20} />
-            )}
+            <List size={20} />
           </button>
           <div className="mobile-map-actions">
             <button className="map-action-btn" aria-label="Locate Me" onClick={() => setMapPanTrigger(Date.now())}>
@@ -1826,21 +2009,9 @@ function App() {
             onNotice={show}
             onRate={(m) => setModal({ type: 'rate', mechanic: m })}
             hideOnDesktop={!!selectedMechanic}
-              onUseMyLocation={() => {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                      setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
-                      setMapPanTrigger(Date.now());
-                    },
-                    (err) => console.warn("Location error:", err),
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                  );
-                } else {
-                  setMapPanTrigger(Date.now());
-                }
-              }}
+              onUseMyLocation={handleUseMyLocation}
             onScanStateChange={setIsLocatingScan}
+            scanRequestId={scanRequestId}
             onNavigateHome={() => setViewMode('all')}
             onOpenSidebar={() => setMobileSidebarOpen(true)}
           />
@@ -1870,13 +2041,14 @@ function App() {
           />
         )}
 
-        <MechanicDetailPanel
+         <MechanicDetailPanel
            mechanic={selectedMechanic}
            onClose={handleCloseDetail}
            user={user}
            onEdit={(m) => setModal({ type: 'edit', mechanic: m })}
            onDelete={deleteMechanic}
            onRate={(m) => setModal({ type: 'rate', mechanic: m })}
+           isAdmin={ADMIN_EMAILS.includes(user?.email)}
            savedMechanics={savedMechanics}
            onToggleSave={toggleSave}
            onDirection={handleShowDirection}
@@ -1884,7 +2056,7 @@ function App() {
            onNotice={show}
            initialItemQuery={pendingItemQuery}
            onInitialItemHandled={() => setPendingItemQuery(null)}
-        />
+         />
       </div>
 
       {notice && <div className="toast" role="status">{notice}</div>}
@@ -1904,7 +2076,7 @@ function App() {
               // Returning business account (e.g. one an admin already set up
               // and handed off) — skip the onboarding wizard and go straight
               // to their dashboard instead of the "add business" flow.
-              const existingBusiness = u && allMechanics.find((m) => m.createdBy === u.uid);
+              const existingBusiness = u && allMechanics.find((m) => m.createdBy === u.uid || m.onboardedBy === u.uid);
               if (existingBusiness) {
                 setModal(null);
                 setBusinessDashboardOpen(true);
@@ -1948,6 +2120,15 @@ function App() {
           onRated={handleRated}
           show={show}
           openAuth={() => setModal({ type: 'auth-for-rate', mechanic: modal.mechanic })}
+        />
+      )}
+
+      {farDirectionTarget && userLocation && (
+        <FarDirectionSheet
+          mechanic={farDirectionTarget}
+          distanceKm={calculateDistance(userLocation.lat, userLocation.lng, farDirectionTarget.lat, farDirectionTarget.lng)}
+          onClose={() => setFarDirectionTarget(null)}
+          onFindNearby={() => { setFarDirectionTarget(null); handleCloseDetail(); setScanRequestId(Date.now()); }}
         />
       )}
     </div>

@@ -53,7 +53,9 @@
         "category": "Workshop",
         "label": "Service flyer"
       }
-    ]
+    ],
+    "accountEmail": "highest-auto-detailing@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -96,7 +98,9 @@
         "category": "Workshop",
         "label": "Workshop (stock placeholder)"
       }
-    ]
+    ],
+    "accountEmail": "kelvin-quartey@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -169,7 +173,9 @@
         "category": "Jobs",
         "label": "FlameLink demo"
       }
-    ]
+    ],
+    "accountEmail": "cm-performance@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -241,7 +247,9 @@
         "category": "Jobs",
         "label": "Shocks in stock"
       }
-    ]
+    ],
+    "accountEmail": "uncle-fii-spare-parts@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -308,7 +316,9 @@
         "category": "Workshop",
         "label": "Workshop (stock placeholder)"
       }
-    ]
+    ],
+    "accountEmail": "dt-guys-pro@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -368,7 +378,9 @@
         "imageUrl": "/mock-media/ikad-spark-plug-2.png"
       }
     ],
-    "media": []
+    "media": [],
+    "accountEmail": "jaq-auto-parts@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -412,7 +424,9 @@
         "category": "Workshop",
         "label": "Workshop walkthrough"
       }
-    ]
+    ],
+    "accountEmail": "flash-motors-engineering-ltd@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -475,7 +489,9 @@
         "category": "Jobs",
         "label": "Parts showcase"
       }
-    ]
+    ],
+    "accountEmail": "safeplus-truck-parts@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -524,7 +540,9 @@
         "category": "Jobs",
         "label": "Shop clip"
       }
-    ]
+    ],
+    "accountEmail": "r3hub@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -595,7 +613,9 @@
         "category": "Workshop",
         "label": "Workshop walkthrough"
       }
-    ]
+    ],
+    "accountEmail": "best-choice-auto-refinish@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   },
   {
     "internal": {
@@ -640,6 +660,8 @@
         "category": "Workshop",
         "label": "Workshop (stock placeholder)"
       }
-    ]
+    ],
+    "accountEmail": "washing-bay-promoter@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   }
 ]
