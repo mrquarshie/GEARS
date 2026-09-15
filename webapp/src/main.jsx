@@ -258,8 +258,8 @@ const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princ
 
 // Business accounts whose generic pitch email has been rotated to their real
 // address. These can SIGN IN (never create a new account) and see only their
-// own listing. Populate as businesses come onboard (§3.3 handoff).
-const BUSINESS_ADMIN_EMAILS = [];
+// own listing. Managed in Firestore (config/businessAdmins → emails), not in
+// code — see loadBusinessAdminEmails below.
 
 // How often a signed-in user's live location gets persisted to their
 // Firestore doc for "nearby business" notifications — watchPosition fires
@@ -1270,6 +1270,7 @@ function FarDirectionSheet({ mechanic, distanceKm, onClose, onFindNearby }) {
 // ---------------------------------------------------------------------------
 function App() {
   const [allMechanics, setAllMechanics] = useState([]);
+  const [businessAdminEmails, setBusinessAdminEmails] = useState([]);
   const [searchedArea, setSearchedArea] = useState('');
   // Initialize synchronously so sidebar never flashes logged-out when session already exists
   const [user, setUser] = useState(() => (auth ? auth.currentUser : null));
@@ -1633,6 +1634,17 @@ function App() {
 
     const onFocus = () => { if (!document.hidden) loadMechanics(); };
 
+    // Business-admin emails live in Firestore (config/businessAdmins) so they
+    // can be managed from the console without a code deploy.
+    const loadBusinessAdminEmails = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'config', 'businessAdmins'));
+        if (snap.exists()) setBusinessAdminEmails(snap.data().emails || []);
+      } catch (e) {
+        console.warn('Failed to load business admin list:', e);
+      }
+    };
+
     const init = async () => {
       // Step 1: check if user just came back from signInWithRedirect
       try {
@@ -1684,6 +1696,9 @@ function App() {
       } finally {
         setLoading(false);
       }
+
+      // Load the business-admin email list (for sign-in-only routing).
+      loadBusinessAdminEmails();
 
       // Periodic refetch + refetch on tab focus/app resume, so a business
       // added after the initial load — or past the old 100-doc cap — surfaces
@@ -1983,7 +1998,7 @@ function App() {
     // credentials only. Everyone else gets the "contact us" sheet.
     if (ADMIN_EMAILS.includes(user?.email)) {
       setModal({ type: 'auth', reason: 'business' });
-    } else if (BUSINESS_ADMIN_EMAILS.includes(user?.email)) {
+    } else if (businessAdminEmails.includes(user?.email)) {
       setModal({ type: 'auth', reason: 'business-admin' });
     } else {
       setModal({ type: 'business-contact' });

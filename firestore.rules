@@ -105,6 +105,16 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
+    // App config — e.g. the business-admin emails list. Public read (it's
+    // only a client-side routing hint), write restricted to super admins.
+    // Manage it at: Firestore → config → businessAdmins → `emails` (array).
+    // ---------------------------------------------------------------
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdminEmail();
+    }
+
+    // ---------------------------------------------------------------
     // Users collection — bookmarks and coarse location live on the root
     // doc; notifications are Cloud-Function-written only.
     // ---------------------------------------------------------------
