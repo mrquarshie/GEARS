@@ -21,6 +21,7 @@ import { useTypewriterLoop } from '../hooks/useTypewriterLoop';
 import { ItemSheet } from './MechanicDetailPanel';
 import { getRecentInteraction, formatRelativeTime } from '../recentInteractions';
 import { shareMechanic } from '../utils/share';
+import { playTapSound } from '../utils/feedback';
 import { buildMechanicsByName, buildSuggestionMatches, SuggestionRowIcon } from './SearchSuggestions';
 
 // Expanding drive-time windows used by the "Use my location" search: start tight
@@ -347,6 +348,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   // in that case don't mark the card "active" or collapse the sheet, since
   // nothing showed on the map to collapse toward.
   const handleDirectionToggle = (m, { recordInteraction = false } = {}) => {
+    playTapSound();
     if (directionTargetId === m.id) {
       setDirectionTargetId(null);
       onDirection(null);
@@ -1302,7 +1304,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                             </button>
                             <button
                               className="card-bottom-icon"
-                              onClick={(e) => { e.stopPropagation(); onRate?.(m); }}
+                              onClick={(e) => { e.stopPropagation(); playTapSound(); onRate?.(m); }}
                             >
                               <RateIcon size={16} />
                             </button>

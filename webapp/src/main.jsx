@@ -44,7 +44,7 @@ import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
 import BusinessDashboard from './components/BusinessDashboard';
 import { CarDetailingIcon, GearsLogoMark, CallIcon } from './components/icons';
-import { vibrateTap } from './utils/feedback';
+import { vibrateTap, playTapSound } from './utils/feedback';
 
 import authImgCar from './components/AuthImages/Car.png';
 import authImgSteer from './components/AuthImages/Steer.png';
@@ -319,29 +319,30 @@ const BUSINESS_CONTACT_DIGITS = '233595785158';
 function BusinessContactSheet({ close }) {
   const whatsappHref = `https://wa.me/${BUSINESS_CONTACT_DIGITS}?text=${encodeURIComponent('Hi Gears! I want to list my business on the app.')}`;
   return (
-    <div className="overlay business-contact-overlay" role="dialog" aria-modal="true" onClick={close}>
-      <div className="business-contact-sheet" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="auth-close" onClick={close} aria-label="Close">
-          <X size={18} />
-        </button>
-        <div className="business-contact-icon"><Storefront size={30} weight="bold" /></div>
-        <h2>Become a Business</h2>
-        <p className="business-contact-copy">
+    <div className="verification-sheet-overlay" role="dialog" aria-modal="true" onClick={close}>
+      <div className="verification-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="verification-sheet-icon">
+          <Storefront size={44} weight="duotone" color="#145E42" />
+        </div>
+        <h3 className="verification-sheet-title">Become a Business</h3>
+        <p className="verification-sheet-desc">
           Every business is verified before it goes live. Reach us on WhatsApp or call for enquiry and verification — we'll get you set up.
         </p>
-        <a
-          className="business-contact-btn business-contact-btn--whatsapp"
-          href={whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <WhatsappLogo size={20} weight="fill" />
-          <span>Chat with us on WhatsApp</span>
-        </a>
-        <a className="business-contact-btn business-contact-btn--call" href={`tel:+${BUSINESS_CONTACT_DIGITS}`}>
-          <CallIcon size={20} />
-          <span>Call {BUSINESS_CONTACT_PHONE}</span>
-        </a>
+        <div className="verification-sheet-footer verification-sheet-footer--stacked">
+          <a
+            className="verification-sheet-btn verification-sheet-btn--link verification-sheet-btn--whatsapp"
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <WhatsappLogo size={20} weight="fill" />
+            <span>Chat with us on WhatsApp</span>
+          </a>
+          <a className="verification-sheet-btn verification-sheet-btn--link verification-sheet-btn--call" href={`tel:+${BUSINESS_CONTACT_DIGITS}`}>
+            <CallIcon size={20} />
+            <span>Call {BUSINESS_CONTACT_PHONE}</span>
+          </a>
+        </div>
       </div>
     </div>
   );
@@ -1363,6 +1364,7 @@ function App() {
   // passes through, so a vibration here covers all of them for free.
   const recordInteraction = (mechanicId, action) => {
     vibrateTap();
+    playTapSound();
     setRecentInteractions((prev) => {
       const next = { ...prev, [mechanicId]: { action, timestamp: Date.now() } };
       saveRecentInteractions(next);
@@ -1836,6 +1838,7 @@ function App() {
     // directly here (not left to recordInteraction below) since unsaving
     // doesn't go through that — only a fresh save does.
     vibrateTap();
+    playTapSound();
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();

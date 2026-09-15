@@ -14,7 +14,7 @@ import {
   NotificationIcon,
   GearsLogoMark,
 } from './icons';
-import { vibrateTap } from '../utils/feedback';
+import { vibrateTap, playTapSound } from '../utils/feedback';
 
 export default function Sidebar({ user, authReady, viewMode, setViewMode, openAuth, onSignOut, onOpenBusiness, myBusiness, isAdmin, isOpen, setIsOpen, isSearchPanelOpen, onCloseSearch, onCloseDetail }) {
   // Get initials from display name or email
@@ -126,7 +126,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             <button
               className="nav-btn business-nav-btn"
               title={`${myBusiness.name} · View Business`}
-              onClick={() => { vibrateTap(); onOpenBusiness(); setIsOpen(false); }}
+              onClick={() => { vibrateTap(); playTapSound(); onOpenBusiness(); setIsOpen(false); }}
             >
               <div className="card-avatar sidebar-business-avatar">{myBusiness.name?.charAt(0)?.toUpperCase() || '?'}</div>
               <span className="nav-text">{myBusiness.name}</span>
@@ -135,7 +135,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             <button
               className="nav-btn business-nav-btn"
               title="Become a Business"
-              onClick={() => { vibrateTap(); onOpenBusiness(); setIsOpen(false); }}
+              onClick={() => { vibrateTap(); playTapSound(); onOpenBusiness(); setIsOpen(false); }}
             >
               <Storefront size={20} />
               <span className="nav-text">Become a Business</span>
@@ -162,7 +162,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
                 </div>
                 <span className="nav-text sidebar-user-alias">{userAlias}</span>
               </div>
-              <button className="auth-btn auth-btn--danger" onClick={() => { vibrateTap(); onSignOut(); setIsOpen(false); }} title="Log Out">
+              <button className="auth-btn auth-btn--danger" onClick={() => { vibrateTap(); playTapSound(); onSignOut(); setIsOpen(false); }} title="Log Out">
                 <SignOut size={22} />
                 <span className="nav-text">Log Out</span>
               </button>
@@ -171,7 +171,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
             // One button, not two — Google's own popup already handles
             // whether the email is new or existing, so a separate "Sign Up"
             // vs "Log In" button would just open the identical flow twice.
-            <button className="auth-btn primary" onClick={() => { vibrateTap(); openAuth(); setIsOpen(false); }} title="Sign Up / Log In">
+            <button className="auth-btn primary" onClick={() => { vibrateTap(); playTapSound(); openAuth(); setIsOpen(false); }} title="Sign Up / Log In">
               <UserPlus size={22} />
               <span className="nav-text">Sign Up / Log In</span>
             </button>
