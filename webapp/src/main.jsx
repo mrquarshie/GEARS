@@ -256,6 +256,11 @@ function GoogleGLogo({ size = 18 }) {
 // merely claimed (tier 2), since Gears vetted it directly during the pitch.
 const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princeessandoh316@gmail.com'];
 
+// Business accounts whose generic pitch email has been rotated to their real
+// address. These can SIGN IN (never create a new account) and see only their
+// own listing. Populate as businesses come onboard (§3.3 handoff).
+const BUSINESS_ADMIN_EMAILS = [];
+
 // How often a signed-in user's live location gets persisted to their
 // Firestore doc for "nearby business" notifications — watchPosition fires
 // far more often than this, so writes are throttled to this interval.
@@ -278,6 +283,7 @@ const AUTH_REASON_COPY = {
   bookmark: 'Sign up to bookmark a mechanic shop or retailer.',
   rate: 'Sign up to rate and review.',
   business: 'Sign up to list and manage your business.',
+  'business-admin': 'Sign in to manage your business.',
 };
 
 // Mirror the signed-in user's basic details into localStorage. Firebase's
@@ -348,7 +354,8 @@ function AuthModal({ close, onSuccess, reason }) {
   const [password, setPassword] = useState('');
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const headline = AUTH_REASON_COPY[reason] || 'Find trusted mechanics, anywhere in Ghana.';
-  const isBusiness = reason === 'business';
+  const isBusiness = reason === 'business' || reason === 'business-admin';
+  const signInOnly = reason === 'business-admin';
 
   const loginWithGoogle = async () => {
     vibrateTap();
@@ -413,6 +420,13 @@ function AuthModal({ close, onSuccess, reason }) {
       const result = await signInWithEmailAndPassword(auth, email, password);
       onSuccess(result.user);
     } catch {
+      if (signInOnly) {
+        // Business admins sign in with existing credentials only — never
+        // create a new account from this form.
+        setErrorMsg('Incorrect email or password.');
+        setLoading(false);
+        return;
+      }
       try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         onSuccess(result.user);
@@ -1268,10 +1282,10 @@ function App() {
   const [savedMechanics, setSavedMechanics] = useState([]);
   const [viewMode, setViewMode] = useState(() => {
     const savedMode = localStorage.getItem('gearsViewMode');
-    const hasAuth = Boolean(auth && auth.currentUser);
-    if (savedMode === 'saved') return hasAuth ? 'saved' : 'all';
-    if (savedMode) return savedMode;
-    return hasAuth ? 'saved' : 'all';
+    // Land on Home after sign-in; only restore a persisted *category* page
+    // (fuel/shop/detailers), never the "Saved" bookmarks view as a default.
+    if (savedMode && savedMode !== 'saved') return savedMode;
+    return 'all';
   });
 
   const handleSetViewMode = (mode) => {
@@ -1628,7 +1642,7 @@ function App() {
           setAuthReady(true);
           const alias = redirectResult.user.displayName?.trim() || redirectResult.user.email?.split('@')[0] || 'User';
           show(`Welcome, ${alias}!`);
-          handleSetViewMode('saved');
+          handleSetViewMode('all');
           setModal((current) => current === 'add' || current?.reason === 'business' ? 'add' : null);
         }
       } catch (e) {
@@ -1648,7 +1662,7 @@ function App() {
             sessionStorage.removeItem('gearsPendingAuth');
             const alias = u.displayName?.trim() || u.email?.split('@')[0] || 'User';
             show(`Welcome, ${alias}!`);
-            handleSetViewMode('saved');
+            handleSetViewMode('all');
           }
         } else {
           clearAuthUser();
@@ -1964,10 +1978,13 @@ function App() {
       setBusinessDashboardOpen(true);
       return;
     }
-    // Admin accounts onboard businesses directly (the pitch flow). Everyone
-    // else is routed to a "contact us" sheet for enquiry/verification.
+    // Super admins onboard businesses directly (pitch flow — sign in or
+    // create a new account). Onboarded businesses sign in with their own
+    // credentials only. Everyone else gets the "contact us" sheet.
     if (ADMIN_EMAILS.includes(user?.email)) {
       setModal({ type: 'auth', reason: 'business' });
+    } else if (BUSINESS_ADMIN_EMAILS.includes(user?.email)) {
+      setModal({ type: 'auth', reason: 'business-admin' });
     } else {
       setModal({ type: 'business-contact' });
     }
@@ -2129,18 +2146,20 @@ function App() {
               setUser(u);
               const alias = u.displayName?.trim() || u.email?.split('@')[0] || 'User';
               show(`Welcome, ${alias}!`);
-              handleSetViewMode('saved');
+              handleSetViewMode('all');
             }
-            if (modal?.reason === 'business') {
+            if (modal?.reason === 'business' || modal?.reason === 'business-admin') {
               // Returning business account (e.g. one an admin already set up
-              // and handed off) — skip the onboarding wizard and go straight
-              // to their dashboard instead of the "add business" flow.
+              // and handed off) — skip onboarding and go straight to their
+              // dashboard instead of the "add business" flow.
               const existingBusiness = u && allMechanics.find((m) => m.createdBy === u.uid || m.onboardedBy === u.uid);
               if (existingBusiness) {
                 setModal(null);
                 setBusinessDashboardOpen(true);
-              } else {
+              } else if (modal?.reason === 'business') {
                 setModal('add');
+              } else {
+                setModal(null);
               }
             } else {
               setModal(null);
