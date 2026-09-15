@@ -131,9 +131,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
               <div className="card-avatar sidebar-business-avatar">{myBusiness.name?.charAt(0)?.toUpperCase() || '?'}</div>
               <span className="nav-text">{myBusiness.name}</span>
             </button>
-          ) : isAdmin ? (
-            // Temporary: only admins see this entry point while the app is
-            // pitch-only. Drop the isAdmin check to reopen self-onboarding.
+          ) : (
             <button
               className="nav-btn business-nav-btn"
               title="Become a Business"
@@ -142,7 +140,7 @@ export default function Sidebar({ user, authReady, viewMode, setViewMode, openAu
               <Storefront size={20} />
               <span className="nav-text">Become a Business</span>
             </button>
-          ) : null}
+          )}
           {!authReady ? (
             <div style={{ width: 32, height: 32 }} />
           ) : user ? (
