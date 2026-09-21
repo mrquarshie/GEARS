@@ -663,5 +663,423 @@
     ],
     "accountEmail": "washing-bay-promoter@gears-ghana.com",
     "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 12,
+      "socialHandle": "https://www.tiktok.com/@samdonauto",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJ4RZrN9mF3w8RZH_5gzETfLQ",
+      "matchConfidence": "high",
+      "notes": "Google rating 3.9 from 10. Reviews are split: long-term customers praise the manager (Mr Donkor) and electronics work, but two detailed reviews describe cars returned in worse condition and high parts delivery charges. Do NOT fast-track to Verified tier — worth a real conversation first."
+    },
+    "name": "Sam Don Auto",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Teshie, Accra",
+    "locationDetail": "Near Teshie fire service, Accra",
+    "lat": 5.6108421,
+    "lng": -0.1022707,
+    "phone": "0543883032",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Google tags them as repair shop and car dealer; reviews point to auto-electrical work on petrol and diesel vehicles.",
+    "hours": "Mon–Wed · 6:30 AM – 6:30 PM · Thu–Sat · 8:30 AM – 6:30 PM · Sun closed",
+    "specialties": [
+      "Auto-Electrical",
+      "Petrol & Diesel"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "sam-don-auto@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 13,
+      "socialHandle": "TikTok — DATES LTD",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJMSUza6GX3w8R9qMX5mDxHOE",
+      "matchConfidence": "high",
+      "notes": "CATEGORY CORRECTION: sheet says Auto shop, but Google lists them as car_repair and reviews describe maintenance, repair, bodywork, mechanical and electronic faults. This is a full-service garage. Rating 4.6 from 20."
+    },
+    "name": "DATES Limited",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Exhibition Roundabout, Accra",
+    "locationDetail": "Exhibition Roundabout, Naa Awula Quaye Rd, Accra",
+    "lat": 5.5370333,
+    "lng": -0.2654442,
+    "phone": "0207038418",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Full-service garage handling maintenance, repairs, bodywork, and mechanical and electronic faults.",
+    "hours": "Mon–Sat · 8:00 AM – 5:00 PM · Sun closed",
+    "specialties": [
+      "Maintenance",
+      "Mechanical Repair",
+      "Auto-Electrical",
+      "Bodywork"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "dates-limited@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 14,
+      "socialHandle": "TikTok — Zefix Auto parts",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJQ1I1R4yb3w8R2Dx0743yhxQ",
+      "matchConfidence": "medium-high",
+      "notes": "Google name is 'ZEFIX ECOWAS LTD', not 'Zefix Auto parts' — confirm it's the same business. Tagged as parts store AND repair. Reviews repeatedly mention Toyota and Mercedes parts and a staff member called Michael. Rating 4.5 from 13."
+    },
+    "name": "Zefix Auto Parts",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto Parts",
+    "categories": [
+      "parts",
+      "mechanic"
+    ],
+    "brandFocus": [
+      "Toyota",
+      "Mercedes-Benz"
+    ],
+    "area": "Spintex, Accra",
+    "locationDetail": "Behind Spintex Rd, at A1 Diesel Ltd, Accra",
+    "lat": 5.6305856,
+    "lng": -0.1506279,
+    "phone": "0505800800",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Genuine spare parts supplier with repair services, with Toyota and Mercedes-Benz parts featuring heavily.",
+    "hours": "Mon–Fri · 8:00 AM – 5:00 PM · Sat · 10:00 AM – 2:00 PM · Sun closed",
+    "specialties": [
+      "Toyota Parts",
+      "Mercedes-Benz Parts",
+      "Genuine Parts"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "zefix-auto-parts@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 15,
+      "socialHandle": "TikTok — Smooth Fix Auto Limited",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJZU4hRgCX3w8RrqVwu0BzHMk",
+      "matchConfidence": "high",
+      "notes": "Exact name match. Tagged parts store AND repair. No opening hours on Google. Reviews are one-word and tell you nothing. Rating 3.8 from 6."
+    },
+    "name": "Smooth Fix Auto Limited",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto Parts",
+    "categories": [
+      "parts",
+      "mechanic"
+    ],
+    "area": "Accra",
+    "locationDetail": "Sorghum St, Accra (Plus code HP4F+RGQ)",
+    "lat": 5.556858,
+    "lng": -0.276693,
+    "phone": "0547507011",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "smooth-fix-auto-limited@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 16,
+      "socialHandle": "TikTok — Mechanic Boy Back up",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "googlePlaceId": null,
+      "matchConfidence": "none",
+      "notes": "No Google Maps match on two searches. Name reads like a personal creator handle rather than a trading name — same pattern as 'Washing Bay Promoter'. Check the TikTok bio for a location or real business name before treating as a lead."
+    },
+    "name": "Mechanic Boy Back up",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "TODO",
+    "locationDetail": "TODO",
+    "lat": null,
+    "lng": null,
+    "phone": "TODO",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "mechanic-boy-back-up@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 17,
+      "socialHandle": "TikTok — Protech Auto Care",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJ0Zaezu2X3w8R-9Qa85dB1HE",
+      "matchConfidence": "high",
+      "notes": "Exact name match. No reviews or rating on Google yet — a new or under-promoted listing, which is itself a pitch."
+    },
+    "name": "Protech Auto Care",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Accra",
+    "locationDetail": "Prof Archampong Street, Accra",
+    "lat": 5.5551813,
+    "lng": -0.2689838,
+    "phone": "0244121085",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": "Mon–Thu · 8:30 AM – 5:00 PM · Fri · 8:00 AM – 5:00 PM · Sat · 9:30 AM – 2:30 PM · Sun closed",
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "protech-auto-care@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 18,
+      "socialHandle": "TikTok — B Spec Autosports",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJU6X6DbuB3w8R7-5oNsG8cXU",
+      "matchConfidence": "high",
+      "notes": "Exact name match. Tagged parts store AND repair. Reviews point to suspension (shocks, springs) and engine upgrades on modern cars — a performance shop. Staff member named Collins. Closed weekends. Rating 4.7 from 13."
+    },
+    "name": "B Spec Autosports",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic",
+      "parts"
+    ],
+    "area": "Tema",
+    "locationDetail": "11 Eagle St, Tema",
+    "lat": 5.6570193,
+    "lng": -0.0684457,
+    "phone": "0547239720",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Performance-focused workshop and parts supplier — suspension, shocks and springs, and engine upgrades for modern vehicles.",
+    "hours": "Mon–Fri · 9:00 AM – 6:00 PM · Sat–Sun closed",
+    "specialties": [
+      "Suspension",
+      "Shocks & Springs",
+      "Engine Upgrades",
+      "Performance Parts"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "b-spec-autosports@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 19,
+      "socialHandle": "TikTok — Muta-Motors",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJGcbrxbKj3w8RDqBRmY1Y5JE",
+      "matchConfidence": "medium",
+      "notes": "Exact name match, but thin: 3 reviews, and Google categorises as 'manufacturer' (same odd tag as Flash Motors). Listed as open 24 hours every day, which almost certainly means hours were never set — do not publish those hours."
+    },
+    "name": "Muta-Motors",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Ablekuma, Accra",
+    "locationDetail": "Ablekuma New Town, Accra",
+    "lat": 5.6316249,
+    "lng": -0.3139936,
+    "phone": "0244451776",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "muta-motors@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 20,
+      "socialHandle": "TikTok — alphaplus_auto_tech",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJ0wR_UHCd3w8RegGMN86Fkck",
+      "duplicateGooglePlaceId": "ChIJG8j_hHCd3w8RMgTzLDlR544",
+      "matchConfidence": "medium-high",
+      "notes": "Matched via handle to 'Alphaplus Auto-technologies'. A second Google listing ('Alphaplus Autoelectrical Services and Accessories', 97 Ecowas Rd) shares the same phone number — same business listed twice. One review describes it as a single auto-electrician working out of a fitter's yard and advises asking for a receipt. Rating 4.8 from 12."
+    },
+    "name": "Alphaplus Auto-Technologies",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic",
+      "parts"
+    ],
+    "area": "Madina, Accra",
+    "locationDetail": "23 Hallelujah Broadway, Madina, Accra",
+    "lat": 5.6899592,
+    "lng": -0.1817263,
+    "phone": "0553548080",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Auto-electrical specialist also supplying parts and accessories.",
+    "hours": "Mon–Fri · 6:00 AM – 6:30 PM · Sat · 8:00 AM – 4:30 PM · Sun closed",
+    "specialties": [
+      "Auto-Electrical",
+      "Accessories"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "alphaplus-auto-technologies@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 21,
+      "socialHandle": "TikTok — StepOne Automotive",
+      "status": "Discovery",
+      "source": "imported_gmaps",
+      "googlePlaceId": "ChIJ_WGgbgCD3w8RgOqIXiIz5VI",
+      "matchConfidence": "high",
+      "notes": "Exact name match and the strongest reputation in this batch — 4.9 from 20, with detailed reviews about honesty, refusing to use low-quality parts, and fixing problems other mechanics couldn't (Honda CR-V, Toyota Camry overheating). No phone on Google — get it from TikTok."
+    },
+    "name": "StepOne Automotive",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Adenta, Accra",
+    "locationDetail": "Adenta Municipality (Plus code PV95+JJ4)",
+    "lat": 5.7185822,
+    "lng": -0.1411813,
+    "phone": "TODO — not on Google",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Reviews describe engine performance and overheating diagnosis on Honda and Toyota vehicles.",
+    "hours": "Mon–Fri · 8:00 AM – 5:00 PM · Sat · 8:00 AM – 3:00 PM · Sun closed",
+    "specialties": [
+      "Engine Diagnostics",
+      "Overheating",
+      "Engine Performance"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "stepone-automotive@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 22,
+      "socialHandle": "TikTok — The Ghana Mechanic",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "googlePlaceId": null,
+      "matchConfidence": "none",
+      "notes": "No Google Maps match. 'The Ghana Mechanic' reads like a content-creator brand rather than a workshop — may belong in the influencer list, not the directory. Check the bio before treating as a lead."
+    },
+    "name": "The Ghana Mechanic",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "TODO",
+    "locationDetail": "TODO",
+    "lat": null,
+    "lng": null,
+    "phone": "TODO",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "the-ghana-mechanic@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   }
 ]

@@ -81,12 +81,19 @@ async function main() {
   // literally "TODO") are excluded — otherwise the first "TODO" phone/email
   // seeded poisons this set and every later lead sharing that same
   // placeholder gets wrongly skipped as a "duplicate".
+  // Name fallback: a lead with no real phone or email (both placeholders,
+  // e.g. two different "TODO" leads, or the same lead re-run) can't be
+  // matched by identity at all otherwise — bit DT Guys Pro/R3hub/Washing Bay
+  // Promoter into duplicate docs on a second --force run, since neither had
+  // a real phone to dedup against.
   const existingPhones = new Set();
   const existingEmails = new Set();
+  const existingNames = new Set();
   (await getDocs(collection(db, 'mechanics'))).forEach((d) => {
     const data = d.data();
     if (!isPlaceholder(data.phone)) existingPhones.add(data.phone.trim());
     if (!isPlaceholder(data.email)) existingEmails.add(data.email.trim().toLowerCase());
+    if (!isPlaceholder(data.name)) existingNames.add(data.name.trim().toLowerCase());
   });
 
   const created = [];
@@ -102,8 +109,9 @@ async function main() {
       continue;
     }
     const phoneKey = !isPlaceholder(station.phone) ? station.phone.trim() : null;
-    if (phoneKey && existingPhones.has(phoneKey)) {
-      skipped.push({ name: station.name, kind: 'fuel', reasons: ['already exists (phone match)'] });
+    const nameKey = !isPlaceholder(station.name) ? station.name.trim().toLowerCase() : null;
+    if ((phoneKey && existingPhones.has(phoneKey)) || (!phoneKey && nameKey && existingNames.has(nameKey))) {
+      skipped.push({ name: station.name, kind: 'fuel', reasons: ['already exists (phone/name match)'] });
       continue;
     }
     const docRef = await addDoc(collection(db, 'mechanics'), {
@@ -117,6 +125,7 @@ async function main() {
     });
     created.push({ name: station.name, id: docRef.id });
     if (phoneKey) existingPhones.add(phoneKey);
+    if (nameKey) existingNames.add(nameKey);
   }
 
   // --- Leads: each gets its own placeholder account from leadData.json ---
@@ -129,8 +138,13 @@ async function main() {
 
     const phoneKey = !isPlaceholder(lead.phone) ? lead.phone.trim() : null;
     const emailKey = !isPlaceholder(lead.email) ? lead.email.trim().toLowerCase() : null;
-    if ((phoneKey && existingPhones.has(phoneKey)) || (emailKey && existingEmails.has(emailKey))) {
-      skipped.push({ name: lead.name, kind: 'lead', reasons: ['already exists (phone/email match)'] });
+    const nameKey = !isPlaceholder(lead.name) ? lead.name.trim().toLowerCase() : null;
+    if (
+      (phoneKey && existingPhones.has(phoneKey)) ||
+      (emailKey && existingEmails.has(emailKey)) ||
+      (!phoneKey && !emailKey && nameKey && existingNames.has(nameKey))
+    ) {
+      skipped.push({ name: lead.name, kind: 'lead', reasons: ['already exists (phone/email/name match)'] });
       continue;
     }
 
@@ -164,6 +178,7 @@ async function main() {
     accounts.push({ name: lead.name, mechanicId: docRef.id, uid, email: accountEmail, password: accountPassword });
     if (phoneKey) existingPhones.add(phoneKey);
     if (emailKey) existingEmails.add(emailKey);
+    if (nameKey) existingNames.add(nameKey);
   }
 
   console.log(`\nCreated ${created.length} mechanic doc(s):`);
