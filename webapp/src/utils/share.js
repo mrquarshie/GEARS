@@ -1,19 +1,24 @@
 import { getShareCardImage } from './shareCard';
 
-// og:image (below) needs a plain static URL a link-preview crawler can fetch
-// directly — it can't run the canvas-based card generator client-side runs
-// for the actual Web Share sheet (see shareMechanic). Until per-business
-// cards are pre-rendered server-side, every business's link preview uses this
-// one fixed brand image instead.
+// og:image (below) is for MechanicDetailPanel's client-side <Helmet> tags
+// only — those never reach a real link-preview crawler (see getShareUrl's
+// comment), but still matter for a browser tab/PDF-save/etc. actually
+// rendering the page, so this stays as a sane default for that case.
 const STATIC_OG_IMAGE = '/share-media-attachments/Mechanic.png';
 
 export function getStaticShareImagePath(mechanic) {
   return mechanic?.shareImage || STATIC_OG_IMAGE;
 }
 
+// Routes through /share/:id (-> api/share/[id].js) instead of straight to
+// the app's own ?mechanic=<id> URL. That function detects link-preview
+// crawlers (WhatsApp, Twitter/X, Facebook, iMessage, etc. — none of which
+// execute JS) and serves them real per-business og:title/description/image
+// tags server-side; a real visitor gets redirected into the app immediately.
+// Client-side <Helmet> tags alone can't do this — crawlers only ever see
+// the raw HTML response, never whatever React sets after the fact.
 export function getShareUrl(mechanic) {
-  const { origin, pathname } = window.location;
-  return `${origin}${pathname}?mechanic=${encodeURIComponent(mechanic.id)}`;
+  return `${window.location.origin}/share/${encodeURIComponent(mechanic.id)}`;
 }
 
 // Opens the OS share sheet with the business link and, where supported,
