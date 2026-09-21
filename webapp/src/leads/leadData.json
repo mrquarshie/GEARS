@@ -967,7 +967,14 @@
     ],
     "products": [],
     "services": [],
-    "media": [],
+    "media": [
+      {
+        "url": "/mock-media/leads/muta-motors/media/workshop-1.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop walkthrough"
+      }
+    ],
     "accountEmail": "muta-motors@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
