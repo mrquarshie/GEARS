@@ -959,9 +959,12 @@
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
-    "about": null,
+    "about": "Specialising in all Korean and Japanese automobiles.",
     "hours": null,
-    "specialties": [],
+    "specialties": [
+      "Korean Vehicles",
+      "Japanese Vehicles"
+    ],
     "products": [],
     "services": [],
     "media": [],
