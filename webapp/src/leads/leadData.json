@@ -1055,7 +1055,8 @@
       "source": "tiktok_only",
       "googlePlaceId": null,
       "matchConfidence": "none",
-      "notes": "No Google Maps match. 'The Ghana Mechanic' reads like a content-creator brand rather than a workshop — may belong in the influencer list, not the directory. Check the bio before treating as a lead."
+      "notes": "Bio checked: real business, not just a personal handle. Location and both phone numbers confirmed directly from the TikTok bio. Primary phone (0247094425) used for the app's Call button; 0302444031 kept here for reference only — the app has no secondary-phone field.",
+      "secondaryPhone": "0302444031"
     },
     "name": "The Ghana Mechanic",
     "logoUrl": null,
@@ -1065,15 +1066,15 @@
     "categories": [
       "mechanic"
     ],
-    "area": "TODO",
-    "locationDetail": "TODO",
-    "lat": null,
-    "lng": null,
-    "phone": "TODO",
+    "area": "Ofankor Barrier, Accra",
+    "locationDetail": "Ofankor Barrier, Nsawam Road, Accra",
+    "lat": 5.6576107,
+    "lng": -0.2647851,
+    "phone": "0247094425",
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
-    "about": null,
+    "about": "Accelerating your car knowledge 😊",
     "hours": null,
     "specialties": [],
     "products": [],
