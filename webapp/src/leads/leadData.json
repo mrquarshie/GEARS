@@ -742,7 +742,7 @@
       "notes": "CATEGORY CORRECTION: sheet says Auto shop, but Google lists them as car_repair and reviews describe maintenance, repair, bodywork, mechanical and electronic faults. This is a full-service garage. Rating 4.6 from 20."
     },
     "name": "DATES Limited",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg",
     "claimed": true,
     "verified": false,
     "specialty": "General repairs",
@@ -771,8 +771,45 @@
       "Spray Booths",
       "Spare Parts"
     ],
-    "products": [],
-    "services": [],
+    "products": [
+      {
+        "name": "AdBlue Diesel Exhaust Fluid",
+        "price": "400.00",
+        "imageUrl": "/mock-media/leads/dates-limited/products/p1.jpeg"
+      },
+      {
+        "name": "Car Key Remote Battery A23 Camelion",
+        "price": "30.00",
+        "imageUrl": "/mock-media/leads/dates-limited/products/p2.jpeg"
+      },
+      {
+        "name": "Car Key Remote Battery Camelion A27",
+        "price": "30.00",
+        "imageUrl": "/mock-media/leads/dates-limited/products/p3.jpeg"
+      }
+    ],
+    "services": [
+      {
+        "name": "Proven Solutions",
+        "description": "At Dates Limited, we don't just offer products; we provide proven solutions.",
+        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
+      },
+      {
+        "name": "Customer Empowerment",
+        "description": "Our mission is to empower customers to take control of their fuel efficiency and environmental impact.",
+        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
+      },
+      {
+        "name": "Driving Change",
+        "description": "At Dates Limited, we believe in the power of small changes to make a big impact.",
+        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
+      },
+      {
+        "name": "Environmental Commitment",
+        "description": "We are deeply committed to environmental sustainability. By promoting cleaner combustion and reducing harmful emissions.",
+        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
+      }
+    ],
     "media": [
       {
         "url": "/mock-media/leads/dates-limited/media/v1.mp4",
