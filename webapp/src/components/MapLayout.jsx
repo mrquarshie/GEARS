@@ -77,13 +77,13 @@ export function buildCategoryMarkerIcon(category, name, selected = false, logoUr
   const safeName = escapeHtml(name || 'Gears');
   const selectedClass = selected ? ' category-marker-card--selected' : '';
   // A business's own logo replaces the generic category glyph when it has
-  // one uploaded. The glyph is always rendered underneath so a logo that
-  // fails to load (404 / broken URL) falls back to the category icon instead
-  // of showing a broken image.
+  // one uploaded. When a logo is present ONLY the <img> is rendered (no glyph
+  // behind it); if the image fails to load, the img is swapped for the glyph
+  // so it never shows a broken image or both at once.
   const glyph = CATEGORY_GLYPH[category] || CATEGORY_GLYPH.mechanic;
   const avatarClass = logoUrl ? ' category-marker-avatar--logo' : '';
   const avatarContent = logoUrl
-    ? `${glyph}<img src="${escapeHtml(logoUrl)}" alt="" onerror="this.style.display='none';this.parentElement.classList.remove('category-marker-avatar--logo')" />`
+    ? `<img src="${escapeHtml(logoUrl)}" alt="" data-glyph="${escapeHtml(glyph)}" onerror="this.parentElement.innerHTML=this.getAttribute('data-glyph');this.parentElement.classList.remove('category-marker-avatar--logo')" />`
     : glyph;
 
   return L.divIcon({
