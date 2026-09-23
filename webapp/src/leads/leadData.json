@@ -1077,7 +1077,20 @@
         "videoUrl": "/mock-media/leads/alphaplus-auto-technologies/services/toyota-corolla-back-deck-speakers-replacement.mp4"
       }
     ],
-    "media": [],
+    "media": [
+      {
+        "url": "/mock-media/leads/alphaplus-auto-technologies/services/dashcam-installation.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Dashcam Installation"
+      },
+      {
+        "url": "/mock-media/leads/alphaplus-auto-technologies/services/toyota-corolla-back-deck-speakers-replacement.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Toyota Corolla Back Deck Speakers Replacement"
+      }
+    ],
     "accountEmail": "alphaplus-auto-technologies@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
