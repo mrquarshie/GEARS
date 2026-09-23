@@ -1044,7 +1044,7 @@
       "notes": "Matched via handle to 'Alphaplus Auto-technologies'. A second Google listing ('Alphaplus Autoelectrical Services and Accessories', 97 Ecowas Rd) shares the same phone number — same business listed twice. One review describes it as a single auto-electrician working out of a fitter's yard and advises asking for a receipt. Rating 4.8 from 12."
     },
     "name": "Alphaplus Auto-Technologies",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/alphaplus-auto-technologies/logo/logo.jpeg",
     "claimed": true,
     "verified": false,
     "specialty": "General repairs",
@@ -1067,7 +1067,16 @@
       "Accessories"
     ],
     "products": [],
-    "services": [],
+    "services": [
+      {
+        "name": "Dashcam Installation",
+        "videoUrl": "/mock-media/leads/alphaplus-auto-technologies/services/dashcam-installation.mp4"
+      },
+      {
+        "name": "Toyota Corolla Back Deck Speakers Replacement",
+        "videoUrl": "/mock-media/leads/alphaplus-auto-technologies/services/toyota-corolla-back-deck-speakers-replacement.mp4"
+      }
+    ],
     "media": [],
     "accountEmail": "alphaplus-auto-technologies@gears-ghana.com",
     "accountPassword": "Gears@2026"
