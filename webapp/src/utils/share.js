@@ -1,5 +1,3 @@
-import { getShareCardImage } from './shareCard';
-
 // og:image (below) is for MechanicDetailPanel's client-side <Helmet> tags
 // only — those never reach a real link-preview crawler (see getShareUrl's
 // comment), but still matter for a browser tab/PDF-save/etc. actually
@@ -21,30 +19,18 @@ export function getShareUrl(mechanic) {
   return `${window.location.origin}/share/${encodeURIComponent(mechanic.id)}`;
 }
 
-// Opens the OS share sheet with the business link and, where supported,
-// attaches a share-card image generated live from the business's own data
-// (name, area, tags, verified status, and an uploaded photo — see
-// utils/shareCard.js) as the post's media. Falls back to copying the link
-// when Web Share isn't available (desktop browsers).
+// Opens the OS share sheet with just the business link and a short text
+// blurb — no attached image. Sharing a file alongside the link makes
+// WhatsApp/iMessage/etc. treat the post as a media share and skip fetching
+// the URL's own link preview (the per-business og:image from /share/:id),
+// so recipients saw our generic card image instead of the real preview.
+// Falls back to copying the link when Web Share isn't available (desktop).
 export async function shareMechanic(mechanic, { onNotice } = {}) {
   const url = getShareUrl(mechanic);
   const title = mechanic.name;
   const text = `Check out ${mechanic.name} on GEARS${mechanic.area ? ` — ${mechanic.area}` : ''}`;
 
-  let file = null;
-  try {
-    const blob = await getShareCardImage(mechanic);
-    if (blob) {
-      const filename = (mechanic.name || 'gears-business').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-      file = new File([blob], `${filename}.png`, { type: 'image/png' });
-    }
-  } catch {
-    // Card generation failed — share link/text only.
-  }
-
-  const shareData = file && navigator.canShare?.({ files: [file] })
-    ? { title, text, url, files: [file] }
-    : { title, text, url };
+  const shareData = { title, text, url };
 
   if (navigator.share) {
     try {
@@ -52,15 +38,6 @@ export async function shareMechanic(mechanic, { onNotice } = {}) {
       return;
     } catch (err) {
       if (err?.name === 'AbortError') return;
-      // Some browsers reject a files-share but accept a link-only one.
-      if (file) {
-        try {
-          await navigator.share({ title, text, url });
-          return;
-        } catch (err2) {
-          if (err2?.name === 'AbortError') return;
-        }
-      }
     }
   }
 
