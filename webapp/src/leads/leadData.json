@@ -1019,8 +1019,20 @@
       "Performance Parts"
     ],
     "products": [],
-    "services": [],
-    "media": [],
+    "services": [
+      {
+        "name": "GLC300 Oil Control Valve",
+        "videoUrl": "/mock-media/leads/b-spec-autosports/services/glc300-oil-control-valve.mp4"
+      }
+    ],
+    "media": [
+      {
+        "url": "/mock-media/leads/b-spec-autosports/services/glc300-oil-control-valve.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "GLC300 Oil Control Valve"
+      }
+    ],
     "accountEmail": "b-spec-autosports@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
