@@ -675,7 +675,7 @@
       "notes": "Google rating 3.9 from 10. Reviews are split: long-term customers praise the manager (Mr Donkor) and electronics work, but two detailed reviews describe cars returned in worse condition and high parts delivery charges. Do NOT fast-track to Verified tier — worth a real conversation first."
     },
     "name": "Sam Don Auto",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/sam-don-auto/logo/logo.jpg",
     "claimed": true,
     "verified": false,
     "specialty": "General repairs",
@@ -693,12 +693,41 @@
     "about": "Google tags them as repair shop and car dealer; reviews point to auto-electrical work on petrol and diesel vehicles.",
     "hours": "Mon–Wed · 6:30 AM – 6:30 PM · Thu–Sat · 8:30 AM – 6:30 PM · Sun closed",
     "specialties": [
-      "Auto-Electrical",
-      "Petrol & Diesel"
+      "Vehicle Servicing",
+      "Engine Repair",
+      "ECU Replacement",
+      "Transmission Repair"
     ],
     "products": [],
-    "services": [],
-    "media": [],
+    "services": [
+      {
+        "name": "Repair, Maintenance & Servicing",
+        "description": "Repair, maintenance and servicing of vehicles.",
+        "imageUrl": "/mock-media/leads/sam-don-auto/services/1.png"
+      },
+      {
+        "name": "Engine Repair & Replacement (ECU)",
+        "description": "Engine repair and replacement, including ECU work.",
+        "imageUrl": "/mock-media/leads/sam-don-auto/services/2.png"
+      },
+      {
+        "name": "Transmission Repair & Programming",
+        "description": "Transmission repair and programming.",
+        "imageUrl": "/mock-media/leads/sam-don-auto/services/3.jpg"
+      }
+    ],
+    "media": [
+      {
+        "url": "/mock-media/leads/sam-don-auto/media/sam-don-auto-repairs.jpg",
+        "category": "Workshop",
+        "label": "Repair work"
+      },
+      {
+        "url": "/mock-media/leads/sam-don-auto/media/pic-with-i-and-bro-kojo.jpeg",
+        "category": "Team",
+        "label": "Team"
+      }
+    ],
     "accountEmail": "sam-don-auto@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
