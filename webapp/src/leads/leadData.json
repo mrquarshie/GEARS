@@ -944,7 +944,7 @@
       "notes": "Exact name match, but thin: 3 reviews, and Google categorises as 'manufacturer' (same odd tag as Flash Motors). Listed as open 24 hours every day, which almost certainly means hours were never set — do not publish those hours."
     },
     "name": "Muta-Motors",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/muta-motors/logo/logo.jpg",
     "claimed": true,
     "verified": false,
     "specialty": "General repairs",
@@ -962,6 +962,12 @@
     "about": "Specialising in all Korean and Japanese automobiles.",
     "hours": null,
     "specialties": [
+      "Oil Change",
+      "Engine Repair",
+      "AC/Heating",
+      "Transmission Repair",
+      "Brake Repairs",
+      "Auto-Electrical",
       "Korean Vehicles",
       "Japanese Vehicles"
     ],
