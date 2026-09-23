@@ -2,7 +2,7 @@
 // only — those never reach a real link-preview crawler (see getShareUrl's
 // comment), but still matter for a browser tab/PDF-save/etc. actually
 // rendering the page, so this stays as a sane default for that case.
-const STATIC_OG_IMAGE = '/share-media-attachments/Mechanic.png';
+const STATIC_OG_IMAGE = '/Logo/logo.png';
 
 export function getStaticShareImagePath(mechanic) {
   return mechanic?.shareImage || STATIC_OG_IMAGE;

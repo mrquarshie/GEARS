@@ -16,7 +16,7 @@
 
 const PROJECT_ID = 'gears-c88f8';
 const SITE_URL = 'https://gears-one.vercel.app';
-const FALLBACK_IMAGE = `${SITE_URL}/share-media-attachments/Mechanic.png`;
+const FALLBACK_IMAGE = `${SITE_URL}/Logo/logo.png`;
 
 // Covers the crawlers that actually matter for link previews. Anything not
 // matched here is treated as a real visitor and bounced straight into the app.
