@@ -5345,6 +5345,13 @@ body {
   height: 100%;
 }
 
+.item-sheet-expand-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
 .item-sheet-image-dots {
   position: absolute;
   left: 0;

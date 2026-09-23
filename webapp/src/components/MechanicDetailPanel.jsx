@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo, Envelope } from '@phosphor-icons/react';
+import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo, Envelope, CornersOut } from '@phosphor-icons/react';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
@@ -693,6 +693,7 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicEmail, me
   const name = item.name || item.title;
   const photos = (item.images?.length ? item.images : [item.imageUrl]).filter(Boolean);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [videoExpanded, setVideoExpanded] = useState(false);
   const resolvedImage = photos[Math.min(activePhoto, photos.length - 1)]
     || (isService && mechanicSpecialty === 'Car Detailing' ? getDetailerPlaceholderImage(name) : null);
   const whatsappDigits = ORDER_WHATSAPP_NUMBER.replace(/^0/, '233');
@@ -726,7 +727,17 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicEmail, me
 
         <div className="item-sheet-image" style={{ background: bg }}>
           {item.videoUrl ? (
-            <video key={item.videoUrl} src={item.videoUrl} poster={resolvedImage} controls muted playsInline />
+            <>
+              <video key={item.videoUrl} src={item.videoUrl} poster={resolvedImage} controls muted playsInline />
+              <button
+                type="button"
+                className="item-sheet-expand-btn nav-pill nav-pill--sm"
+                onClick={(e) => { e.stopPropagation(); setVideoExpanded(true); }}
+                aria-label="Expand video"
+              >
+                <CornersOut size={16} weight="bold" />
+              </button>
+            </>
           ) : resolvedImage ? (
             <img src={resolvedImage} alt={name} />
           ) : (
@@ -787,6 +798,13 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicEmail, me
           )}
         </div>
       </div>
+      {videoExpanded && item.videoUrl && (
+        <MediaLightbox
+          items={[{ video: item.videoUrl, image: resolvedImage, title: name, price: item.price, description: item.description }]}
+          startIndex={0}
+          onClose={() => setVideoExpanded(false)}
+        />
+      )}
     </div>
   );
 }
