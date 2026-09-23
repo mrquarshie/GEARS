@@ -5118,6 +5118,7 @@ body {
   place-items: center;
   background: var(--category-color);
   overflow: hidden;
+  position: relative;
   transition: width 0.18s ease, height 0.18s ease;
 }
 
@@ -5132,6 +5133,8 @@ body {
 }
 
 .category-marker-avatar--logo img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
