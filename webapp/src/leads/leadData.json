@@ -204,7 +204,7 @@
     "ratingCount": 0,
     "ratingSum": 0,
     "about": "Spare parts dealer at Abossey Okai supplying genuine parts for a wide range of vehicles. Orders by call or WhatsApp, with an online catalog and delivery available.",
-    "hours": "TODO — not published",
+    "hours": null,
     "specialties": [
       "Engines",
       "Shaft & Shocks",
@@ -219,20 +219,14 @@
     "products": [
       {
         "name": "Shock Absorbers",
-        "description": "TODO — confirm makes/models stocked",
-        "price": "TODO",
         "imageUrl": "/mock-media/leads/uncle-fii/products/shocks.jpeg"
       },
       {
         "name": "Brake Discs & Pads",
-        "description": "TODO — confirm makes/models stocked",
-        "price": "TODO",
         "imageUrl": "/mock-media/leads/uncle-fii/products/brakes.jpeg"
       },
       {
         "name": "Drive Shafts / CV Joints",
-        "description": "TODO — confirm makes/models stocked",
-        "price": "TODO",
         "imageUrl": "/mock-media/leads/uncle-fii/products/driveshaft.jpeg"
       }
     ],
