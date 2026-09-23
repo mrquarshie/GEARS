@@ -932,7 +932,7 @@
       "notes": "Exact name match. No reviews or rating on Google yet — a new or under-promoted listing, which is itself a pitch."
     },
     "name": "Protech Auto Care",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/protech-auto-care/logo/logo.jpeg",
     "claimed": true,
     "verified": false,
     "specialty": "General repairs",
@@ -949,10 +949,43 @@
     "ratingSum": 0,
     "about": null,
     "hours": "Mon–Thu · 8:30 AM – 5:00 PM · Fri · 8:00 AM – 5:00 PM · Sat · 9:30 AM – 2:30 PM · Sun closed",
-    "specialties": [],
+    "specialties": [
+      "General Vehicle Repairs",
+      "Vehicle Maintenance & Servicing",
+      "Automotive Diagnostics",
+      "Mechanical Repairs"
+    ],
     "products": [],
-    "services": [],
-    "media": [],
+    "services": [
+      {
+        "name": "Front Hub Bearing & Brakes Replaced",
+        "videoUrl": "/mock-media/leads/protech-auto-care/services/front-hub-bearing-brakes-replaced.mp4"
+      },
+      {
+        "name": "Routine Servicing",
+        "videoUrl": "/mock-media/leads/protech-auto-care/services/routine-servicing.mp4"
+      }
+    ],
+    "media": [
+      {
+        "url": "/mock-media/leads/protech-auto-care/media/workshop-1.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      },
+      {
+        "url": "/mock-media/leads/protech-auto-care/services/front-hub-bearing-brakes-replaced.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Front Hub Bearing & Brakes Replaced"
+      },
+      {
+        "url": "/mock-media/leads/protech-auto-care/services/routine-servicing.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Routine Servicing"
+      }
+    ],
     "accountEmail": "protech-auto-care@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
