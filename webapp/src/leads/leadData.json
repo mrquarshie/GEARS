@@ -1130,7 +1130,20 @@
         "videoUrl": "/mock-media/leads/stepone-automotive/services/ford-f150-headlights-job.mp4"
       }
     ],
-    "media": [],
+    "media": [
+      {
+        "url": "/mock-media/leads/stepone-automotive/services/autoauth-fca-server-access.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Autoauth FCA Server Access"
+      },
+      {
+        "url": "/mock-media/leads/stepone-automotive/services/ford-f150-headlights-job.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Ford F150 Headlights Job"
+      }
+    ],
     "accountEmail": "stepone-automotive@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
