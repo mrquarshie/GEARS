@@ -760,14 +760,33 @@
     "about": "Full-service garage handling maintenance, repairs, bodywork, and mechanical and electronic faults.",
     "hours": "Mon–Sat · 8:00 AM – 5:00 PM · Sun closed",
     "specialties": [
-      "Maintenance",
-      "Mechanical Repair",
-      "Auto-Electrical",
-      "Bodywork"
+      "Vehicle Servicing & Repairs",
+      "Fuel-Injection Diagnostics",
+      "Fuel-Injection Purging",
+      "Autogas/LPG Installation",
+      "Fuel-Saving Systems",
+      "Fuel Pumps",
+      "Performance Parts",
+      "Bodywork & Spraying",
+      "Spray Booths",
+      "Spare Parts"
     ],
     "products": [],
     "services": [],
-    "media": [],
+    "media": [
+      {
+        "url": "/mock-media/leads/dates-limited/media/v1.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      },
+      {
+        "url": "/mock-media/leads/dates-limited/media/v2.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      }
+    ],
     "accountEmail": "dates-limited@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
