@@ -111,7 +111,7 @@
       "notes": "BMW specialist. Ghana-based but sells product worldwide. No phone or street address published — email only. Prices listed in USD, not GHS."
     },
     "name": "CM Performance",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/cm-performance/logo/logo.jpg",
     "claimed": true,
     "verified": false,
     "specialty": "Mechanic + Auto Shop",
@@ -1227,7 +1227,7 @@
       "secondaryPhone": "0302444031"
     },
     "name": "The Ghana Mechanic",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/the-ghana-mechanic/logo/logo.jpg",
     "claimed": true,
     "verified": false,
     "specialty": "General repairs",
