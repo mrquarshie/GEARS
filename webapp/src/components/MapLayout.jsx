@@ -73,17 +73,23 @@ function escapeHtml(value) {
 // everywhere on the real map — exported so other screens (e.g. the business
 // location picker, before a listing has an id to cache against) can render
 // an identical-looking marker without going through the id-keyed cache below.
-export function buildCategoryMarkerIcon(category, name, selected = false) {
-  const glyph = CATEGORY_GLYPH[category] || CATEGORY_GLYPH.mechanic;
+export function buildCategoryMarkerIcon(category, name, selected = false, logoUrl = null) {
   const safeName = escapeHtml(name || 'Gears');
   const selectedClass = selected ? ' category-marker-card--selected' : '';
+  // A business's own logo replaces the generic category glyph when it has
+  // one uploaded — makes the marker instantly recognizable as that specific
+  // business on the map instead of just "a mechanic".
+  const avatarClass = logoUrl ? ' category-marker-avatar--logo' : '';
+  const avatarContent = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" alt="" />`
+    : (CATEGORY_GLYPH[category] || CATEGORY_GLYPH.mechanic);
 
   return L.divIcon({
     className: 'category-marker-icon',
     html: `
       <div class="category-marker-card category-marker-card--${category}${selectedClass}">
         <div class="category-marker-head">
-          <div class="category-marker-avatar">${glyph}</div>
+          <div class="category-marker-avatar${avatarClass}">${avatarContent}</div>
         </div>
         <div class="category-marker-dot"></div>
         <div class="category-marker-label">${safeName}</div>
@@ -135,7 +141,7 @@ function getCategoryIcon(mechanic, selected = false) {
   if (iconCache.has(key)) return iconCache.get(key);
 
   const category = getMechanicCategory(mechanic.specialty);
-  const divIcon = buildCategoryMarkerIcon(category, mechanic.name, selected);
+  const divIcon = buildCategoryMarkerIcon(category, mechanic.name, selected, mechanic.logoUrl);
 
   iconCache.set(key, divIcon);
   return divIcon;

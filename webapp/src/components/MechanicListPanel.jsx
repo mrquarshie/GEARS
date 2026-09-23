@@ -260,6 +260,20 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   const mechanicsByName = useMemo(() => buildMechanicsByName(mechanics), [mechanics]);
 
+  // Services filter tab's options — every distinct service name actually
+  // offered by a listed business, instead of a fixed hardcoded list that
+  // drifts from what businesses really offer.
+  const availableServiceNames = useMemo(() => {
+    const names = new Set();
+    mechanics.forEach(m => {
+      (m.services || []).forEach(s => {
+        const name = (typeof s === 'string' ? s : s.name)?.trim();
+        if (name) names.add(name);
+      });
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [mechanics]);
+
   const suggestions = useMemo(() => buildSuggestionMatches(mechanics, searchTerm), [searchTerm, mechanics]);
 
   const popularProducts = useMemo(() => {
@@ -432,9 +446,27 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
   const sortedMechanics = useMemo(() => {
     if (viewMode === 'history') return displayedMechanics; // already sorted by recency
-    // Closest first; listings without a resolved distance sink to the bottom.
-    return [...displayedMechanics].sort((a, b) => (a._rawDist ?? Infinity) - (b._rawDist ?? Infinity));
-  }, [displayedMechanics, viewMode]);
+    const list = [...displayedMechanics];
+    if (currentSort === 'Top Rated') {
+      // "New" (no reviews yet) sinks below any actual rating, not to 0.
+      return list.sort((a, b) => {
+        const ra = a.rating === 'New' ? -1 : Number(a.rating) || 0;
+        const rb = b.rating === 'New' ? -1 : Number(b.rating) || 0;
+        return rb - ra;
+      });
+    }
+    if (currentSort === 'Most Popular') {
+      // visitCount is incremented every time a listing's detail view is
+      // opened (see recordItemInteraction/visit tracking) — the closest
+      // thing this app has to an impressions/analytics count.
+      return list.sort((a, b) => (b.visitCount || 0) - (a.visitCount || 0));
+    }
+    if (currentSort === 'Open Now') {
+      return list.sort((a, b) => (b.open === true ? 1 : 0) - (a.open === true ? 1 : 0));
+    }
+    // Near You (default): closest first; listings without a resolved distance sink to the bottom.
+    return list.sort((a, b) => (a._rawDist ?? Infinity) - (b._rawDist ?? Infinity));
+  }, [displayedMechanics, viewMode, currentSort]);
 
   const activeFilterCount = selectedFilters.services.length + selectedFilters.availability.length + (selectedFilters.distance ? 1 : 0) + (selectedFilters.rating ? 1 : 0);
 
@@ -818,7 +850,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
 
                           {activeFilterTab === 'Services' && (
                             <div className="filter-body">
-                              {['General Repair', 'Brakes', 'Electric Fault', 'Lights', 'Engine', 'Spraying', 'Upgrade', 'Diagnostics'].map(s => {
+                              {availableServiceNames.map(s => {
                                 const active = selectedFilters.services.includes(s);
                                 return (
                                   <button
