@@ -788,28 +788,7 @@
         "imageUrl": "/mock-media/leads/dates-limited/products/p3.jpeg"
       }
     ],
-    "services": [
-      {
-        "name": "Proven Solutions",
-        "description": "At Dates Limited, we don't just offer products; we provide proven solutions.",
-        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
-      },
-      {
-        "name": "Customer Empowerment",
-        "description": "Our mission is to empower customers to take control of their fuel efficiency and environmental impact.",
-        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
-      },
-      {
-        "name": "Driving Change",
-        "description": "At Dates Limited, we believe in the power of small changes to make a big impact.",
-        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
-      },
-      {
-        "name": "Environmental Commitment",
-        "description": "We are deeply committed to environmental sustainability. By promoting cleaner combustion and reducing harmful emissions.",
-        "imageUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg"
-      }
-    ],
+    "services": [],
     "media": [
       {
         "url": "/mock-media/leads/dates-limited/media/v1.mp4",
