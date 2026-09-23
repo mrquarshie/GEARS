@@ -1092,7 +1092,7 @@
       "notes": "Exact name match and the strongest reputation in this batch — 4.9 from 20, with detailed reviews about honesty, refusing to use low-quality parts, and fixing problems other mechanics couldn't (Honda CR-V, Toyota Camry overheating). No phone on Google — get it from TikTok."
     },
     "name": "StepOne Automotive",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/stepone-automotive/logo/logo.jpeg",
     "claimed": true,
     "verified": false,
     "specialty": "General repairs",
@@ -1103,19 +1103,33 @@
     "locationDetail": "Adenta Municipality (Plus code PV95+JJ4)",
     "lat": 5.7185822,
     "lng": -0.1411813,
-    "phone": "TODO — not on Google",
+    "phone": null,
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
     "about": "Reviews describe engine performance and overheating diagnosis on Honda and Toyota vehicles.",
     "hours": "Mon–Fri · 8:00 AM – 5:00 PM · Sat · 8:00 AM – 3:00 PM · Sun closed",
     "specialties": [
-      "Engine Diagnostics",
-      "Overheating",
-      "Engine Performance"
+      "Computer Diagnostics",
+      "ECU/ECM Programming",
+      "TCM Programming",
+      "Auto Electrical",
+      "Engine & Mechanical Repairs",
+      "Suspension & Steering",
+      "Bodywork & Panel Beating",
+      "Spray Painting"
     ],
     "products": [],
-    "services": [],
+    "services": [
+      {
+        "name": "Autoauth FCA Server Access",
+        "videoUrl": "/mock-media/leads/stepone-automotive/services/autoauth-fca-server-access.mp4"
+      },
+      {
+        "name": "Ford F150 Headlights Job",
+        "videoUrl": "/mock-media/leads/stepone-automotive/services/ford-f150-headlights-job.mp4"
+      }
+    ],
     "media": [],
     "accountEmail": "stepone-automotive@gears-ghana.com",
     "accountPassword": "Gears@2026"
