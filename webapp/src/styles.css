@@ -5132,6 +5132,12 @@ body {
   border: 1px solid rgba(17, 24, 39, 0.08);
 }
 
+/* Hide the category glyph while a logo is present — it's either the logo,
+   or (on load failure) the glyph + colored background, never both. */
+.category-marker-avatar--logo > svg {
+  display: none;
+}
+
 .category-marker-avatar--logo img {
   position: absolute;
   inset: 0;
