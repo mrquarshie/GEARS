@@ -1259,5 +1259,204 @@
     "media": [],
     "accountEmail": "the-ghana-mechanic@gears-ghana.com",
     "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 23,
+      "socialHandle": null,
+      "status": "Discovery",
+      "source": "whatsapp_referral",
+      "notes": "Referred by a contact (Davis) over WhatsApp as one of 3 artisans working out of the same spot in Kaase, Kumasi (shared location link). No Google listing or reviews — referral only."
+    },
+    "name": "Police",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Bodywork",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Kaase, Kumasi",
+    "locationDetail": "Kaase, Asokwa Municipal District, Kumasi",
+    "lat": 6.6641503,
+    "lng": -1.6084131,
+    "phone": "0243306700",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Straightener and welder.",
+    "hours": null,
+    "specialties": [
+      "Straightening",
+      "Welding"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "police-straightener-welder@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 24,
+      "socialHandle": null,
+      "status": "Discovery",
+      "source": "whatsapp_referral",
+      "notes": "Referred by a contact (Davis) over WhatsApp as one of 3 artisans working out of the same spot in Kaase, Kumasi (shared location link). No Google listing or reviews — referral only."
+    },
+    "name": "Paapa",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto-Electrical",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Kaase, Kumasi",
+    "locationDetail": "Kaase, Asokwa Municipal District, Kumasi",
+    "lat": 6.6641503,
+    "lng": -1.6084131,
+    "phone": "0553180724",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "BMW and Mercedes-Benz auto-electrician.",
+    "hours": null,
+    "specialties": [
+      "BMW",
+      "Mercedes-Benz",
+      "Auto-Electrical"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "paapa-auto-electrician@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 25,
+      "socialHandle": null,
+      "status": "Discovery",
+      "source": "whatsapp_referral",
+      "notes": "Referred by a contact (Davis) over WhatsApp as one of 3 artisans working out of the same spot in Kaase, Kumasi (shared location link). No Google listing or reviews — referral only."
+    },
+    "name": "Tetteh",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Kaase, Kumasi",
+    "locationDetail": "Kaase, Asokwa Municipal District, Kumasi",
+    "lat": 6.6641503,
+    "lng": -1.6084131,
+    "phone": "0549274260",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "BMW and Mercedes-Benz mechanic.",
+    "hours": null,
+    "specialties": [
+      "BMW",
+      "Mercedes-Benz"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "tetteh-mechanic@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 26,
+      "socialHandle": null,
+      "status": "Discovery",
+      "source": "whatsapp_referral",
+      "notes": "Referred by a contact (Davis) over WhatsApp. Located at Suame Magazine (Kumasi's large auto-parts/repair industrial area) — a different location from Police/Paapa/Tetteh's shared spot in Kaase, per a separate maps link. No Google listing or reviews — referral only."
+    },
+    "name": "Cosmos",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto-Electrical",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Suame Magazine, Kumasi",
+    "locationDetail": "Suame Magazine Industrial Area, Breman, Kumasi",
+    "lat": 6.7313270,
+    "lng": -1.6324105,
+    "phone": "0535339814",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Toyota, Honda, Hyundai and Kia electrician/mechanic.",
+    "hours": null,
+    "specialties": [
+      "Toyota",
+      "Honda",
+      "Hyundai",
+      "Kia",
+      "Auto-Electrical"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "cosmos-auto-electrician@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 27,
+      "socialHandle": "Instagram — @ohwowjnr",
+      "status": "Discovery",
+      "source": "whatsapp_referral",
+      "secondaryPhone": "0240222397",
+      "notes": "Referred by a contact (Davis) over WhatsApp, sent as a flyer/poster image. Location is the 'OH WOW HQ' Google Maps plus-code (MW7C+3R, Accra), decoded to Borteyman, Adenta — not a standard Google Business listing, so no rating/reviews yet."
+    },
+    "name": "KB Car Services",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic",
+      "parts"
+    ],
+    "area": "Borteyman, Adenta, Accra",
+    "locationDetail": "Borteyman, Adenta Municipal District, Accra",
+    "lat": 5.6626875,
+    "lng": -0.0779375,
+    "phone": "0260637476",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Dealers in all kinds of fixing services for cars, and dealers in all car parts.",
+    "hours": "24/7",
+    "specialties": [
+      "Vehicle Repairs",
+      "Auto Parts"
+    ],
+    "products": [],
+    "services": [
+      { "name": "Oil Change" },
+      { "name": "Maintenance" },
+      { "name": "Transmission Servicing" },
+      { "name": "Programming and Calibration" },
+      { "name": "Muffler and Exhaust Delete" },
+      { "name": "AC Servicing and Repairs" }
+    ],
+    "media": [
+      {
+        "url": "/mock-media/leads/kb-car-services/media/flyer.jpg",
+        "category": "Flyer",
+        "label": "Services flyer"
+      }
+    ],
+    "accountEmail": "kb-car-services@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   }
 ]
