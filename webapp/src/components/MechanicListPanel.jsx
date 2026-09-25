@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft, ArrowRight, X, Wrench, Envelope } from '@phosphor-icons/react';
+import { Target, ArrowLeft, ArrowRight, X, Wrench, Envelope, MapPinLine } from '@phosphor-icons/react';
 import {
   BookmarkIcon,
   CallIcon,
@@ -236,6 +236,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const [currentSort, setCurrentSort] = useState('Near You');
   const [isScanning, setIsScanning] = useState(false);
   const [nearMeRange, setNearMeRange] = useState(null);
+  const [noNearbyMechanics, setNoNearbyMechanics] = useState(false);
   const [bookmarkSubTab, setBookmarkSubTab] = useState('Mechanics');
   const [directionTargetId, setDirectionTargetId] = useState(null);
   // Mirrors the detail panel's collapsed peek bar: shrinks the whole list
@@ -310,7 +311,9 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     const remaining = Math.max(0, MIN_SCAN_MS - (Date.now() - scanStartRef.current));
     const timer = setTimeout(() => {
       setIsScanning(false);
-      setNearMeRange(findNearMeBucket(mechanics));
+      const bucket = findNearMeBucket(mechanics);
+      setNearMeRange(bucket);
+      if (!bucket) setNoNearbyMechanics(true);
     }, remaining);
     return () => clearTimeout(timer);
   }, [mechanics, isScanning]);
@@ -606,6 +609,14 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       document.body
     );
   }, [verificationSheet]);
+
+  const noNearbyPortal = useMemo(() => {
+    if (!noNearbyMechanics) return null;
+    return createPortal(
+      <NoNearbyMechanicsSheet onClose={() => setNoNearbyMechanics(false)} />,
+      document.body
+    );
+  }, [noNearbyMechanics]);
 
   const directionPeekTarget = directionPeek ? mechanics.find(m => m.id === directionTargetId) : null;
   if (directionPeekTarget) {
@@ -1383,6 +1394,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
         </div>
       </div>
       {verificationPortal}
+      {noNearbyPortal}
 
       {/* Portaled to document.body — .mechanic-list-panel has a persistent
           inline transform (for its swipe-to-drag sheet), and any ancestor
@@ -1442,6 +1454,29 @@ function VerificationSheet({ tier, name, onClose }) {
         </div>
         <h3 className="verification-sheet-title">{title}</h3>
         <p className="verification-sheet-desc">{desc}</p>
+        <div className="verification-sheet-footer">
+          <button className="verification-sheet-btn" onClick={onClose}>Got it</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Shown when a "Use my location" scan widens through every drive-time
+// bucket (see NEAR_ME_BUCKETS) and still finds nothing within an hour —
+// same bottom-sheet shell as VerificationSheet/FarDirectionSheet, so a
+// dead-end search reads the same way a too-far direction request does.
+function NoNearbyMechanicsSheet({ onClose }) {
+  return (
+    <div className="verification-sheet-overlay" onClick={onClose}>
+      <div className="verification-sheet" onClick={e => e.stopPropagation()}>
+        <div className="verification-sheet-icon">
+          <MapPinLine size={44} weight="duotone" color="#145E42" />
+        </div>
+        <h3 className="verification-sheet-title">No mechanics nearby yet</h3>
+        <p className="verification-sheet-desc">
+          We couldn't find any mechanics within an hour's drive of your location. Try again later or search a different area.
+        </p>
         <div className="verification-sheet-footer">
           <button className="verification-sheet-btn" onClick={onClose}>Got it</button>
         </div>
