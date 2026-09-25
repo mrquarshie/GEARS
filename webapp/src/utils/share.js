@@ -8,6 +8,11 @@ export function getStaticShareImagePath(mechanic) {
   return mechanic?.shareImage || STATIC_OG_IMAGE;
 }
 
+// Canonical public domain — shared links always point here regardless of
+// which host the app happens to be running on (e.g. the Vercel preview
+// domain), so every share ends up on the custom domain, not gears-one.vercel.app.
+const CANONICAL_ORIGIN = 'https://www.gears.live';
+
 // Routes through /share/:id (-> api/share/[id].js) instead of straight to
 // the app's own ?mechanic=<id> URL. That function detects link-preview
 // crawlers (WhatsApp, Twitter/X, Facebook, iMessage, etc. — none of which
@@ -16,7 +21,7 @@ export function getStaticShareImagePath(mechanic) {
 // Client-side <Helmet> tags alone can't do this — crawlers only ever see
 // the raw HTML response, never whatever React sets after the fact.
 export function getShareUrl(mechanic) {
-  return `${window.location.origin}/share/${encodeURIComponent(mechanic.id)}`;
+  return `${CANONICAL_ORIGIN}/share/${encodeURIComponent(mechanic.id)}`;
 }
 
 // Opens the OS share sheet with just the business link and a short text

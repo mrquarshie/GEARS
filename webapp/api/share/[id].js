@@ -15,7 +15,7 @@
 // no service account/admin credentials needed.
 
 const PROJECT_ID = 'gears-c88f8';
-const SITE_URL = 'https://gears-one.vercel.app';
+const SITE_URL = 'https://www.gears.live';
 const FALLBACK_IMAGE = `${SITE_URL}/Logo/logo.png`;
 
 // Covers the crawlers that actually matter for link previews. Anything not
