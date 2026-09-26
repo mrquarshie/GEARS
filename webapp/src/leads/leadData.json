@@ -811,7 +811,7 @@
       "notes": "Google name is 'ZEFIX ECOWAS LTD', not 'Zefix Auto parts' — confirm it's the same business. Tagged as parts store AND repair. Reviews repeatedly mention Toyota and Mercedes parts and a staff member called Michael. Rating 4.5 from 13."
     },
     "name": "Zefix Auto Parts",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/zefix-auto-parts/logo/logo.jpg",
     "claimed": true,
     "verified": false,
     "specialty": "Auto Parts",
@@ -834,13 +834,32 @@
     "about": "Genuine spare parts supplier with repair services, with Toyota and Mercedes-Benz parts featuring heavily.",
     "hours": "Mon–Fri · 8:00 AM – 5:00 PM · Sat · 10:00 AM – 2:00 PM · Sun closed",
     "specialties": [
-      "Toyota Parts",
-      "Mercedes-Benz Parts",
-      "Genuine Parts"
+      "Automotive Spare Parts",
+      "OEM Parts",
+      "Aftermarket Parts",
+      "Engine Parts",
+      "Brake Systems",
+      "Tyres & Rims",
+      "Filters",
+      "Engine Oils",
+      "Parts Sourcing & Fitment Verification"
     ],
     "products": [],
     "services": [],
-    "media": [],
+    "media": [
+      {
+        "url": "/mock-media/leads/zefix-auto-parts/media/workshop-1.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      },
+      {
+        "url": "/mock-media/leads/zefix-auto-parts/media/workshop-2.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      }
+    ],
     "accountEmail": "zefix-auto-parts@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
