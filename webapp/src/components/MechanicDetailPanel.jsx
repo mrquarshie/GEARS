@@ -234,10 +234,10 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
       <div className={`mechanic-detail-overlay ${variant === 'business' ? 'mechanic-detail-overlay--business' : ''}`} onClick={onClose}></div>
       <div className={`mechanic-detail-panel ${variant === 'business' ? 'mechanic-detail-panel--business' : ''}`}>
         <Helmet>
-          <title>{mechanic.name} - Mechanic in {mechanic.area} | Gears</title>
-          <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}. ${mechanic.phone ? `Call ${mechanic.phone}.` : mechanic.email ? `Email ${mechanic.email}.` : ''}`} />
+          <title>{`${mechanic.name} - Mechanic in ${mechanic.area || 'Ghana'} | Gears`}</title>
+          <meta name="description" content={`Contact ${mechanic.name} in ${mechanic.area || 'Ghana'}. Specialty: ${mechanic.specialty || 'General Repairs'}. ${mechanic.phone ? `Call ${mechanic.phone}.` : mechanic.email ? `Email ${mechanic.email}.` : ''}`} />
           <meta property="og:title" content={`${mechanic.name} | Gears`} />
-          <meta property="og:description" content={`Contact ${mechanic.name} in ${mechanic.area}. Specialty: ${mechanic.specialty || 'General Repairs'}.`} />
+          <meta property="og:description" content={`Contact ${mechanic.name} in ${mechanic.area || 'Ghana'}. Specialty: ${mechanic.specialty || 'General Repairs'}.`} />
           <meta property="og:image" content={`${window.location.origin}${getStaticShareImagePath(mechanic)}`} />
           <meta property="og:url" content={getShareUrl(mechanic)} />
           <script type="application/ld+json">

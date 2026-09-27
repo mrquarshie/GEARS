@@ -1477,5 +1477,288 @@
     ],
     "accountEmail": "kb-car-services@gears-ghana.com",
     "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 28,
+      "socialHandle": "TikTok — @johaniautocool",
+      "status": "Discovery",
+      "source": "imported_web",
+      "secondaryPhone": "0302981664",
+      "notes": "Confirmed via their own website (johaniautocool.com) — real business with an Accra workshop (Cornerstone St, Kokomlemle) and a second branch in Tamale (Behind Toyota Ghana, Techiman Rd). Hours are ambiguous: the site states both '24 hours' and 'Mon-Sat 8am-5pm, Sun closed' in different sections — left unset rather than guessing which is current."
+    },
+    "name": "Johani Auto Cool Ltd",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto AC & Repair",
+    "categories": [
+      "mechanic"
+    ],
+    "area": "Kokomlemle, Accra",
+    "locationDetail": "Cornerstone Street, Kokomlemle, Accra",
+    "lat": 5.5753786,
+    "lng": -0.2159083,
+    "phone": "0240579099",
+    "email": "info@johaniautocool.com",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Car AC repair specialist also handling general mechanical work — oil changes, brakes, suspension, and engine diagnostics. Also operates a branch in Tamale.",
+    "hours": null,
+    "specialties": [
+      "AC Diagnostics",
+      "AC Repair & Servicing",
+      "AC Installation",
+      "Oil Change",
+      "Brake Repair",
+      "Suspension",
+      "Engine Diagnostics"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "johani-auto-cool@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 29,
+      "socialHandle": "TikTok — @richy.ray.auto.pr",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "notes": "No reliable match found. The closest web result under a similar name ('Ray's Auto Polishes', a detailing studio) has a different business type and no confirmed link to this handle, so it was not attached — would rather leave this blank than misattribute another business's details."
+    },
+    "name": "Richy Ray Auto Pro",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": null,
+    "locationDetail": null,
+    "lat": null,
+    "lng": null,
+    "phone": null,
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "richy-ray-auto-pro@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 30,
+      "socialHandle": "TikTok — @carmodsgh",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "notes": "TikTok account confirmed to exist and be active — posts car-modification builds (e.g. a 2012 Chevy Cruze cosmetic/performance build for ~GHC 5000: intake, exhaust, lights, interior). No street address or phone found; may operate informally/by appointment rather than from a fixed shopfront."
+    },
+    "name": "Car Mods Gh",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": null,
+    "locationDetail": null,
+    "lat": null,
+    "lng": null,
+    "phone": null,
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Car modification and customization work — cosmetic and performance builds (exhaust, intake, lighting, interior).",
+    "hours": null,
+    "specialties": [
+      "Car Modification",
+      "Performance Upgrades",
+      "Custom Builds"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "car-mods-gh@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 31,
+      "socialHandle": "TikTok — @automobiles.gh.lt",
+      "status": "Discovery",
+      "source": "imported_web",
+      "matchConfidence": "medium",
+      "notes": "Matched to 'Automobiles Ghana Limited', North Legon, Accra — an auto parts store promoting genuine/original parts. Name and handle line up well, but this wasn't confirmed directly from the business's own TikTok bio, so treat as medium confidence. An email (Promoteallgh@gmail.com) turned up in the same search but looked too generic/unrelated to attach with any confidence — left off."
+    },
+    "name": "Automobiles Gh Ltd",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto Parts",
+    "categories": [
+      "parts"
+    ],
+    "area": "North Legon, Accra",
+    "locationDetail": "North Legon, Accra",
+    "lat": 5.6704484,
+    "lng": -0.1816338,
+    "phone": "0240135139",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Automotive parts store promoting the use of genuine, original parts.",
+    "hours": null,
+    "specialties": [
+      "Genuine Parts",
+      "Auto Parts"
+    ],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "automobiles-gh@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 32,
+      "socialHandle": "TikTok — @dr.automobile.wor",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "notes": "No reliable web presence found under this name — not in Google, OSM, or business directories checked."
+    },
+    "name": "Dr Automobile Workshop",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "General repairs",
+    "categories": [
+      "mechanic"
+    ],
+    "area": null,
+    "locationDetail": null,
+    "lat": null,
+    "lng": null,
+    "phone": null,
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "dr-automobile-workshop@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 33,
+      "socialHandle": "TikTok — @acasima",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "notes": "No reliable web presence found under this name — not in Google, OSM, or business directories checked."
+    },
+    "name": "Acasima",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto Parts",
+    "categories": [
+      "parts"
+    ],
+    "area": null,
+    "locationDetail": null,
+    "lat": null,
+    "lng": null,
+    "phone": null,
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "acasima@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 34,
+      "socialHandle": "TikTok — @magblog2",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "classificationFlag": "UNCONFIRMED BUSINESS TYPE — the handle 'Magazine Blog' and general search results suggest this may be a content/blog account rather than an actual auto shop. Worth confirming it's a real business before treating it as a normal listing.",
+      "notes": "TikTok account exists but its content/focus couldn't be confirmed as automotive from search results alone."
+    },
+    "name": "Magazine Blog",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": null,
+    "categories": [
+      "mechanic"
+    ],
+    "area": null,
+    "locationDetail": null,
+    "lat": null,
+    "lng": null,
+    "phone": null,
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "magazine-blog@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 35,
+      "socialHandle": "TikTok — @larweh_carspareparts",
+      "status": "Discovery",
+      "source": "tiktok_only",
+      "notes": "No reliable web presence found under this name — not in Google, OSM, or business directories checked."
+    },
+    "name": "Larweh Car Spare Parts",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Auto Parts",
+    "categories": [
+      "parts"
+    ],
+    "area": null,
+    "locationDetail": null,
+    "lat": null,
+    "lng": null,
+    "phone": null,
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": null,
+    "hours": null,
+    "specialties": [],
+    "products": [],
+    "services": [],
+    "media": [],
+    "accountEmail": "larweh-car-spare-parts@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   }
 ]

@@ -29,17 +29,20 @@ service cloud.firestore {
       allow read: if canReadMechanic(resource.data);
 
       // Only authenticated users can submit a new mechanic
-      // Validates required fields are non-empty strings
-      // A business needs a phone OR an email — some (e.g. an email-only
-      // supplier) don't want calls/a phone number published at all.
+      // Validates name is a non-empty string; area/phone/email are each
+      // optional (null is fine — a lead with no confirmed location or
+      // contact yet still gets a listing) but can't be a blank string,
+      // so nobody writes a fake placeholder just to satisfy this rule.
       // "verified: true" can only be set by an admin account — everyone else
       // starts at most "claimed" and needs Gears staff to flip it manually.
       allow create: if request.auth != null
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
-        && request.resource.data.area is string
-        && request.resource.data.area.size() > 0
-        && ((request.resource.data.phone is string && request.resource.data.phone.size() > 0)
+        && (!('area' in request.resource.data) || request.resource.data.area == null
+            || (request.resource.data.area is string && request.resource.data.area.size() > 0))
+        && (!('phone' in request.resource.data) || request.resource.data.phone == null
+            || (request.resource.data.phone is string && request.resource.data.phone.size() > 0))
+        && (!('email' in request.resource.data) || request.resource.data.email == null
             || (request.resource.data.email is string && request.resource.data.email.size() > 0))
         && (!('verified' in request.resource.data) || request.resource.data.verified != true || isAdminEmail())
         && (!('lat' in request.resource.data) || request.resource.data.lat == null || request.resource.data.lat is number)
