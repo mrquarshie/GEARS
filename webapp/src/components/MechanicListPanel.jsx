@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft, ArrowRight, X, Wrench, Envelope, MapPinLine } from '@phosphor-icons/react';
+import { Target, ArrowLeft, ArrowRight, Wrench, Envelope, MapPinLine } from '@phosphor-icons/react';
+import CloseButton from './CloseButton';
 import {
   BookmarkIcon,
   CallIcon,
@@ -645,13 +646,10 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 <Envelope size={16} />
               </button>
             )}
-            <button
+            <CloseButton
               className="detail-collapsed-close"
-              aria-label="Close"
               onClick={() => { setDirectionTargetId(null); onDirection(null); setDirectionPeek(false); }}
-            >
-              <X size={18} />
-            </button>
+            />
           </div>
         </div>
         {verificationPortal}

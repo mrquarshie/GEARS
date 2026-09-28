@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Pencil, Trash, Plus, Wrench, CaretLeft, CaretRight, WhatsappLogo, Envelope, CornersOut } from '@phosphor-icons/react';
+import CloseButton from './CloseButton';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
@@ -189,9 +190,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
               <Envelope size={16} />
             </button>
           )}
-          <button className="detail-collapsed-close" onClick={onClose} aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
-          </button>
+          <CloseButton className="detail-collapsed-close" onClick={onClose} />
         </div>
       </div>
     );
@@ -245,9 +244,7 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
           </script>
         </Helmet>
 
-        <button className="close-panel-btn" onClick={onClose} aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
-        </button>
+        <CloseButton className="close-panel-btn" onClick={onClose} />
 
         {variant === 'business' && (
           <div className="detail-business-heading">View Business Profile</div>
@@ -721,9 +718,7 @@ export function ItemSheet({ item, mechanicName, mechanicPhone, mechanicEmail, me
   return (
     <div className="item-sheet-overlay" onClick={onClose}>
       <div className="item-sheet" onClick={(e) => e.stopPropagation()}>
-        <button className="item-sheet-close nav-pill nav-pill--light nav-pill--sm" onClick={onClose} aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg>
-        </button>
+        <CloseButton className="item-sheet-close" onClick={onClose} />
 
         <div className="item-sheet-image" style={{ background: bg }}>
           {item.videoUrl ? (
@@ -846,7 +841,7 @@ function MediaLightbox({ items, startIndex, onClose }) {
   return (
     <div className="media-lightbox-overlay" onClick={onClose}>
       <div className="media-lightbox-card" onClick={(e) => e.stopPropagation()}>
-        <button className="media-lightbox-close nav-pill nav-pill--sm" onClick={onClose} aria-label="Close"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33073 15.8334L4.16406 14.6667L8.83073 10.0001L4.16406 5.33341L5.33073 4.16675L9.9974 8.83341L14.6641 4.16675L15.8307 5.33341L11.1641 10.0001L15.8307 14.6667L14.6641 15.8334L9.9974 11.1667L5.33073 15.8334Z" fill="#1D1B20"/></svg></button>
+        <CloseButton className="media-lightbox-close" onClick={onClose} />
         <div className="media-lightbox-media" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {item.video ? (
             <video key={item.video} src={item.video} poster={item.image} controls muted playsInline />

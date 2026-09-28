@@ -3,6 +3,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query } from 'firebase/firestore';
 import { LocationPicker, TILE_URL, TILE_SUBDOMAINS, TILE_ATTRIBUTION, getMechanicCategory } from './MapLayout';
 import MechanicDetailPanel from './MechanicDetailPanel';
+import CloseButton from './CloseButton';
 import {
   List,
   ArrowsLeftRight,
@@ -914,9 +915,7 @@ function BizCatalogTab({ mechanic, user, show, pendingAdd, onAddHandled, onOpenA
           <div className="biz-catalog-page-card">
           <div className="biz-catalog-page-header">
             <h1>{editingItem ? `Edit ${kindLabel}` : `Add New ${kindLabel}`}</h1>
-            <button type="button" className="biz-catalog-page-close" onClick={resetForm} aria-label="Close">
-              <X size={20} />
-            </button>
+            <CloseButton className="biz-catalog-page-close" onClick={resetForm} />
           </div>
           <form className="biz-catalog-page-form" onSubmit={handlePreview}>
             <div className="biz-catalog-page-body business-fields">
@@ -1240,9 +1239,7 @@ function BizMediaTab({ mechanic, user, show, pendingAdd, onAddHandled }) {
         <div className="biz-catalog-form-overlay" onClick={() => setShowForm(false)}>
           <form className="biz-catalog-form business-fields" onSubmit={handleAdd} onClick={(e) => e.stopPropagation()}>
             <div className="mobile-drag-handle"></div>
-            <button type="button" className="biz-catalog-form-close" onClick={() => setShowForm(false)} aria-label="Close">
-              <X size={16} />
-            </button>
+            <CloseButton className="biz-catalog-form-close" onClick={() => setShowForm(false)} />
             <h4 className="biz-catalog-form-title">Add Photo</h4>
             <div className="biz-catalog-form-scroll">
               <label>Photo

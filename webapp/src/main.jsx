@@ -40,6 +40,7 @@ import Sidebar from './components/Sidebar';
 import MapLayout, { TILE_URL as BIZ_TILE_URL, TILE_SUBDOMAINS as BIZ_TILE_SUBDOMAINS, TILE_ATTRIBUTION as BIZ_TILE_ATTRIBUTION, LocationPicker } from './components/MapLayout';
 import MechanicListPanel from './components/MechanicListPanel';
 import MechanicDetailPanel from './components/MechanicDetailPanel';
+import CloseButton from './components/CloseButton';
 import SearchPanel from './components/SearchPanel';
 import NotificationsPanel from './components/NotificationsPanel';
 import BusinessDashboard from './components/BusinessDashboard';
@@ -176,7 +177,7 @@ function RateModal({ mechanic, user, close, onRated, show, openAuth }) {
     <div className="rate-modal-overlay" role="dialog" aria-modal="true" onClick={close}>
       <div className="rate-modal-content" onClick={e => e.stopPropagation()}>
         <div className="mobile-drag-handle"></div>
-        <button type="button" className="rate-modal-close" onClick={close} aria-label="Close">×</button>
+        <CloseButton className="rate-modal-close" onClick={close} />
 
         <div className="rate-modal-scroll">
           <h2 className="rate-modal-title">Rate {mechanic.name}</h2>
@@ -449,9 +450,7 @@ function AuthModal({ close, onSuccess, reason }) {
   return (
     <div className="overlay" role="dialog" aria-modal="true">
       <div className={`auth-modal-content ${isBusiness ? 'auth-modal-content--business' : ''}`}>
-        <button type="button" className="auth-close" onClick={close} aria-label="Close">
-          <X size={18} />
-        </button>
+        <CloseButton className="auth-close" onClick={close} />
 
         <div className={`auth-header-graphics ${keyboardOpen ? 'keyboard-open' : ''}`}>
           <img className="auth-deco auth-deco-big" src={authImgCar} alt="" />
