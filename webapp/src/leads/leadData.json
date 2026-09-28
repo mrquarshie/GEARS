@@ -1707,8 +1707,8 @@
       "leadNumber": 33,
       "socialHandle": "TikTok — @acasima",
       "status": "Discovery",
-      "source": "tiktok_only",
-      "notes": "No reliable web presence found under this name — not in Google, OSM, or business directories checked."
+      "source": "tiktok_bio",
+      "notes": "Confirmed real via the TikTok bio itself: 'Genuine Auto Parts', Abossey Okai Accra, Nationwide Delivery, WhatsApp 0241714397. Auto parts shop, not a repair mechanic."
     },
     "name": "Acasima",
     "logoUrl": null,
@@ -1718,20 +1718,29 @@
     "categories": [
       "parts"
     ],
-    "area": null,
-    "locationDetail": null,
-    "lat": null,
-    "lng": null,
-    "phone": null,
+    "area": "Abossey Okai, Accra",
+    "locationDetail": "Abossey Okai, Accra",
+    "lat": 5.5591011,
+    "lng": -0.2336242,
+    "phone": "0241714397",
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
-    "about": null,
+    "about": "Genuine auto parts, with nationwide delivery.",
     "hours": null,
-    "specialties": [],
+    "specialties": [
+      "Genuine Parts"
+    ],
     "products": [],
     "services": [],
-    "media": [],
+    "media": [
+      {
+        "url": "/mock-media/leads/acasima/media/workshop-1.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      }
+    ],
     "accountEmail": "acasima@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
@@ -1784,7 +1793,8 @@
       "status": "Discovery",
       "source": "tiktok_only",
       "googlePlaceId": "ChIJ3_kYewB_IBARieKN_ssue0s",
-      "notes": "Not independently confirmed — no matching business found in a separate search pass, and the Google Place ID couldn't be verified directly (Maps place pages don't expose data to a plain fetch). Published on the strength of a second research pass; area/phone should be treated as lower-confidence than most other listings. Coordinates are a Tema town-centroid approximation, not the exact shop location."
+      "secondaryPhone": "0550970378",
+      "notes": "Phone numbers confirmed directly from the TikTok bio: 'Number Tema 0558514550' and 'Afariwa: 0550970378'. Auto parts shop only — not a repair mechanic, per the business owner."
     },
     "name": "Larweh Car Spare Parts",
     "logoUrl": "/mock-media/leads/larweh-car-spare-parts/logo/logo.jpeg",
@@ -1792,18 +1802,17 @@
     "verified": false,
     "specialty": "Car spare parts",
     "categories": [
-      "parts",
-      "mechanic"
+      "parts"
     ],
     "area": "Tema, Greater Accra",
     "locationDetail": "M232+4JC, Tema, Ghana",
     "lat": 5.6596409,
     "lng": -0.0096771,
-    "phone": "0558033640",
+    "phone": "0558514550",
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
-    "about": "Automotive spare-parts business in Tema, also listed as an auto repair shop.",
+    "about": "Automotive spare-parts business in Tema.",
     "hours": "Mon–Sat · 6:30 AM – 5:30 PM · Sun closed",
     "specialties": [
       "Car Spare Parts"

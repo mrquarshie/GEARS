@@ -2084,6 +2084,9 @@ body {
 }
 
 .detail-scroll {
+  /* Desktop panel is a fixed top:24/bottom:24 box (see .mechanic-detail-panel),
+     so this fills the remaining space same as always; the mobile media
+     query below overrides this to hug content instead. */
   flex: 1;
   overflow-y: auto;
 }
@@ -4597,16 +4600,32 @@ body {
   .mechanic-detail-panel {
     position: fixed;
     top: calc(var(--vh, 1vh) * 7);
-    /* Explicit height from --vh (not `bottom: 0`) so this panel shrinks
-       to clear an expanded Safari toolbar on its own, independent of
-       #root's now-stable box — see the #root comment above. */
-    height: calc(var(--vh, 1vh) * 93);
+    /* The base (desktop) rule sets `bottom: 24px` — left in place here,
+       both top and bottom would be definite and force the box to stretch
+       to fill that exact span regardless of max-height. `bottom: auto`
+       hands sizing back to content + max-height. */
+    bottom: auto;
+    /* max-height (not a fixed height) so the sheet hugs whatever the active
+       tab actually contains — a short Reviews list stays short instead of
+       stretching into a near-full-screen sheet with empty scroll space
+       below it — while still capping at a sane ceiling (clearing an
+       expanded Safari toolbar) for tabs with enough content to need it. */
+    max-height: calc(var(--vh, 1vh) * 93);
     left: 16px;
     right: 16px;
     width: auto;
     border-radius: 24px 24px 0 0;
     z-index: 10001;
     animation: slideUpMobile 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* flex-basis: auto (not a bare `flex: 1`) so this sizes to its actual
+     content first — a short tab (e.g. "No reviews yet") keeps the whole
+     sheet short instead of stretching to fill the panel's max-height with
+     empty space. flex-shrink still lets it give way and scroll
+     (overflow-y) when a tab's content is tall enough to hit that cap. */
+  .detail-scroll {
+    flex: 0 1 auto;
   }
 
   @keyframes slideUpMobile {
