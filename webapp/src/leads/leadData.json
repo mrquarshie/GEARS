@@ -1688,7 +1688,14 @@
     "ratingSum": 0,
     "about": null,
     "hours": null,
-    "specialties": [],
+    "specialties": [
+      "Engine Repairs & Servicing",
+      "Computer Diagnostics",
+      "Auto Electrical Repairs",
+      "Transmission Repairs",
+      "Suspension & Braking Systems",
+      "Vehicle Maintenance"
+    ],
     "products": [],
     "services": [],
     "media": [
