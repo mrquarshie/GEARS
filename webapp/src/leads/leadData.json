@@ -1800,7 +1800,7 @@
     "logoUrl": "/mock-media/leads/larweh-car-spare-parts/logo/logo.jpeg",
     "claimed": true,
     "verified": false,
-    "specialty": "Car spare parts",
+    "specialty": "Auto Parts",
     "categories": [
       "parts"
     ],
@@ -1815,7 +1815,13 @@
     "about": "Automotive spare-parts business in Tema.",
     "hours": "Mon–Sat · 6:30 AM – 5:30 PM · Sun closed",
     "specialties": [
-      "Car Spare Parts"
+      "Engine & Transmission Parts",
+      "Body Parts & Panels",
+      "Headlights & Taillights",
+      "Brake, Suspension & Steering Components",
+      "Electrical Components & Sensors",
+      "Radiators & Cooling-System Parts",
+      "Used/Imported Vehicle Parts"
     ],
     "products": [],
     "services": [],
