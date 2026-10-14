@@ -1714,10 +1714,10 @@
       "leadNumber": 33,
       "socialHandle": "TikTok — @acasima",
       "status": "Discovery",
-      "source": "tiktok_bio",
-      "notes": "Confirmed real via the TikTok bio itself: 'Genuine Auto Parts', Abossey Okai Accra, Nationwide Delivery, WhatsApp 0241714397. Auto parts shop, not a repair mechanic."
+      "source": "owner_provided",
+      "notes": "Confirmed real via the TikTok bio ('Genuine Auto Parts', Abossey Okai Accra, Nationwide Delivery, WhatsApp 0241714397) and a flyer/poster the business shared directly, which gives the real brand name 'Akasima Auto Parts' (the TikTok handle @acasima is a slight spelling variant), a more precise location (near Small Mosque, Abossey Okai), and the product lines in stock. Auto parts shop, not a repair mechanic."
     },
-    "name": "Acasima",
+    "name": "Akasima Auto Parts",
     "logoUrl": null,
     "claimed": true,
     "verified": false,
@@ -1726,16 +1726,20 @@
       "parts"
     ],
     "area": "Abossey Okai, Accra",
-    "locationDetail": "Abossey Okai, Accra",
+    "locationDetail": "Near Small Mosque, Abossey Okai, Accra",
     "lat": 5.5591011,
     "lng": -0.2336242,
     "phone": "0241714397",
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
-    "about": "Genuine auto parts, with nationwide delivery.",
+    "about": "Quality auto parts for all Japanese, Korean and other car models, with nationwide delivery.",
     "hours": null,
     "specialties": [
+      "Suspension & Steering Parts",
+      "Shock Absorbers",
+      "Ball Joints",
+      "Tie Rod Ends",
       "Genuine Parts"
     ],
     "products": [],
@@ -1746,6 +1750,11 @@
         "type": "video",
         "category": "Workshop",
         "label": "Workshop video"
+      },
+      {
+        "url": "/mock-media/leads/acasima/media/flyer.png",
+        "category": "Flyer",
+        "label": "New arrivals flyer"
       }
     ],
     "accountEmail": "acasima@gears-ghana.com",
