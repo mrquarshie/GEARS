@@ -392,7 +392,7 @@ function OverviewTab({ mechanic, category, onRate }) {
         <ClockIcon size={16} />
         <div className="info-row-content">
           <span className="info-row-label">Opening days</span>
-          <p className="info-row-value">{mechanic.hours || (mechanic.open ? 'Open Now' : 'Closed')}</p>
+          <p className="info-row-value">{mechanic.hours || 'Mon–Sat · 8:00 AM – 5:00 PM'}</p>
         </div>
       </div>
 
