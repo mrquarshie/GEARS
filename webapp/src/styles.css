@@ -4597,9 +4597,13 @@ body {
        below it — while still capping at a sane ceiling (clearing an
        expanded Safari toolbar) for tabs with enough content to need it. */
     max-height: calc(var(--vh, 1vh) * 93);
-    left: 16px;
-    right: 16px;
-    width: auto;
+    /* Full screen width, edge to edge — always, regardless of how much
+       content the active tab has (that's what max-height above is for).
+       This used to inset 16px on each side, which on a real device left
+       a visibly uneven gap down the right edge. */
+    left: 0;
+    right: 0;
+    width: 100%;
     border-radius: 24px 24px 0 0;
     z-index: 10001;
     animation: slideUpMobile 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
