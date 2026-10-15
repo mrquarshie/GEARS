@@ -1523,23 +1523,7 @@
       "Exhaust & Emissions",
       "Oil Change & General Servicing"
     ],
-    "products": [
-      {
-        "name": "Genuine AC Parts"
-      },
-      {
-        "name": "AC Compressors"
-      },
-      {
-        "name": "AC Filters"
-      },
-      {
-        "name": "AC Cooling Units"
-      },
-      {
-        "name": "AC Condensers"
-      }
-    ],
+    "products": [],
     "services": [],
     "media": [],
     "accountEmail": "johani-auto-cool@gears-ghana.com",
