@@ -251,7 +251,9 @@
       "socialHandle": "https://snapchat.com/t/6MPlmzUC",
       "status": "Discovery",
       "website": "https://dtguyspro.com",
-      "notes": "Site is a client-side rendered PWA — fetch returns only the shell, no content. Everything below comes from meta tags. No location, phone, hours or prices are exposed without running the app. Offers BOTH mobile and drive-in service, plus retail products — three revenue lines, which affects how the listing should be structured."
+      "googlePlaceId": "ChIJ325cjaddQwMR4m6GXmB1kwM",
+      "matchConfidence": "medium",
+      "notes": "Site is a client-side rendered PWA — fetch returns only the shell, no content, so earlier details came from meta tags only. A Google Maps listing for 'DT GUYS PRO' in Kumasi (car wash/auto detailing) is a likely match and fills in real location/phone/hours/rating, but the connection to this specific social account hasn't been independently confirmed. Offers BOTH mobile and drive-in service, plus retail products — three revenue lines. Coordinates are a Kumasi city-centroid approximation (the street address didn't resolve via geocoding), not the exact shop location."
     },
     "name": "DT Guys Pro",
     "logoUrl": null,
@@ -265,52 +267,29 @@
       "mobile",
       "drive-in"
     ],
-    "area": "TODO",
-    "locationDetail": "TODO — drive-in location not published on site shell",
-    "lat": null,
-    "lng": null,
-    "phone": "TODO",
-    "rating": "New",
-    "ratingCount": 0,
-    "ratingSum": 0,
-    "about": "Car wash and detailing offering both mobile service and drive-in appointments, alongside a range of car care products for sale.",
-    "hours": "TODO",
+    "area": "Kumasi",
+    "locationDetail": "13 Boakye Asaamu Avenue, Kumasi, Ghana",
+    "lat": 6.6985605,
+    "lng": -1.6233086,
+    "phone": "0545528657",
+    "rating": "5.0",
+    "ratingCount": 4,
+    "ratingSum": 20,
+    "about": "Car care business offering car washing and detailing, with drive-in and mobile service options.",
+    "hours": "Mon · 8:00 AM – 7:00 PM · Tue–Sat · 8:00 AM – 7:30 PM · Sun · 8:00 AM – 5:00 PM",
     "specialties": [
-      "Mobile Wash",
-      "Drive-In Detailing",
-      "Car Care Products"
+      "Vehicle Detailing",
+      "Premium Car Washing",
+      "Mobile Car Wash",
+      "Drive-In Car Care"
     ],
-    "packages": [
-      {
-        "name": "Mobile Wash",
-        "description": "TODO — confirm what's included and coverage area",
-        "duration": "TODO",
-        "price": "TODO",
-        "imageUrl": "/mock-media/shock-absorber.jpg"
-      },
-      {
-        "name": "Drive-In Service",
-        "description": "TODO — confirm packages offered on site",
-        "duration": "TODO",
-        "price": "TODO",
-        "imageUrl": "/mock-media/timing-belt-kit.jpg"
-      }
+    "products": [],
+    "services": [
+      { "name": "Car Washing" },
+      { "name": "Auto Detailing" },
+      { "name": "Mobile Vehicle Cleaning" }
     ],
-    "products": [
-      {
-        "name": "Car Wash Supplies",
-        "description": "Professional-grade soaps, waxes, and cleaning products for the perfect wash.",
-        "price": "",
-        "imageUrl": "/mock-media/brake-pad.jpg"
-      }
-    ],
-    "media": [
-      {
-        "url": "/mock-media/radiator.jpg",
-        "category": "Workshop",
-        "label": "Workshop (stock placeholder)"
-      }
-    ],
+    "media": [],
     "accountEmail": "dt-guys-pro@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
