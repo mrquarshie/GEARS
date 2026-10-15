@@ -1609,7 +1609,7 @@ body {
 .card-avatar {
   width: 32px;
   height: 32px;
-  background: var(--forest);
+  background: var(--ink);
   border-radius: 8px;
   outline: 1px solid rgba(255, 255, 255, 0.3);
   outline-offset: -1px;
