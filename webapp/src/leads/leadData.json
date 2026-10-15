@@ -1485,7 +1485,7 @@
       "status": "Discovery",
       "source": "imported_web",
       "secondaryPhone": "0302981664",
-      "notes": "Confirmed via their own website (johaniautocool.com) — real business with an Accra workshop (Cornerstone St, Kokomlemle) and a second branch in Tamale (Behind Toyota Ghana, Techiman Rd). A second research pass supplied a rating (4.8 from 106), a more specific hours claim (Mon–Sat 6am–5:30pm, Sun closed — the site itself had conflicting '24 hours' vs 'Mon-Sat 8am-5pm' text, so this is taken as the more precise source), and additional services (ECU coding/programming, key programming) not mentioned on the site itself. Phone number matches across both sources."
+      "notes": "Confirmed via their own website (johaniautocool.com) — real business with an Accra workshop (Cornerstone St, Kokomlemle) and a second branch in Tamale (Behind Toyota Ghana, Techiman Rd). A second research pass supplied a rating (4.8 from 106) and additional services (ECU coding/programming, key programming) not mentioned on the site itself. Phone number matches across both sources. Hours confirmed directly by the business: open 24 hours — resolves the site's earlier conflicting '24 hours' vs 'Mon-Sat 8am-5pm' text in favor of 24 hours."
     },
     "name": "Johani Auto Cool Ltd",
     "logoUrl": null,
@@ -1505,7 +1505,7 @@
     "ratingCount": 106,
     "ratingSum": 508,
     "about": "Full-service automotive air-conditioning and general mechanical repair business operating in Accra and Tamale.",
-    "hours": "Mon–Sat · 6:00 AM – 5:30 PM · Sun closed",
+    "hours": "24/7",
     "specialties": [
       "AC Diagnostics",
       "AC Leakage Detection",
