@@ -256,7 +256,7 @@
       "notes": "Site is a client-side rendered PWA — fetch returns only the shell, no content, so earlier details came from meta tags only. A Google Maps listing for 'DT GUYS PRO' in Kumasi (car wash/auto detailing) is a likely match and fills in real location/phone/hours/rating, but the connection to this specific social account hasn't been independently confirmed. Offers BOTH mobile and drive-in service, plus retail products — three revenue lines. Coordinates are a Kumasi city-centroid approximation (the street address didn't resolve via geocoding), not the exact shop location."
     },
     "name": "DT Guys Pro",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/dt-guys-pro/logo/logo.svg",
     "claimed": true,
     "verified": false,
     "specialty": "Car Detailing",
@@ -289,7 +289,20 @@
       { "name": "Auto Detailing" },
       { "name": "Mobile Vehicle Cleaning" }
     ],
-    "media": [],
+    "media": [
+      {
+        "url": "/mock-media/leads/dt-guys-pro/media/v1.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      },
+      {
+        "url": "/mock-media/leads/dt-guys-pro/media/v2.mp4",
+        "type": "video",
+        "category": "Workshop",
+        "label": "Workshop video"
+      }
+    ],
     "accountEmail": "dt-guys-pro@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
