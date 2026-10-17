@@ -1302,6 +1302,9 @@ function App() {
   const viewModeRef = useRef(viewMode);
   useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
   const lastLocationWriteRef = useRef(0);
+  // Last location actually committed to state via setUserLocation — guards
+  // against GPS noise re-triggering it (see watchPosition callback below).
+  const lastSetLocationRef = useRef(null);
   const [mapPanTrigger, setMapPanTrigger] = useState(0);
   const [isLocatingScan, setIsLocatingScan] = useState(false);
   // Bumped to re-run MechanicListPanel's own handleScanLocation (the full
@@ -1466,7 +1469,19 @@ function App() {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setUserLocation({ lat: latitude, lng: longitude });
+          // enableHighAccuracy GPS fires far more often than the user
+          // actually moves — each tick is a *new* object even when it only
+          // drifted a few meters from noise. Committing every tick to state
+          // re-ran the mechanics list's distance sort (it depends on
+          // userLocation) on every tick, reordering cards out from under
+          // anyone mid-scroll. Only commit once the device has moved far
+          // enough for the rounded distance to plausibly change.
+          const last = lastSetLocationRef.current;
+          const movedFar = !last || calculateDistance(last.lat, last.lng, latitude, longitude) > 0.02;
+          if (movedFar) {
+            lastSetLocationRef.current = { lat: latitude, lng: longitude };
+            setUserLocation({ lat: latitude, lng: longitude });
+          }
           // If this is the very first time we get location, trigger a pan
           setMapPanTrigger(prev => prev === 0 ? 1 : prev);
 

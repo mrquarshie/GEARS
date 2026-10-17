@@ -604,7 +604,11 @@ body {
 .filter-popup {
   position: absolute;
   top: calc(100% + 12px);
-  left: 0;
+  /* The filter button sits at the right end of the search bar, so anchoring
+     to its right edge and expanding leftward keeps the popup inside the
+     panel. Anchoring to left:0 instead sent it off the panel's right edge,
+     where .mechanic-list-scroll's overflow-x:hidden clipped it. */
+  right: 0;
   width: 320px;
   background: white;
   border-radius: var(--dropdown-radius);
@@ -615,7 +619,7 @@ body {
   flex-direction: column;
   padding: 16px;
   font-family: inherit;
-  transform-origin: top left;
+  transform-origin: top right;
   animation: sortDropdownOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
