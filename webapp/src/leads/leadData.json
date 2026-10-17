@@ -307,7 +307,7 @@
       "notes": "No Google Maps listing found — searched Ghana-wide and Accra. Bio gives phone and email but NO address or city, so location is entirely unknown. Content is driver-education (spark plug anatomy, morning checks, spotting faulty parts) rather than pure product promotion — closest in style to the content plan for Gears itself."
     },
     "name": "JAQ Auto Parts",
-    "logoUrl": "/mock-media/leads/jaq-auto-parts/logo/jaq-auto-parts-logo.jpeg",
+    "logoUrl": "/mock-media/leads/jaq-auto-parts/logo/logo.jpg",
     "claimed": true,
     "verified": false,
     "specialty": "Auto Parts",
@@ -320,8 +320,8 @@
       "Honda",
       "Kia"
     ],
-    "area": "TODO — not published anywhere",
-    "locationDetail": "TODO — no address on TikTok, no Maps listing",
+    "area": null,
+    "locationDetail": null,
     "lat": null,
     "lng": null,
     "phone": "0599931376",
@@ -329,7 +329,7 @@
     "ratingCount": 0,
     "ratingSum": 0,
     "about": "Auto parts dealer specialising in Hyundai, Toyota, Honda and Kia, plus general maintenance essentials. Orders by call or WhatsApp.",
-    "hours": "TODO",
+    "hours": null,
     "specialties": [
       "Hyundai Parts",
       "Toyota Parts",
@@ -337,20 +337,7 @@
       "Kia Parts",
       "Maintenance Essentials"
     ],
-    "products": [
-      {
-        "name": "Spark Plugs",
-        "description": "TODO — confirm brands stocked",
-        "price": "TODO",
-        "imageUrl": "/mock-media/ikad-spark-plug-1.png"
-      },
-      {
-        "name": "TODO — add top-selling SKUs",
-        "description": "TODO",
-        "price": "TODO",
-        "imageUrl": "/mock-media/ikad-spark-plug-2.png"
-      }
-    ],
+    "products": [],
     "media": [],
     "accountEmail": "jaq-auto-parts@gears-ghana.com",
     "accountPassword": "Gears@2026"
@@ -431,7 +418,7 @@
     "ratingCount": 0,
     "ratingSum": 0,
     "about": "Spare parts dealer for trucks and trailers, stocking parts for Howo, NX, TX, Shacman and Weichai. Located beside the Tema Motorway. Orders by call or WhatsApp.",
-    "hours": "TODO — not published on Google or TikTok",
+    "hours": null,
     "open": true,
     "specialties": [
       "Howo Parts",
@@ -441,20 +428,7 @@
       "Trailer Spare Parts",
       "Truck Tyres"
     ],
-    "products": [
-      {
-        "name": "Truck Tyres",
-        "description": "TODO — confirm brands and sizes stocked",
-        "price": "TODO",
-        "imageUrl": "/mock-media/timing-belt-kit.jpg"
-      },
-      {
-        "name": "TODO — add top-selling SKUs",
-        "description": "TODO",
-        "price": "TODO",
-        "imageUrl": "/mock-media/shock-absorber.jpg"
-      }
-    ],
+    "products": [],
     "media": [
       {
         "url": "/mock-media/leads/safeplus-truck-parts/media/showcase-1.mp4",
@@ -1821,6 +1795,107 @@
       }
     ],
     "accountEmail": "larweh-car-spare-parts@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 36,
+      "instagramHandle": "express.car_spa",
+      "tiktokHandle": "ECS",
+      "status": "Discovery",
+      "googlePlaceId": null,
+      "notes": "Popular on TikTok and Instagram for car-wash/detailing transformation clips. Operates by appointment only — exact workshop pin/gate coordinates are shared directly with clients after a booking is confirmed, so no address or map coordinates are published. No Google Maps listing found."
+    },
+    "name": "ECS Detailing",
+    "logoUrl": null,
+    "claimed": true,
+    "verified": false,
+    "specialty": "Car Detailing",
+    "categories": [
+      "detailer"
+    ],
+    "serviceType": [
+      "drive-in"
+    ],
+    "area": "Westlands, Accra",
+    "locationDetail": "Westlands, Accra — exact pin shared with clients upon booking confirmation",
+    "lat": null,
+    "lng": null,
+    "phone": "0207838814",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Professional automotive detailing and premium car wash service in Westlands, Accra, known for deeply satisfying vehicle restoration and cleaning transformations. Also operates as Express Car Spa.",
+    "hours": null,
+    "specialties": [
+      "Ceramic Wash & Wax",
+      "Paint Correction",
+      "Deep Interior Cleaning",
+      "Multi-Stage Detailing"
+    ],
+    "products": [],
+    "services": [
+      { "name": "Ceramic Wash & Wax" },
+      { "name": "Paint Correction" },
+      { "name": "Deep Interior Detailing" }
+    ],
+    "media": [],
+    "accountEmail": "ecs-detailing@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": 37,
+      "socialHandle": "TikTok — daautoltd.gh",
+      "status": "Discovery",
+      "googlePlaceId": null,
+      "duplicateGooglePlaceId": null,
+      "matchConfidence": "medium",
+      "email": "daautolimitedgh@gmail.com",
+      "whatsapp": "0267770887",
+      "socialProof": "Flyer photo post: 79 likes, 1 comment, 24 saves.",
+      "notes": "Public reporting connects D.A. Auto with vehicle shipping, customs clearance, and custom paintwork. A likely Google Maps listing exists at Musuku Junction, Kwabenya, Accra, but the connection between that listing and the supplied TikTok profile needs confirmation. Logo supplied directly by the business reads \"D.A. Auto Limited\". TikTok handle @daautoltd.gh confirmed live via oEmbed (public display name: \"D.A. AUTO LTD GH\"). Bio, hours, both phone numbers, email, and service list confirmed directly from a pinned flyer photo post on the profile. A follower commented \"Location\" on that same post asking where they're based, and it was never answered — so the address/area still rests on the separate Google Maps match, not on anything TikTok itself publishes."
+    },
+    "name": "D.A. Auto Limited",
+    "logoUrl": "/mock-media/leads/da-auto-limited/logo/logo.png",
+    "claimed": true,
+    "verified": false,
+    "specialty": "Automotive Services, Vehicle Importation & Customization",
+    "categories": [
+      "mechanic",
+      "bodywork"
+    ],
+    "area": "Kwabenya, Accra",
+    "locationDetail": "Point 2, Musuku Junction, Kwabenya, Accra, Ghana",
+    "lat": null,
+    "lng": null,
+    "phone": "0245173322",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Experience top-notch auto repair services and unbeatable car deals. Your trusted partner for all things automotive.",
+    "hours": "Mon-Sat · Open 24 hours · Sun · 9:00 AM – 11:30 PM",
+    "specialties": [
+      "General Vehicle Maintenance & Servicing",
+      "Computer Diagnostics",
+      "EV Charging & Repair",
+      "Sale of Spare Parts",
+      "General Auto Repair",
+      "Import & Sale of Vehicles"
+    ],
+    "products": [],
+    "services": [
+      {
+        "name": "General Vehicle Maintenance & Servicing",
+        "videoUrl": "/mock-media/leads/da-auto-limited/services/general-vehicle-maintenance.mp4"
+      },
+      {
+        "name": "Key Programming / Cutting",
+        "videoUrl": "/mock-media/leads/da-auto-limited/services/key-programming-cutting.mp4"
+      }
+    ],
+    "media": [],
+    "accountEmail": "da-auto-limited@gears-ghana.com",
     "accountPassword": "Gears@2026"
   }
 ]
