@@ -501,17 +501,16 @@
       "googlePlaceId": "ChIJj3LXL7mZ2w8R4NFGxXtxi9c",
       "matchConfidence": "confirmed",
       "socialProof": "41.8K TikTok followers, 489.4K likes — by far the largest account in the lead list. Recent video views 336–4,852. Maintains a dedicated 'Car spraying' playlist.",
-      "notes": "Match confirmed: the Google listing's phone (+233 53 573 6253) is identical to the TikTok bio number. Google rating 5.0 from only 2 reviews — a tiny sample next to a 41.8K following, which is itself the pitch: their reputation lives on TikTok, not on Maps. CATEGORY CORRECTION: this is auto refinishing, spraying and bodywork, NOT detailing. The sheet had them under Detailer."
+      "notes": "Match confirmed: the Google listing's phone (+233 53 573 6253) is identical to the TikTok bio number. Google rating 5.0 from only 2 reviews — a tiny sample next to a 41.8K following, which is itself the pitch: their reputation lives on TikTok, not on Maps. Work is auto refinishing/spraying/bodywork specifically, but confirmed (2026-10-17) to list under the app's Detailer category — getMechanicCategory keys off `specialty === 'Car Detailing'` and the `categories` array has no effect in the app, so `specialty` was set accordingly."
     },
     "name": "Best Choice Auto Refinish",
     "logoUrl": null,
     "claimed": true,
     "verified": false,
-    "specialty": "Auto Refinishing",
+    "specialty": "Car Detailing",
     "categories": [
-      "bodywork"
+      "detailer"
     ],
-    "categoryNote": "No existing category fits. getMechanicCategory will fall this through to 'mechanic' unless a bodywork/spraying category is added.",
     "area": "Abuakwa, Kumasi",
     "locationDetail": "Abuakwa, Kumasi (Plus code P7GC+V65)",
     "lat": 6.7271799,
