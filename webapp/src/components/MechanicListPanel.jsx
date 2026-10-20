@@ -472,6 +472,18 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     return list.sort((a, b) => (a._rawDist ?? Infinity) - (b._rawDist ?? Infinity));
   }, [displayedMechanics, viewMode, currentSort]);
 
+  // A category with only a handful of results is otherwise invisible under
+  // the "minimized" peek (just the title/search bar) until the user drags
+  // the sheet up themselves — auto-expand so those results are visible
+  // right away, same as the existing search auto-expand below. Runs after
+  // the viewMode-reset effect above (declared later, so it wins within the
+  // same commit) and re-fires once async data lands.
+  useEffect(() => {
+    if (sortedMechanics.length > 0 && sortedMechanics.length <= 3) {
+      setSheetState('expanded');
+    }
+  }, [viewMode, sortedMechanics.length]);
+
   const activeFilterCount = selectedFilters.services.length + selectedFilters.availability.length + (selectedFilters.distance ? 1 : 0) + (selectedFilters.rating ? 1 : 0);
 
   const carouselCardData = useMemo(() => {
