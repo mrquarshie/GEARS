@@ -281,7 +281,7 @@
     "name": "JAQ Auto Parts",
     "logoUrl": "/mock-media/leads/jaq-auto-parts/logo/jaq-auto-parts-logo.jpeg",
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Auto Parts",
     "categories": [
       "parts"

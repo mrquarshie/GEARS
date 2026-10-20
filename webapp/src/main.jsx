@@ -290,6 +290,7 @@ const ACCEPTED_BUSINESS_NAMES = new Set([
   'Johani Auto Cool Ltd',
   'Richy Ray Auto Pro',
   'Akasima Auto Parts',
+  'JAQ Auto Parts',
 ].map((n) => n.toLowerCase()));
 
 // How often the mechanics list refetches so a business onboarded (or edited)
