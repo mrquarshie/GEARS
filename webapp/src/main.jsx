@@ -267,6 +267,13 @@ const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princ
 // far more often than this, so writes are throttled to this interval.
 const LOCATION_WRITE_INTERVAL_MS = 10 * 60 * 1000;
 
+// www.gears.live is already shared with businesses and keeps showing the
+// full claimed-or-verified directory. The Vercel link is used to demo only
+// the businesses we've fully won (tier 1/verified) — local dev stays
+// unrestricted either way, for testing.
+const IS_VERCEL_DEMO_HOST =
+  typeof window !== 'undefined' && window.location.hostname === 'gears-one.vercel.app';
+
 // How often the mechanics list refetches so a business onboarded (or edited)
 // after the initial load still shows up without a hard refresh (§4). A timer
 // + tab-focus refetch, not a live onSnapshot listener — predictable read
@@ -1641,7 +1648,7 @@ function App() {
         // cleaned up for real or intentionally reintroduced.
         const docs = result.docs
           .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((m) => m.verified || m.claimed);
+          .filter((m) => (IS_VERCEL_DEMO_HOST ? m.verified : m.verified || m.claimed));
         setAllMechanics(docs);
       } catch (e) {
         console.error('Failed to load mechanics:', e);
