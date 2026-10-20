@@ -269,10 +269,28 @@ const LOCATION_WRITE_INTERVAL_MS = 10 * 60 * 1000;
 
 // www.gears.live is already shared with businesses and keeps showing the
 // full claimed-or-verified directory. The Vercel link is used to demo only
-// the businesses we've fully won (tier 1/verified) — local dev stays
-// unrestricted either way, for testing.
+// the businesses that have actually agreed to be on the platform — local
+// dev stays unrestricted either way, for testing. Matched by name here
+// (rather than a Firestore "verified" flag) so adding/removing a name from
+// this list is the whole update — no script, no live-data write, no
+// credentials needed.
 const IS_VERCEL_DEMO_HOST =
   typeof window !== 'undefined' && window.location.hostname === 'gears-one.vercel.app';
+
+const ACCEPTED_BUSINESS_NAMES = new Set([
+  'Highest Auto Detailing',
+  'Uncle Fii Spare Parts',
+  'DATES Limited',
+  'Protech Auto Care',
+  'The Ghana Mechanic',
+  'Police',
+  'Paapa',
+  'Tetteh',
+  'KB Car Services',
+  'Johani Auto Cool Ltd',
+  'Richy Ray Auto Pro',
+  'Akasima Auto Parts',
+].map((n) => n.toLowerCase()));
 
 // How often the mechanics list refetches so a business onboarded (or edited)
 // after the initial load still shows up without a hard refresh (§4). A timer
@@ -1648,7 +1666,11 @@ function App() {
         // cleaned up for real or intentionally reintroduced.
         const docs = result.docs
           .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((m) => (IS_VERCEL_DEMO_HOST ? m.verified : m.verified || m.claimed));
+          .filter((m) => (
+            IS_VERCEL_DEMO_HOST
+              ? ACCEPTED_BUSINESS_NAMES.has((m.name || '').trim().toLowerCase())
+              : m.verified || m.claimed
+          ));
         setAllMechanics(docs);
       } catch (e) {
         console.error('Failed to load mechanics:', e);
