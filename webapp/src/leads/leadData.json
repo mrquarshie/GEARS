@@ -8,7 +8,7 @@
     "name": "Highest Auto Detailing",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Car Detailing",
     "area": "Nsawam, Accra (near Nsawam Road)",
     "locationDetail": "Nsawam, Accra (near Nsawam Road)",
@@ -190,7 +190,7 @@
     "name": "Uncle Fii Spare Parts",
     "logoUrl": "/mock-media/leads/uncle-fii/logo/logo.jpg",
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Auto Parts",
     "categories": [
       "parts"
@@ -703,7 +703,7 @@
     "name": "DATES Limited",
     "logoUrl": "/mock-media/leads/dates-limited/logo/logo.jpeg",
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "General repairs",
     "categories": [
       "mechanic"
@@ -912,7 +912,7 @@
     "name": "Protech Auto Care",
     "logoUrl": "/mock-media/leads/protech-auto-care/logo/logo.jpeg",
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "General repairs",
     "categories": [
       "mechanic"
@@ -1213,7 +1213,7 @@
     "name": "The Ghana Mechanic",
     "logoUrl": "/mock-media/leads/the-ghana-mechanic/logo/logo.jpg",
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "General repairs",
     "categories": [
       "mechanic"
@@ -1255,7 +1255,7 @@
     "name": "Police",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Bodywork",
     "categories": [
       "mechanic"
@@ -1291,7 +1291,7 @@
     "name": "Paapa",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Auto-Electrical",
     "categories": [
       "mechanic"
@@ -1328,7 +1328,7 @@
     "name": "Tetteh",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "General repairs",
     "categories": [
       "mechanic"
@@ -1355,56 +1355,17 @@
   },
   {
     "internal": {
-      "leadNumber": 26,
-      "socialHandle": null,
-      "status": "Discovery",
-      "source": "whatsapp_referral",
-      "notes": "Referred by a contact (Davis) over WhatsApp. Located at Suame Magazine (Kumasi's large auto-parts/repair industrial area) — a different location from Police/Paapa/Tetteh's shared spot in Kaase, per a separate maps link. No Google listing or reviews — referral only."
-    },
-    "name": "Cosmos",
-    "logoUrl": null,
-    "claimed": true,
-    "verified": false,
-    "specialty": "Auto-Electrical",
-    "categories": [
-      "mechanic"
-    ],
-    "area": "Suame Magazine, Kumasi",
-    "locationDetail": "Suame Magazine Industrial Area, Breman, Kumasi",
-    "lat": 6.7313270,
-    "lng": -1.6324105,
-    "phone": "0535339814",
-    "rating": "New",
-    "ratingCount": 0,
-    "ratingSum": 0,
-    "about": "Toyota, Honda, Hyundai and Kia electrician/mechanic.",
-    "hours": null,
-    "specialties": [
-      "Toyota",
-      "Honda",
-      "Hyundai",
-      "Kia",
-      "Auto-Electrical"
-    ],
-    "products": [],
-    "services": [],
-    "media": [],
-    "accountEmail": "cosmos-auto-electrician@gears-ghana.com",
-    "accountPassword": "Gears@2026"
-  },
-  {
-    "internal": {
       "leadNumber": 27,
       "socialHandle": "Instagram — @ohwowjnr",
       "status": "Discovery",
       "source": "whatsapp_referral",
       "secondaryPhone": "0240222397",
-      "notes": "Referred by a contact (Davis) over WhatsApp, sent as a flyer/poster image. Location is the 'OH WOW HQ' Google Maps plus-code (MW7C+3R, Accra), decoded to Borteyman, Adenta — not a standard Google Business listing, so no rating/reviews yet."
+      "notes": "Referred by a contact (Davis) over WhatsApp, sent as a flyer/poster image. Location is the 'OH WOW HQ' Google Maps plus-code (MW7C+3R, Accra), decoded to Borteyman, Adenta — not a standard Google Business listing, so no rating/reviews yet. Merged with the separately-sourced 'Cosmos' lead (ex-leadNumber 26) — owner confirmed it's the same business; brand-focus specialties folded in below."
     },
     "name": "KB Car Services",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "General repairs",
     "categories": [
       "mechanic",
@@ -1422,7 +1383,12 @@
     "hours": "24/7",
     "specialties": [
       "Vehicle Repairs",
-      "Auto Parts"
+      "Auto Parts",
+      "Toyota",
+      "Honda",
+      "Hyundai",
+      "Kia",
+      "Auto-Electrical"
     ],
     "products": [],
     "services": [
@@ -1455,7 +1421,7 @@
     "name": "Johani Auto Cool Ltd",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Auto AC & Repair",
     "categories": [
       "mechanic"
@@ -1505,7 +1471,7 @@
     "name": "Richy Ray Auto Pro",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "General automotive repair",
     "categories": [
       "mechanic"
@@ -1677,7 +1643,7 @@
     "name": "Akasima Auto Parts",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Auto Parts",
     "categories": [
       "parts"

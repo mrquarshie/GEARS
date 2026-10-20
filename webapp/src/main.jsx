@@ -267,6 +267,14 @@ const ADMIN_EMAILS = ['aciestech21@gmail.com', 'skyemmanuel42@gmail.com', 'princ
 // far more often than this, so writes are throttled to this interval.
 const LOCATION_WRITE_INTERVAL_MS = 10 * 60 * 1000;
 
+// On the main live link only, the directory shows just the tier-1 (verified)
+// businesses we've fully accepted — everywhere else (Vercel previews, local
+// dev) shows the full claimed-or-verified list so pitching/onboarding work
+// stays visible while businesses are still being vetted.
+const IS_MAIN_PROD_HOST =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'www.gears.live' || window.location.hostname === 'gears.live');
+
 // How often the mechanics list refetches so a business onboarded (or edited)
 // after the initial load still shows up without a hard refresh (§4). A timer
 // + tab-focus refetch, not a live onSnapshot listener — predictable read
@@ -1611,7 +1619,9 @@ function App() {
       // No Firebase configured (e.g. local dev without .env) — use local mock
       // data instead so the app is still usable/testable. Remove this once
       // VITE_FIREBASE_* is set up locally.
-      const mockData = mockExtrasData.map((m, i) => ({ id: `mock-${i}`, ...m }));
+      const mockData = mockExtrasData
+        .map((m, i) => ({ id: `mock-${i}`, ...m }))
+        .filter((m) => (IS_MAIN_PROD_HOST ? m.verified : true));
       setAllMechanics(mockData);
       setLoading(false);
       setAuthReady(true);
@@ -1641,7 +1651,7 @@ function App() {
         // cleaned up for real or intentionally reintroduced.
         const docs = result.docs
           .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((m) => m.verified || m.claimed);
+          .filter((m) => (IS_MAIN_PROD_HOST ? m.verified : m.verified || m.claimed));
         setAllMechanics(docs);
       } catch (e) {
         console.error('Failed to load mechanics:', e);

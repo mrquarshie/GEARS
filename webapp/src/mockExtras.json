@@ -3,7 +3,7 @@
     "name": "Highest Auto Detailing",
     "logoUrl": null,
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Car Detailing",
     "area": "Nsawam, Accra (near Nsawam Road)",
     "locationDetail": "Nsawam, Accra (near Nsawam Road)",
@@ -158,7 +158,7 @@
     "name": "Uncle Fii Spare Parts",
     "logoUrl": "/mock-media/leads/uncle-fii/logo/logo.jpg",
     "claimed": true,
-    "verified": false,
+    "verified": true,
     "specialty": "Auto Parts",
     "categories": [
       "parts"
@@ -309,20 +309,7 @@
       "Kia Parts",
       "Maintenance Essentials"
     ],
-    "products": [
-      {
-        "name": "Spark Plugs",
-        "description": "TODO — confirm brands stocked",
-        "price": "TODO",
-        "imageUrl": "/mock-media/ikad-spark-plug-1.png"
-      },
-      {
-        "name": "TODO — add top-selling SKUs",
-        "description": "TODO",
-        "price": "TODO",
-        "imageUrl": "/mock-media/ikad-spark-plug-2.png"
-      }
-    ],
+    "products": [],
     "media": []
   },
   {
