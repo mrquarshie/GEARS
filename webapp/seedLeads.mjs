@@ -51,7 +51,12 @@ function readiness(entry) {
   if (isPlaceholder(entry.area)) reasons.push('area missing/placeholder');
   // A business needs a phone OR an email (some are email-only by choice —
   // see firestore.rules) — only flag it if BOTH are missing/placeholder.
-  if (isPlaceholder(entry.phone) && isPlaceholder(entry.email)) reasons.push('phone/email missing/placeholder');
+  // Fuel stations are exempt: they're informational map pins (not claimable,
+  // not callable) sourced from research rather than a business's own
+  // contact details, so there's deliberately no phone/email to give.
+  if (entry.specialty !== 'Fuel Station' && isPlaceholder(entry.phone) && isPlaceholder(entry.email)) {
+    reasons.push('phone/email missing/placeholder');
+  }
   if (entry.internal?.classificationFlag) reasons.push(`flagged: ${entry.internal.classificationFlag}`);
   return reasons;
 }

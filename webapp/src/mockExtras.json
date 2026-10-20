@@ -538,126 +538,822 @@
     ]
   },
   {
-    "name": "Goil Filling Station",
-    "lat": 5.5731,
-    "lng": -0.1998,
-    "phone": "0244123009",
-    "area": "Asafo, Kumasi",
-    "locationDetail": "Asafo, Kumasi (near Total station)",
+    "name": "Goil Achimota",
+    "area": "Achimota, Accra",
+    "lat": 5.618,
+    "lng": -0.227,
     "specialty": "Fuel Station",
-    "rating": "4.5",
-    "ratingCount": 120,
-    "ratingSum": 540,
-    "open": true,
-    "hours": "Mon-Sat · 7:00 AM – 6:00 PM",
-    "facilities": [
-      "Car Wash",
-      "ATM",
-      "Shop"
-    ],
-    "fuelPrices": [
-      {
-        "type": "Petrol",
-        "price": "14.65",
-        "unit": "L",
-        "color": "#dc2626"
-      },
-      {
-        "type": "Diesel",
-        "price": "15.08",
-        "unit": "L",
-        "color": "#2563eb"
-      },
-      {
-        "type": "LPG",
-        "price": "9.80",
-        "unit": "kg",
-        "color": "#ea580c"
-      }
-    ],
-    "reviews": [
-      {
-        "userName": "Yaw B.",
-        "value": 5,
-        "comment": "Never a long queue and pumps are always accurate.",
-        "date": "2026-06-10"
-      }
-    ]
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Darkuman",
+    "area": "Darkuman, Accra",
+    "lat": 5.558,
+    "lng": -0.245,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Atico Junction (Kaneshie-Odorkor)",
+    "area": "Odorkor, Accra",
+    "lat": 5.56,
+    "lng": -0.245,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Burma Camp",
+    "area": "Burma Camp, Accra",
+    "lat": 5.585,
+    "lng": -0.15,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Kpeshie",
+    "area": "Kpeshie, Accra",
+    "lat": 5.575,
+    "lng": -0.14,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Circle",
+    "area": "Nkrumah Circle, Accra",
+    "lat": 5.56,
+    "lng": -0.208,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Adabraka",
+    "area": "Adabraka, Accra",
+    "lat": 5.56,
+    "lng": -0.208,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Mile 11",
+    "area": "Mile 11, Winneba Road, Accra",
+    "lat": 5.56,
+    "lng": -0.34,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Dzorwulu",
+    "area": "Dzorwulu, Accra",
+    "lat": 5.595,
+    "lng": -0.185,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
   },
   {
     "name": "Goil Spintex",
-    "lat": 5.628,
-    "lng": -0.121,
-    "phone": "0244123010",
-    "area": "Spintex Road, Accra",
+    "area": "Spintex, Accra",
+    "lat": 5.625,
+    "lng": -0.13,
     "specialty": "Fuel Station",
-    "rating": "4.3",
-    "ratingCount": 97,
-    "ratingSum": 417,
-    "open": true,
-    "hours": "24 Hours",
-    "facilities": [
-      "ATM",
-      "Shop"
-    ],
-    "fuelPrices": [
-      {
-        "type": "Petrol",
-        "price": "14.65",
-        "unit": "L",
-        "color": "#dc2626"
-      },
-      {
-        "type": "Diesel",
-        "price": "15.08",
-        "unit": "L",
-        "color": "#2563eb"
-      }
-    ]
+    "rating": "New",
+    "ratingCount": 0
   },
   {
-    "name": "Total Energies Airport City",
-    "lat": 5.6052,
-    "lng": -0.1719,
-    "phone": "0244123011",
-    "area": "Airport City, Accra",
+    "name": "Goil Kaneshie",
+    "area": "Kaneshie, Accra",
+    "lat": 5.556,
+    "lng": -0.235,
     "specialty": "Fuel Station",
-    "rating": "4.6",
-    "ratingCount": 73,
-    "ratingSum": 336,
-    "open": true,
-    "hours": "24 Hours",
-    "facilities": [
-      "Car Wash",
-      "ATM",
-      "Shop",
-      "Air & Water"
-    ],
-    "fuelPrices": [
-      {
-        "type": "Petrol",
-        "price": "14.70",
-        "unit": "L",
-        "color": "#dc2626"
-      },
-      {
-        "type": "Diesel",
-        "price": "15.15",
-        "unit": "L",
-        "color": "#2563eb"
-      }
-    ]
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Dansoman",
+    "area": "Dansoman, Accra",
+    "lat": 5.535,
+    "lng": -0.255,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil East Legon",
+    "area": "East Legon, Accra",
+    "lat": 5.65,
+    "lng": -0.16,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Madina",
+    "area": "Madina, Accra",
+    "lat": 5.68,
+    "lng": -0.167,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Haatso",
+    "area": "Haatso, Accra",
+    "lat": 5.67,
+    "lng": -0.195,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Teshie",
+    "area": "Teshie, Accra",
+    "lat": 5.585,
+    "lng": -0.103,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Nungua",
+    "area": "Nungua, Accra",
+    "lat": 5.6,
+    "lng": -0.07,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Kasoa",
+    "area": "Kasoa",
+    "lat": 5.533,
+    "lng": -0.417,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Weija",
+    "area": "Weija, Accra",
+    "lat": 5.56,
+    "lng": -0.33,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Liberation Road",
+    "area": "Liberation Road, Accra",
+    "lat": 5.57,
+    "lng": -0.185,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Oxford Street",
+    "area": "Osu, Accra",
+    "lat": 5.56,
+    "lng": -0.179,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Kanda Overhead",
+    "area": "Kanda, Accra",
+    "lat": 5.57,
+    "lng": -0.195,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Apenkwa",
+    "area": "Apenkwa, Accra",
+    "lat": 5.605,
+    "lng": -0.215,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies La Town",
+    "area": "La, Accra",
+    "lat": 5.56,
+    "lng": -0.165,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies McCarthy Hill",
+    "area": "McCarthy Hill, Accra",
+    "lat": 5.57,
+    "lng": -0.27,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Dzorwulu",
+    "area": "Dzorwulu, Accra",
+    "lat": 5.5955,
+    "lng": -0.1855,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies East Legon",
+    "area": "East Legon, Accra",
+    "lat": 5.6505,
+    "lng": -0.1605,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Spintex",
+    "area": "Spintex, Accra",
+    "lat": 5.6255,
+    "lng": -0.1305,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Adenta",
+    "area": "Adenta, Accra",
+    "lat": 5.708,
+    "lng": -0.166,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Airport",
+    "area": "Airport, Accra",
+    "lat": 5.605,
+    "lng": -0.17,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Dansoman (Hansonic, Mataheko)",
+    "area": "Dansoman, Accra",
+    "lat": 5.5355,
+    "lng": -0.2555,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Haatso-Atomic Road",
+    "area": "Atomic Road, Haatso, Accra",
+    "lat": 5.66,
+    "lng": -0.195,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Pantang",
+    "area": "Pantang, Accra",
+    "lat": 5.71,
+    "lng": -0.195,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Liberation Road",
+    "area": "Liberation Road, Accra",
+    "lat": 5.5705,
+    "lng": -0.1845,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Obetsebi Lamptey Roundabout",
+    "area": "Kokomlemle, Accra",
+    "lat": 5.55,
+    "lng": -0.22,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Motorway Extension",
+    "area": "Motorway Extension, Accra",
+    "lat": 5.62,
+    "lng": -0.12,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Allied Oil Nkrumah Circle",
+    "area": "Nkrumah Circle, Accra",
+    "lat": 5.5605,
+    "lng": -0.2085,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Allied Oil Zongo",
+    "area": "Zongo, Accra",
+    "lat": 5.55,
+    "lng": -0.215,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Allied Oil Bubuashie",
+    "area": "Bubuashie, Accra",
+    "lat": 5.565,
+    "lng": -0.24,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Allied Oil Mpeheasem",
+    "area": "Mpeheasem, Accra",
+    "lat": 5.63,
+    "lng": -0.19,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Allied Oil Dzorwulu",
+    "area": "Dzorwulu, Accra",
+    "lat": 5.5945,
+    "lng": -0.1845,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "PetroSol Spintex Road",
+    "area": "Spintex, Accra",
+    "lat": 5.626,
+    "lng": -0.131,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Frimps Oil Spintex",
+    "area": "Spintex, Accra",
+    "lat": 5.6245,
+    "lng": -0.1295,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Frimps Oil Tetegu",
+    "area": "Tetegu, Accra",
+    "lat": 5.53,
+    "lng": -0.36,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Star Oil Kasoa",
+    "area": "Kasoa",
+    "lat": 5.5335,
+    "lng": -0.4175,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Kasoa",
+    "area": "Kasoa",
+    "lat": 5.534,
+    "lng": -0.4165,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Madina",
+    "area": "Madina, Accra",
+    "lat": 5.6805,
+    "lng": -0.1675,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Tema Community 1",
+    "area": "Community 1, Tema",
+    "lat": 5.67,
+    "lng": -0.017,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Dahwenya",
+    "area": "Dahwenya, Tema",
+    "lat": 5.72,
+    "lng": 0.02,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Tema Roundabout",
+    "area": "Tema Roundabout, Tema",
+    "lat": 5.666,
+    "lng": -0.017,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Tema Motorway Roundabout",
+    "area": "Tema Motorway Roundabout, Tema",
+    "lat": 5.645,
+    "lng": -0.045,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Zen Petroleum Ashaiman Zenu",
+    "area": "Zenu, Ashaiman",
+    "lat": 5.698,
+    "lng": -0.032,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Ashaiman",
+    "area": "Ashaiman",
+    "lat": 5.695,
+    "lng": -0.033,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
   },
   {
     "name": "Goil Ahodwo",
-    "lat": 6.669,
-    "lng": -1.618,
-    "phone": "0244123012",
     "area": "Ahodwo, Kumasi",
+    "lat": 6.675,
+    "lng": -1.615,
     "specialty": "Fuel Station",
     "rating": "New",
-    "ratingCount": 0,
-    "ratingSum": 0,
-    "open": false
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Ayigya",
+    "area": "Ayigya, Oforikrom, Kumasi",
+    "lat": 6.68,
+    "lng": -1.58,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Buokrom",
+    "area": "Buokrom, Kumasi",
+    "lat": 6.72,
+    "lng": -1.59,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Abrepokese",
+    "area": "Abrepokese, Kumasi",
+    "lat": 6.73,
+    "lng": -1.66,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Abrepokuma",
+    "area": "Abrepokuma, Kumasi",
+    "lat": 6.735,
+    "lng": -1.665,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Mile 4 (Solar Station)",
+    "area": "Mile 4, Kumasi",
+    "lat": 6.66,
+    "lng": -1.64,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Zen Petroleum Tafo Nhyiaeso",
+    "area": "Tafo Nhyiaeso, Kumasi",
+    "lat": 6.73,
+    "lng": -1.6,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Adum",
+    "area": "Adum, Kumasi",
+    "lat": 6.692,
+    "lng": -1.624,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Asafo",
+    "area": "Asafo, Kumasi",
+    "lat": 6.688,
+    "lng": -1.633,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Suame",
+    "area": "Suame, Kumasi",
+    "lat": 6.72,
+    "lng": -1.635,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Bantama",
+    "area": "Bantama, Kumasi",
+    "lat": 6.705,
+    "lng": -1.63,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Asokwa",
+    "area": "Asokwa, Kumasi",
+    "lat": 6.665,
+    "lng": -1.61,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Kumasi Airport",
+    "area": "Airport Area, Kumasi",
+    "lat": 6.715,
+    "lng": -1.59,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Takoradi Market Circle",
+    "area": "Market Circle, Takoradi",
+    "lat": 4.897,
+    "lng": -1.758,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Takoradi Market Circle",
+    "area": "Market Circle, Takoradi",
+    "lat": 4.8975,
+    "lng": -1.7585,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Anaji",
+    "area": "Anaji, Takoradi",
+    "lat": 4.93,
+    "lng": -1.785,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Effia-Kuma",
+    "area": "Effia-Kuma, Takoradi",
+    "lat": 4.915,
+    "lng": -1.76,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Sekondi",
+    "area": "Sekondi",
+    "lat": 4.934,
+    "lng": -1.711,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Shell Sekondi Naval Base Area",
+    "area": "Sekondi",
+    "lat": 4.935,
+    "lng": -1.712,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Cape Coast By-pass (Auto Gas)",
+    "area": "Cape Coast By-pass, Cape Coast",
+    "lat": 5.12,
+    "lng": -1.27,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Cape Coast Central",
+    "area": "Cape Coast Central",
+    "lat": 5.105,
+    "lng": -1.246,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Cape Coast",
+    "area": "Cape Coast Central",
+    "lat": 5.1055,
+    "lng": -1.2465,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Daboya Road",
+    "area": "Daboya Road, Tamale",
+    "lat": 9.43,
+    "lng": -0.86,
+    "specialty": "Fuel Station",
+    "rating": "3.9",
+    "ratingCount": 106
+  },
+  {
+    "name": "Goil Tamale (Opposite STC Yard)",
+    "area": "Tamale Central",
+    "lat": 9.403,
+    "lng": -0.839,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Zen Petroleum Zoozugu",
+    "area": "Zoozugu, Tamale",
+    "lat": 9.45,
+    "lng": -0.87,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Sunyani Old Barrier",
+    "area": "Old Barrier, Sunyani",
+    "lat": 7.345,
+    "lng": -2.335,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Sunyani (Eusbett)",
+    "area": "Near Eusbett Hotel, Sunyani",
+    "lat": 7.339,
+    "lng": -2.326,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Frimps Oil Penkwase",
+    "area": "Penkwase, Sunyani",
+    "lat": 7.36,
+    "lng": -2.34,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Ho",
+    "area": "Ho Central",
+    "lat": 6.6,
+    "lng": 0.471,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Ho",
+    "area": "Ho Central",
+    "lat": 6.6005,
+    "lng": 0.4715,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Koforidua",
+    "area": "Koforidua Central",
+    "lat": 6.094,
+    "lng": -0.259,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Vivo Energy (Shell) Koforidua",
+    "area": "Koforidua Central",
+    "lat": 6.0945,
+    "lng": -0.2595,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Frimps Oil Koforidua",
+    "area": "Koforidua Central",
+    "lat": 6.0935,
+    "lng": -0.2585,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Techiman",
+    "area": "Techiman Central",
+    "lat": 7.59,
+    "lng": -1.935,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Obuasi",
+    "area": "Obuasi Central",
+    "lat": 6.202,
+    "lng": -1.67,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "TotalEnergies Obuasi",
+    "area": "Obuasi Central",
+    "lat": 6.2025,
+    "lng": -1.6705,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Wa",
+    "area": "Wa Central",
+    "lat": 10.06,
+    "lng": -2.5,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
+  },
+  {
+    "name": "Goil Bolgatanga",
+    "area": "Bolgatanga Central",
+    "lat": 10.785,
+    "lng": -0.851,
+    "specialty": "Fuel Station",
+    "rating": "New",
+    "ratingCount": 0
   }
 ]
