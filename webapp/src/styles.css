@@ -1848,8 +1848,45 @@ body {
   color: #3b5bfd;
 }
 
-.fuel-delivery-btn {
-  position: relative;
+.fuel-delivery-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 24px 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background-color: #fafafa;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.fuel-delivery-notice:hover {
+  background-color: #f3f4f6;
+}
+
+.fuel-delivery-notice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 20%;
+  background-color: #e6f4ea;
+}
+
+.fuel-delivery-notice-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.fuel-delivery-notice-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--forest);
 }
 
 .delivery-soon-pill {

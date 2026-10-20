@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft, ArrowRight, Wrench, Envelope, MapPinLine } from '@phosphor-icons/react';
+import { Target, ArrowLeft, ArrowRight, Wrench, Envelope, MapPinLine, CaretRight } from '@phosphor-icons/react';
 import CloseButton from './CloseButton';
 import {
   BookmarkIcon,
@@ -245,6 +245,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const [directionPeek, setDirectionPeek] = useState(false);
   const [productSheet, setProductSheet] = useState(null); // { item, mechanicId, mechanicName, mechanicPhone }
   const [verificationSheet, setVerificationSheet] = useState(null);
+  const [fuelDeliverySheetOpen, setFuelDeliverySheetOpen] = useState(false);
 
   // --- Swipeable Bottom Sheet State ---
   const [sheetState, setSheetState] = useState('minimized'); // 'minimized', 'half', 'expanded'
@@ -614,6 +615,14 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
   const dynamicStyle = isMobile && !isFullPage ? {
     transform: `translateY(calc(${transformBase} + ${dragOffset}px))`
   } : {};
+
+  const fuelDeliveryPortal = useMemo(() => {
+    if (!fuelDeliverySheetOpen) return null;
+    return createPortal(
+      <FuelDeliverySheet onClose={() => setFuelDeliverySheetOpen(false)} />,
+      document.body
+    );
+  }, [fuelDeliverySheetOpen]);
 
   const verificationPortal = useMemo(() => {
     if (!verificationSheet) return null;
@@ -1101,6 +1110,25 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
           </div>
         )}
 
+        {viewMode === 'fuel' && (
+          <div
+            className="fuel-delivery-notice"
+            role="button"
+            tabIndex={0}
+            onClick={() => setFuelDeliverySheetOpen(true)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setFuelDeliverySheetOpen(true); }}
+          >
+            <div className="fuel-delivery-notice-icon">
+              <FillingStationIcon size={18} state="filled" color="var(--forest)" />
+            </div>
+            <div className="fuel-delivery-notice-text">
+              <span className="fuel-delivery-notice-title">Fuel Order &amp; Delivery</span>
+              <span className="delivery-soon-pill">Coming Soon</span>
+            </div>
+            <CaretRight size={16} color="var(--muted)" />
+          </div>
+        )}
+
         <div className="mechanic-cards">
           {loading ? (
             <>
@@ -1243,14 +1271,6 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                             </h3>
                             <p className="card-area">{m.area}</p>
                           </div>
-                          <div className="fuel-price-chips">
-                            <div className="fuel-price-chip">
-                              <span className="fuel-price-label">Petrol -</span><span className="fuel-price-value"> ₵14.65</span>
-                            </div>
-                            <div className="fuel-price-chip">
-                              <span className="fuel-price-label">Diesel -</span><span className="fuel-price-value fuel-price-diesel"> ₵15.08</span>
-                            </div>
-                          </div>
                         </div>
                         <div className="card-bottom-bar">
                           <div className="card-bottom-left">
@@ -1268,11 +1288,6 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           >
                             <LocationIcon size={16} />
                             <span className="card-action-label">Direction</span>
-                          </button>
-                          <button className="card-bottom-action fuel-delivery-btn" onClick={(e) => e.stopPropagation()}>
-                            <FillingStationIcon size={14} />
-                            <span>Delivery</span>
-                            <span className="delivery-soon-pill">Soon</span>
                           </button>
                         </div>
                       </>
@@ -1405,6 +1420,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       </div>
       {verificationPortal}
       {noNearbyPortal}
+      {fuelDeliveryPortal}
 
       {/* Portaled to document.body — .mechanic-list-panel has a persistent
           inline transform (for its swipe-to-drag sheet), and any ancestor
@@ -1486,6 +1502,29 @@ function NoNearbyMechanicsSheet({ onClose }) {
         <h3 className="verification-sheet-title">No mechanics nearby yet</h3>
         <p className="verification-sheet-desc">
           We couldn't find any mechanics within an hour's drive of your location. Try again later or search a different area.
+        </p>
+        <div className="verification-sheet-footer">
+          <button className="verification-sheet-btn" onClick={onClose}>Got it</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Explains the upcoming fuel ordering/delivery feature — opened by tapping
+// the "Coming Soon" notice pinned above the fuel station list. Replaces the
+// old per-card "Delivery Soon" button, which repeated the same disabled
+// promise on every single card instead of saying it once, clearly.
+function FuelDeliverySheet({ onClose }) {
+  return (
+    <div className="verification-sheet-overlay" onClick={onClose}>
+      <div className="verification-sheet" onClick={e => e.stopPropagation()}>
+        <div className="verification-sheet-icon">
+          <FillingStationIcon size={44} state="filled" color="#145E42" />
+        </div>
+        <h3 className="verification-sheet-title">Fuel Order & Delivery</h3>
+        <p className="verification-sheet-desc">
+          Soon you'll be able to order fuel straight from Gears and have it delivered to you — no need to drive to a station. We're setting this up with filling stations now; it isn't live yet.
         </p>
         <div className="verification-sheet-footer">
           <button className="verification-sheet-btn" onClick={onClose}>Got it</button>
