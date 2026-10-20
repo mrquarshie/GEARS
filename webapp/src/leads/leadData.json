@@ -1832,7 +1832,7 @@
       "email": "daautolimitedgh@gmail.com",
       "whatsapp": "0267770887",
       "socialProof": "Flyer photo post: 79 likes, 1 comment, 24 saves.",
-      "notes": "Public reporting connects D.A. Auto with vehicle shipping, customs clearance, and custom paintwork. A likely Google Maps listing exists at Musuku Junction, Kwabenya, Accra, but the connection between that listing and the supplied TikTok profile needs confirmation. Logo supplied directly by the business reads \"D.A. Auto Limited\". TikTok handle @daautoltd.gh confirmed live via oEmbed (public display name: \"D.A. AUTO LTD GH\"). Bio, hours, both phone numbers, email, and service list confirmed directly from a pinned flyer photo post on the profile. A follower commented \"Location\" on that same post asking where they're based, and it was never answered — so the address/area still rests on the separate Google Maps match, not on anything TikTok itself publishes."
+      "notes": "Public reporting connects D.A. Auto with vehicle shipping, customs clearance, and custom paintwork. A likely Google Maps listing exists at Musuku Junction, Kwabenya, Accra, but the connection between that listing and the supplied TikTok profile needs confirmation. Logo supplied directly by the business reads \"D.A. Auto Limited\". TikTok handle @daautoltd.gh confirmed live via oEmbed (public display name: \"D.A. AUTO LTD GH\"). Bio, hours, both phone numbers, email, and service list confirmed directly from a pinned flyer photo post on the profile. A follower commented \"Location\" on that same post asking where they're based, and it was never answered — so the address/area still rests on the separate Google Maps match, not on anything TikTok itself publishes. Later research pass (also under 'D.A. Auto Ltd Ghana') independently confirmed the shipping/customs-clearance/painting scope and the same phone number, and added auto-electrical, fuel system and wheel alignment services not previously listed — folded in below."
     },
     "name": "D.A. Auto Limited",
     "logoUrl": "/mock-media/leads/da-auto-limited/logo/logo.png",
@@ -1851,7 +1851,7 @@
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
-    "about": "Experience top-notch auto repair services and unbeatable car deals. Your trusted partner for all things automotive.",
+    "about": "Ghanaian automotive business handling vehicle shipping, customs clearance, custom paintwork, and general repair and maintenance, alongside vehicle importation and sales. Experience top-notch auto repair services and unbeatable car deals.",
     "hours": "Mon-Sat · Open 24 hours · Sun · 9:00 AM – 11:30 PM",
     "specialties": [
       "General Vehicle Maintenance & Servicing",
@@ -1859,7 +1859,13 @@
       "EV Charging & Repair",
       "Sale of Spare Parts",
       "General Auto Repair",
-      "Import & Sale of Vehicles"
+      "Import & Sale of Vehicles",
+      "Vehicle Shipping & Importation",
+      "Customs Clearance",
+      "Custom Vehicle Painting",
+      "Auto-Electrical Diagnostics",
+      "Fuel System Repair",
+      "Wheel Alignment"
     ],
     "products": [],
     "services": [
@@ -1870,7 +1876,15 @@
       {
         "name": "Key Programming / Cutting",
         "videoUrl": "/mock-media/leads/da-auto-limited/services/key-programming-cutting.mp4"
-      }
+      },
+      { "name": "Vehicle Importation & Shipping" },
+      { "name": "Customs Clearance Assistance" },
+      { "name": "Auto Painting & Respraying" },
+      { "name": "Auto-Electrical Diagnostics" },
+      { "name": "Fuel System Repair" },
+      { "name": "Wheel Alignment" },
+      { "name": "Oil Change" },
+      { "name": "Tire Rotation" }
     ],
     "media": [],
     "accountEmail": "da-auto-limited@gears-ghana.com",
