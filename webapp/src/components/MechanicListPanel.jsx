@@ -606,14 +606,21 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
     setDragOffset(0); // Reset visual offset
   };
 
-  // Calculate dynamic transform based on state and drag offset
-  let transformBase = 'calc(100% - 150px)'; // minimized
-  if (sheetState === 'half') transformBase = '80vh';
-  if (sheetState === 'expanded') transformBase = '240px';
+  // How tall the sheet is per snap state, as a % of the SMALL viewport
+  // (svh — see the CSS comment on .mechanic-list-panel for why). The
+  // panel is bottom-anchored (styles.css), so whatever height it has, the
+  // whole box — and every card in its internal scroll list — stays on
+  // screen; there's no "overshoot" state to guard against here.
+  const SHEET_HEIGHT_SVH = { minimized: 60, half: 75, expanded: 94 };
+  const baseHeightSvh = SHEET_HEIGHT_SVH[sheetState] ?? SHEET_HEIGHT_SVH.minimized;
 
   const isFullPage = isMobile && (viewMode === 'saved' || viewMode === 'history');
   const dynamicStyle = isMobile && !isFullPage ? {
-    transform: `translateY(calc(${transformBase} + ${dragOffset}px))`
+    // Dragging down (positive dragOffset) shrinks the sheet; dragging up
+    // (negative) grows it. clamp() keeps it from collapsing to nothing or
+    // growing past the viewport mid-drag, before the gesture snaps to a
+    // named state on release.
+    height: `clamp(20svh, calc(${baseHeightSvh}svh - ${dragOffset}px), 96svh)`
   } : {};
 
   const fuelDeliveryPortal = useMemo(() => {
@@ -784,7 +791,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           if (sheetState !== 'expanded') {
                             if (panelRef.current) {
                               panelRef.current.style.transition = 'none';
-                              panelRef.current.style.transform = 'translateY(240px)';
+                              panelRef.current.style.height = '94svh';
                             }
                             setSheetState('expanded');
                             setDragOffset(0);
@@ -1353,11 +1360,22 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                             </div>
                           )}
 
-                          {viewMode === 'detailers' && (
+                          {viewMode === 'detailers' && m.media?.length > 0 && (
                             <div className="detailer-thumbnails">
-                              <div className="thumbnail-block"></div>
-                              <div className="thumbnail-block"></div>
-                              <div className="thumbnail-block"></div>
+                              {m.media.filter(item => item.url).slice(0, 3).map((item, i) => (
+                                <div key={i} className="thumbnail-block">
+                                  {item.type === 'video' ? (
+                                    <video src={item.url} muted playsInline preload="metadata" />
+                                  ) : (
+                                    <img src={item.url} alt={item.label || m.name} onError={(e) => e.target.style.display = 'none'} />
+                                  )}
+                                  {item.type === 'video' && (
+                                    <span className="media-tile-play-badge" aria-hidden="true">
+                                      <CaretRight size={14} weight="fill" />
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>

@@ -1785,7 +1785,7 @@
       "notes": "Popular on TikTok and Instagram for car-wash/detailing transformation clips. Operates by appointment only — exact workshop pin/gate coordinates are shared directly with clients after a booking is confirmed, so no address or map coordinates are published. No Google Maps listing found."
     },
     "name": "ECS Detailing",
-    "logoUrl": null,
+    "logoUrl": "/mock-media/leads/ecs-detailing/logo/logo.png",
     "claimed": true,
     "verified": false,
     "specialty": "Car Detailing",
@@ -1817,7 +1817,10 @@
       { "name": "Paint Correction" },
       { "name": "Deep Interior Detailing" }
     ],
-    "media": [],
+    "media": [
+      { "url": "/mock-media/leads/ecs-detailing/media/1.mp4", "type": "video", "category": "Workshop", "label": "Workshop video" },
+      { "url": "/mock-media/leads/ecs-detailing/media/2.mp4", "type": "video", "category": "Workshop", "label": "Workshop video" }
+    ],
     "accountEmail": "ecs-detailing@gears-ghana.com",
     "accountPassword": "Gears@2026"
   },
@@ -1889,5 +1892,113 @@
     "media": [],
     "accountEmail": "da-auto-limited@gears-ghana.com",
     "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": null,
+      "socialHandle": "TikTok — a1detailingsolutions",
+      "status": "Discovery",
+      "source": "imported_tiktok",
+      "googlePlaceId": "ChIJgzefMQCf3w8ROCz47SCN6NQ",
+      "duplicateGooglePlaceId": null,
+      "matchConfidence": "high",
+      "notes": "TikTok profile publicly describes car detailing, leather-seat reupholstery, couch and carpet cleaning. Public posts also show vehicle spraying, paintwork, tyre care, and car-care products. Google listing is a likely match; listed location differs across available sources and should be confirmed."
+    },
+    "name": "A1 Detailing Solutions",
+    "logoUrl": "/mock-media/leads/a1-detailing-solutions/logo/logo.png",
+    "claimed": true,
+    "verified": false,
+    "specialty": "Car Detailing",
+    "categories": ["detailer", "bodywork"],
+    "area": "Greater Accra",
+    "locationDetail": "MQXC+QJ9, Kwabenya, Ghana (Google listing; verify workshop address)",
+    "lat": null,
+    "lng": null,
+    "phone": "0543176679",
+    "rating": "4.7",
+    "ratingCount": 36,
+    "ratingSum": 169.2,
+    "about": "Automotive detailing and car-care business offering vehicle cleaning, appearance restoration, upholstery care, and car-care products.",
+    "hours": null,
+    "specialties": [
+      "Interior and exterior detailing",
+      "Paint correction and vehicle paintwork",
+      "Ceramic coating and paint protection",
+      "Headlight restoration",
+      "Tyre cleaning and restoration",
+      "Leather-seat reupholstery",
+      "Carpet and couch cleaning",
+      "Odour removal and sanitization"
+    ],
+    "products": [
+      { "name": "Car-care chemicals" },
+      { "name": "Car shampoo" },
+      { "name": "All-purpose cleaners" },
+      { "name": "Tyre-care products" },
+      { "name": "Microfibre cloths" },
+      { "name": "Detailing brushes and wash accessories" },
+      { "name": "Sneaker-cleaning products" }
+    ],
+    "services": [
+      { "name": "Car washing" },
+      { "name": "Interior deep cleaning" },
+      { "name": "Exterior detailing" },
+      { "name": "Upholstery and carpet extraction" },
+      { "name": "Paint correction" },
+      { "name": "Ceramic coating" },
+      { "name": "Headlight restoration" },
+      { "name": "Vehicle spraying and paintwork" },
+      { "name": "Leather-seat reupholstery" },
+      { "name": "Couch and carpet cleaning" },
+      { "name": "Odour removal and sanitization" }
+    ],
+    "media": [
+      { "url": "/mock-media/leads/a1-detailing-solutions/media/1.mov", "type": "video", "category": "Workshop", "label": "Workshop video" },
+      { "url": "/mock-media/leads/a1-detailing-solutions/media/2.mov", "type": "video", "category": "Workshop", "label": "Workshop video" },
+      { "url": "/mock-media/leads/a1-detailing-solutions/media/3.mov", "type": "video", "category": "Workshop", "label": "Workshop video" }
+    ],
+    "accountEmail": "a1-detailing-solutions@gears-ghana.com",
+    "accountPassword": "Gears@2026"
+  },
+  {
+    "internal": {
+      "leadNumber": null,
+      "socialHandle": "TikTok — luxdazz",
+      "status": "Discovery",
+      "source": "imported_tiktok",
+      "googlePlaceId": null,
+      "duplicateGooglePlaceId": null,
+      "matchConfidence": "medium",
+      "notes": "A public directory lists LuxDazz Auto Care & Detailing in Accra. Exact match to the supplied TikTok profile and business contact details require confirmation. Web search for a precise address/location turned up nothing conclusive — no matching business, Google Maps listing, or social page found under this name in Ghana; location still needs manual confirmation (e.g. direct outreach via the TikTok handle)."
+    },
+    "name": "LuxDazz Auto Care & Detailing",
+    "logoUrl": "/mock-media/leads/luxdazz-auto-care-detailing/logo/logo.png",
+    "claimed": false,
+    "verified": false,
+    "specialty": "Car Detailing",
+    "categories": ["detailer"],
+    "area": "Accra",
+    "locationDetail": null,
+    "lat": null,
+    "lng": null,
+    "phone": null,
+    "rating": "5.0",
+    "ratingCount": 1,
+    "ratingSum": 5,
+    "about": "Automotive care and detailing business listed in Accra, Ghana.",
+    "hours": null,
+    "specialties": [
+      "Automotive detailing"
+    ],
+    "products": [],
+    "services": [
+      { "name": "Car detailing" }
+    ],
+    "media": [
+      { "url": "/mock-media/leads/luxdazz-auto-care-detailing/media/1.mov", "type": "video", "category": "Workshop", "label": "Workshop video" },
+      { "url": "/mock-media/leads/luxdazz-auto-care-detailing/media/2.mp4", "type": "video", "category": "Workshop", "label": "Workshop video" },
+      { "url": "/mock-media/leads/luxdazz-auto-care-detailing/media/3.mp4", "type": "video", "category": "Workshop", "label": "Workshop video" }
+    ],
+    "accountEmail": null
   }
 ]

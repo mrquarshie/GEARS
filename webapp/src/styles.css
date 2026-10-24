@@ -4551,19 +4551,41 @@ body {
   /* Bottom Sheet MechanicListPanel - floats above the map on all sides */
   .mechanic-list-panel {
     position: fixed;
-    top: -24%;
+    /* Bottom-anchored, not top+transform. The old approach fixed the
+       panel's HEIGHT (90vh/90svh) and only moved it up/down with
+       `transform: translateY()` to fake "minimized"/"half"/"expanded" —
+       which meant every state shared one oversized box, and any state
+       whose translateY didn't land that box exactly flush with the
+       viewport bottom left a slice of it (and whatever cards were
+       rendered in that slice) below the visible screen, unreachable by
+       scrolling no matter how far the sheet was already open. That bug
+       showed up in EVERY state, not just "expanded" — dragging only
+       changed how much of the box overshot.
+       Anchoring to `bottom` and varying `height` per state (set inline
+       by MechanicListPanel's `dynamicStyle`, via SHEET_HEIGHT_SVH) makes
+       this impossible by construction: the panel's bottom edge is always
+       pinned near the real viewport bottom, so however tall it is, the
+       WHOLE box — and therefore its entire internal scrollable list — is
+       always on screen. "Minimized" just means a shorter box, not a
+       taller box parked partly off-screen. */
+    /* Explicit auto — without this, the desktop rule's `top: 24px` above
+       still cascades in here (CSS applies per-property, not per-block; a
+       mobile rule that doesn't redeclare `top` doesn't clear it). With
+       top/height/bottom all set at once the box is over-constrained, and
+       the spec has the browser solve it from top+height, ignoring
+       `bottom` — leaving a visible gap between the sheet and the real
+       screen bottom instead of sitting flush against it. */
+    top: auto;
     left: 12px;
     right: 12px;
     bottom: 12px;
     width: auto;
-    /* Stable height (not the reactive --vh) — --vh also tracks Safari's
-       toolbar collapsing/expanding during touch-scroll, not just the
-       keyboard, which was making this sheet grow while a finger was
-       actively scrolling the list and shrink back the moment it lifted,
-       re-hiding whatever card had just scrolled into view. See the #root
-       comment above for the general rationale. */
-    height: 90vh;
-    /* Max height when fully expanded */
+    /* Fallback only — MechanicListPanel sets the real height inline per
+       sheetState (see SHEET_HEIGHT_SVH). svh (not vh): vh is computed
+       against the browser's larger, toolbar-collapsed viewport, so while
+       the toolbar is showing (the default on load) a plain vh height
+       would still reach a few percent past the real visible area. */
+    height: 60svh;
     border-radius: 28px;
     z-index: 1000;
     outline: 1px solid rgba(0, 0, 0, 0.1);
@@ -4571,10 +4593,8 @@ body {
     box-shadow:
       0 4px 4px -4px rgba(12, 12, 13, 0.05),
       0 16px 32px -4px rgba(12, 12, 13, 0.1);
-    /* By default, transition the transform for snapping */
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    transform: translateY(calc(100% - 150px));
-    /* Minimized state default */
+    /* By default, transition height for snapping */
+    transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     padding-bottom: env(safe-area-inset-bottom);
   }
 
@@ -5253,10 +5273,19 @@ body {
 }
 
 .thumbnail-block {
+  position: relative;
   width: 80px;
   height: 80px;
   background-color: #f3f4f6;
   border-radius: 12px;
+  overflow: hidden;
+}
+
+.thumbnail-block img,
+.thumbnail-block video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Select dropdown in modals */
