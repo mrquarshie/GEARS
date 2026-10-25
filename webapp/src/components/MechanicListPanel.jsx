@@ -23,6 +23,7 @@ import { ItemSheet } from './MechanicDetailPanel';
 import { getRecentInteraction, formatRelativeTime } from '../recentInteractions';
 import { shareMechanic } from '../utils/share';
 import { playTapSound } from '../utils/feedback';
+import { getFuelStationLogo } from '../utils/fuelStations';
 import { buildMechanicsByName, buildSuggestionMatches, SuggestionRowIcon } from './SearchSuggestions';
 
 // Expanding drive-time windows used by the "Use my location" search: start tight
@@ -1257,13 +1258,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                           <div className="fuel-card-header">
                             <img
                               className="fuel-card-logo"
-                              src={
-                                m.name.toLowerCase().includes('shell')
-                                  ? 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e8/Shell_logo.svg/100px-Shell_logo.svg.png'
-                                  : m.name.toLowerCase().includes('goil')
-                                    ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Goil_Logo.svg/100px-Goil_Logo.svg.png'
-                                    : 'https://placehold.co/32x32'
-                              }
+                              src={getFuelStationLogo(m.name)}
                               alt={m.name}
                             />
                             <div className="fuel-distance-badge">

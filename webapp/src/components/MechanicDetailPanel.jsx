@@ -5,6 +5,7 @@ import CloseButton from './CloseButton';
 import { collection, addDoc, getDocs, onSnapshot, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { shareMechanic, getStaticShareImagePath, getShareUrl } from '../utils/share';
+import { getFuelStationLogo } from '../utils/fuelStations';
 import {
   BookmarkIcon,
   CallIcon,
@@ -252,7 +253,9 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
 
         <div className="detail-hero">
           <div className="detail-hero-avatar">
-            {mechanic.logoUrl ? (
+            {mechanic.specialty === 'Fuel Station' ? (
+              <img src={getFuelStationLogo(mechanic.name)} alt={mechanic.name} className="detail-hero-avatar-img" />
+            ) : mechanic.logoUrl ? (
               <img src={mechanic.logoUrl} alt={mechanic.name} className="detail-hero-avatar-img" />
             ) : (
               <span className="detail-hero-avatar-letter">{mechanic.name.charAt(0).toUpperCase()}</span>
