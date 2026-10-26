@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { getFuelStationLogo } from '../utils/fuelStations';
 
 // Fix for default marker icon in leaflet with React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -143,7 +144,11 @@ function getCategoryIcon(mechanic, selected = false) {
   if (iconCache.has(key)) return iconCache.get(key);
 
   const category = getMechanicCategory(mechanic.specialty);
-  const divIcon = buildCategoryMarkerIcon(category, mechanic.name, selected, mechanic.logoUrl);
+  // Fuel stations don't have a per-listing logoUrl — their brand thumbnail
+  // comes from the shared name→logo lookup instead (same one used by the
+  // list cards and detail panel hero).
+  const logoUrl = mechanic.logoUrl || (category === 'fuel' ? getFuelStationLogo(mechanic.name) : null);
+  const divIcon = buildCategoryMarkerIcon(category, mechanic.name, selected, logoUrl);
 
   iconCache.set(key, divIcon);
   return divIcon;
