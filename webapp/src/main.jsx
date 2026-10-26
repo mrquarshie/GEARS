@@ -1669,7 +1669,10 @@ function App() {
           .map((d) => ({ id: d.id, ...d.data() }))
           .filter((m) => (
             IS_VERCEL_DEMO_HOST
-              ? ACCEPTED_BUSINESS_NAMES.has((m.name || '').trim().toLowerCase())
+              // Filling stations are real public data (seeded live, not a
+              // pitch lead awaiting sign-off), so they're shown outright
+              // rather than gated behind the per-name accepted list.
+              ? m.specialty === 'Fuel Station' || ACCEPTED_BUSINESS_NAMES.has((m.name || '').trim().toLowerCase())
               : m.verified || m.claimed
           ));
         setAllMechanics(docs);
