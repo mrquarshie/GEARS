@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft, ArrowRight, Wrench, Envelope, MapPinLine, CaretRight } from '@phosphor-icons/react';
+import { Target, ArrowLeft, ArrowRight, Wrench, Envelope, MapPinLine, CaretRight, Moped } from '@phosphor-icons/react';
 import CloseButton from './CloseButton';
 import {
   BookmarkIcon,
@@ -749,17 +749,29 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 </div>
               </div>
             ) : (
-              <h1 className="list-title">
-                {viewMode === 'detailers' ? (
-                  <>Discover Car Detailers</>
-                ) : viewMode === 'fuel' ? (
-                  <>Find Fuel Stations</>
-                ) : viewMode === 'shop' ? (
-                  <>Auto Parts Dealers</>
-                ) : (
-                  <>A Mechanic,<br />When You Need One.</>
+              <div className="list-title-row">
+                <h1 className="list-title">
+                  {viewMode === 'detailers' ? (
+                    <>Discover Car Detailers</>
+                  ) : viewMode === 'fuel' ? (
+                    <>Find Fuel Stations<br />Near You</>
+                  ) : viewMode === 'shop' ? (
+                    <>Auto Parts Dealers</>
+                  ) : (
+                    <>A Mechanic,<br />When You Need One.</>
+                  )}
+                </h1>
+                {viewMode === 'fuel' && (
+                  <button
+                    type="button"
+                    className="fuel-delivery-fab"
+                    onClick={() => setFuelDeliverySheetOpen(true)}
+                    aria-label="Fuel order & delivery"
+                  >
+                    <Moped size={22} weight="fill" />
+                  </button>
                 )}
-              </h1>
+              </div>
             )}
 
             {viewMode === 'history' && (
@@ -1115,25 +1127,6 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {viewMode === 'fuel' && (
-          <div
-            className="fuel-delivery-notice"
-            role="button"
-            tabIndex={0}
-            onClick={() => setFuelDeliverySheetOpen(true)}
-            onKeyDown={(e) => { if (e.key === 'Enter') setFuelDeliverySheetOpen(true); }}
-          >
-            <div className="fuel-delivery-notice-icon">
-              <FillingStationIcon size={18} state="filled" color="var(--forest)" />
-            </div>
-            <div className="fuel-delivery-notice-text">
-              <span className="fuel-delivery-notice-title">Fuel Order &amp; Delivery</span>
-              <span className="delivery-soon-pill">Coming Soon</span>
-            </div>
-            <CaretRight size={16} color="var(--muted)" />
           </div>
         )}
 

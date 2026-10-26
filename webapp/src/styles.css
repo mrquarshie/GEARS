@@ -303,6 +303,47 @@ body {
   color: var(--forest);
 }
 
+.list-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 24px 0;
+}
+
+.list-title-row .list-title {
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.fuel-delivery-fab {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--forest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  animation: fuel-delivery-bounce 2.4s ease-in-out infinite;
+}
+
+.fuel-delivery-fab:active {
+  animation-play-state: paused;
+  transform: scale(0.92);
+}
+
+@keyframes fuel-delivery-bounce {
+  0%, 55%, 100% { transform: translateY(0); }
+  15% { transform: translateY(-7px); }
+  28% { transform: translateY(0); }
+  38% { transform: translateY(-3px); }
+}
+
 /* Bookmarks/History: title + tabs pin together to the top of the scroll area while
    the cards (and, for History, the subtitle) scroll underneath. */
 .list-sticky-header {
@@ -1846,59 +1887,6 @@ body {
 
 .fuel-price-diesel {
   color: #3b5bfd;
-}
-
-.fuel-delivery-notice {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 24px 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  background-color: #fafafa;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.fuel-delivery-notice:hover {
-  background-color: #f3f4f6;
-}
-
-.fuel-delivery-notice-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: 20%;
-  background-color: #e6f4ea;
-}
-
-.fuel-delivery-notice-text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.fuel-delivery-notice-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--forest);
-}
-
-.delivery-soon-pill {
-  font-size: 10px;
-  font-weight: 600;
-  color: #92400e;
-  background: #fef3c7;
-  border-radius: 10px;
-  padding: 2px 8px;
-  margin-left: 2px;
-  outline: 1px solid rgba(245, 158, 11, 0.3);
-  outline-offset: -1px;
 }
 
 .card-bottom-divider {
@@ -4617,6 +4605,10 @@ body {
   }
 
   .list-title {
+    padding-top: 0;
+  }
+
+  .list-title-row {
     padding-top: 0;
   }
 
