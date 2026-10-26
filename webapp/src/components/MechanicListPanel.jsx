@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, ArrowLeft, ArrowRight, Wrench, Envelope, MapPinLine, CaretRight, Moped } from '@phosphor-icons/react';
+import { Target, ArrowLeft, ArrowRight, Wrench, Envelope, MapPinLine, CaretRight } from '@phosphor-icons/react';
 import CloseButton from './CloseButton';
 import {
   BookmarkIcon,
   CallIcon,
   CarDetailingIcon,
+  DeliveryHelmetIcon,
   FillingStationIcon,
   FilterIcon,
   LocationIcon,
@@ -768,7 +769,7 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                     onClick={() => setFuelDeliverySheetOpen(true)}
                     aria-label="Fuel order & delivery"
                   >
-                    <Moped size={22} weight="fill" />
+                    <DeliveryHelmetIcon size={26} />
                   </button>
                 )}
               </div>
@@ -1267,22 +1268,20 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
                             <p className="card-area">{m.area}</p>
                           </div>
                         </div>
-                        <div className="card-bottom-bar">
-                          <div className="card-bottom-left">
-                            <button
-                              className={`card-bottom-icon ${savedMechanics.includes(m.id) ? 'active' : ''}`}
-                              onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
-                            >
-                              <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
-                            </button>
-                            <div className="card-bottom-divider"></div>
-                          </div>
+                        <div className="card-bottom-bar card-bottom-bar--fuel">
+                          <button
+                            className={`card-bottom-action ${savedMechanics.includes(m.id) ? 'active' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); onToggleSave(m); }}
+                          >
+                            <BookmarkIcon size={16} state={savedMechanics.includes(m.id) ? 'filled' : 'default'} color={savedMechanics.includes(m.id) ? 'var(--forest)' : 'currentColor'} />
+                            <span>Bookmark</span>
+                          </button>
                           <button
                             className={`card-bottom-action ${directionTargetId === m.id ? 'active' : ''}`}
                             onClick={(e) => { e.stopPropagation(); handleDirectionToggle(m); }}
                           >
                             <LocationIcon size={16} />
-                            <span className="card-action-label">Direction</span>
+                            <span>View Direction</span>
                           </button>
                         </div>
                       </>
