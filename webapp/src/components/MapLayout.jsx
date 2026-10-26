@@ -254,6 +254,73 @@ const UserLocationScanningIcon = L.divIcon({
   iconAnchor: [12, 12]
 });
 
+// watchPosition fires a new userLocation on every GPS tick, which used to
+// teleport the dot straight to each new fix — fine for noisy jitter, jarring
+// for an actual multi-meter walk/drive. Tween the marker's on-screen position
+// between fixes instead, driving Leaflet directly via setLatLng (not the
+// declarative `position` prop) so the animation runs every frame without
+// forcing a React re-render.
+const USER_MARKER_TWEEN_MS = 450;
+// A fix more than this far from the last drawn position is a real jump (first
+// fix, GPS re-lock after a tunnel/dead zone, teleport in dev tools) rather
+// than normal movement — snap instantly instead of animating across it.
+const USER_MARKER_SNAP_KM = 1.5;
+
+function easeOutCubic(t) {
+  return 1 - (1 - t) ** 3;
+}
+
+function SmoothUserMarker({ position, icon, zIndexOffset }) {
+  const markerRef = useRef(null);
+  const displayedRef = useRef(position);
+  const frameRef = useRef(null);
+
+  useEffect(() => () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); }, []);
+
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (!marker || !position) return;
+
+    const from = displayedRef.current || position;
+    const to = position;
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
+
+    const distKm = haversineKm(from[0], from[1], to[0], to[1]);
+    if (distKm === 0) return;
+    if (distKm > USER_MARKER_SNAP_KM) {
+      displayedRef.current = to;
+      marker.setLatLng(to);
+      return;
+    }
+
+    const [fromLat, fromLng] = from;
+    const [toLat, toLng] = to;
+    const start = performance.now();
+
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / USER_MARKER_TWEEN_MS);
+      const eased = easeOutCubic(t);
+      const lat = fromLat + (toLat - fromLat) * eased;
+      const lng = fromLng + (toLng - fromLng) * eased;
+      marker.setLatLng([lat, lng]);
+      displayedRef.current = [lat, lng];
+      if (t < 1) frameRef.current = requestAnimationFrame(step);
+    };
+    frameRef.current = requestAnimationFrame(step);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position?.[0], position?.[1]]);
+
+  if (!position) return null;
+  return (
+    <Marker
+      ref={markerRef}
+      position={displayedRef.current || position}
+      icon={icon}
+      zIndexOffset={zIndexOffset}
+    />
+  );
+}
+
 // We use a single CARTO Voyager tile layer (with labels) instead of two separate
 // layers (nolabels + only_labels), halving the tile requests.
 export const TILE_URL = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${import.meta.env.VITE_CARTO_API_KEY}`;
@@ -410,7 +477,7 @@ export default function MapLayout({ mechanics, selectedMechanic, onSelectMechani
         )}
 
         {userLocation && (
-          <Marker
+          <SmoothUserMarker
             position={[userLocation.lat, userLocation.lng]}
             icon={isLocatingScan ? UserLocationScanningIcon : UserLocationIcon}
             zIndexOffset={1000}
