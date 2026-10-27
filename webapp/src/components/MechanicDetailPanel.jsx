@@ -91,7 +91,7 @@ function UnverifiedIcon({ size = 20 }) {
   );
 }
 
-export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled, variant = 'customer' }) {
+export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, onDelete, onRate, isAdmin, savedMechanics, onToggleSave, onDirection, onUnconfirmedLocation, onRecordInteraction, onNotice, initialItemQuery, onInitialItemHandled, variant = 'customer' }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [collapsed, setCollapsed] = useState(false);
   const [detailSheetItem, setDetailSheetItem] = useState(null);
@@ -140,6 +140,11 @@ export default function MechanicDetailPanel({ mechanic, onClose, user, onEdit, o
   if (!mechanic) return null;
 
   const handleDirectionClick = () => {
+    if (mechanic.lat == null || mechanic.lng == null) {
+      onUnconfirmedLocation?.(mechanic);
+      onRecordInteraction?.(mechanic.id, 'direction');
+      return;
+    }
     const showed = onDirection(mechanic);
     onRecordInteraction?.(mechanic.id, 'direction');
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;

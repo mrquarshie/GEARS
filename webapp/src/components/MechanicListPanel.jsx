@@ -224,7 +224,7 @@ function UnverifiedIcon({ size = 20 }) {
 // least this long so the loading/radar sequence is actually visible.
 const MIN_SCAN_MS = 3500;
 
-export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, hideOnDesktop, onUseMyLocation, onScanStateChange, scanRequestId, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice, onRate, loading }) {
+export default function MechanicListPanel({ mechanics, searchedArea, onSearch, onSelect, user, savedMechanics, onToggleSave, viewMode, searchRef, onOpenSearch, onDirection, onUnconfirmedLocation, hideOnDesktop, onUseMyLocation, onScanStateChange, scanRequestId, onNavigateHome, onOpenSidebar, recentInteractions, onRecordInteraction, onNotice, onRate, loading }) {
   const [searchTerm, setSearchTerm] = useState(searchedArea || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -374,6 +374,11 @@ export default function MechanicListPanel({ mechanics, searchedArea, onSearch, o
       setDirectionTargetId(null);
       onDirection(null);
       setDirectionPeek(false);
+      return;
+    }
+    if (m.lat == null || m.lng == null) {
+      onUnconfirmedLocation?.(m);
+      if (recordInteraction) onRecordInteraction?.(m.id, 'direction');
       return;
     }
     const showed = onDirection(m);

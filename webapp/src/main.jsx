@@ -291,6 +291,7 @@ const ACCEPTED_BUSINESS_NAMES = new Set([
   'Richy Ray Auto Pro',
   'Akasima Auto Parts',
   'JAQ Auto Parts',
+  'Car Mods Gh',
 ].map((n) => n.toLowerCase()));
 
 // How often the mechanics list refetches so a business onboarded (or edited)
@@ -1291,6 +1292,64 @@ function FarDirectionSheet({ mechanic, distanceKm, onClose, onFindNearby }) {
   );
 }
 
+// Shown instead of the old silent toast when a business has no confirmed
+// lat/lng yet — same bottom-sheet shell as FarDirectionSheet, so a business
+// without verified coordinates still reads as "call first", not "broken".
+function UnconfirmedLocationSheet({ mechanic, onClose, onShowAnyway }) {
+  const areaLabel = mechanic?.locationDetail || mechanic?.area;
+  const phone = mechanic?.phone;
+  return (
+    <div className="verification-sheet-overlay" onClick={onClose}>
+      <div className="verification-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="verification-sheet-icon">
+          <NavigationArrow size={44} weight="duotone" color="#145E42" />
+        </div>
+        <h3 className="verification-sheet-title">Exact location not confirmed</h3>
+        <p className="verification-sheet-desc">
+          <span style={{ fontWeight: 600, color: 'black' }}>{mechanic?.name || 'This business'}</span>{' '}
+          hasn't confirmed their exact address yet{areaLabel ? ` — we're showing you the general area around ${areaLabel}` : ''}.
+          {phone ? ' Call ahead to confirm before heading out.' : ' Reach out to them directly to confirm before heading out.'}
+        </p>
+        <div className="verification-sheet-footer verification-sheet-footer--stacked">
+          {phone && (
+            <button
+              className="verification-sheet-btn"
+              onClick={() => { window.location.href = `tel:${phone.replace(/\s+/g, '')}`; }}
+            >
+              Call {phone}
+            </button>
+          )}
+          <button
+            className={`verification-sheet-btn${phone ? ' verification-sheet-btn--call' : ''}`}
+            onClick={onShowAnyway}
+          >
+            Show approximate direction anyway
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Forward-geocodes a business's free-text area/locationDetail via Nominatim
+// (same service used for the reverse/forward lookups elsewhere in this file)
+// so a business with no confirmed lat/lng can still show an approximate
+// route instead of nothing at all.
+async function geocodeAreaText(text) {
+  if (!text) return null;
+  try {
+    const q = encodeURIComponent(text);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=gh&limit=1`);
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  } catch {
+    // Network/geocoding failure — caller just won't get an approximate route.
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Main App
 // ---------------------------------------------------------------------------
@@ -1347,6 +1406,10 @@ function App() {
   // "work" but the OSRM route + map bounds fitting both points isn't a
   // useful result, so ask first instead of just doing it.
   const [farDirectionTarget, setFarDirectionTarget] = useState(null);
+  // Set when a business has no confirmed lat/lng — shows UnconfirmedLocationSheet
+  // instead of a silent no-op, while an approximate route (geocoded from the
+  // business's area/locationDetail text) still draws on the map if one resolves.
+  const [unconfirmedLocationTarget, setUnconfirmedLocationTarget] = useState(null);
   const [recentInteractions, setRecentInteractions] = useState(loadRecentInteractions);
   const [businessDashboardOpen, setBusinessDashboardOpen] = useState(false);
   // Which of the signed-in owner's businesses is currently being managed —
@@ -1422,6 +1485,20 @@ function App() {
     setFarDirectionTarget(null);
     setRouteTarget({ lat: mechanic.lat, lng: mechanic.lng });
     return true;
+  };
+
+  // Called instead of handleShowDirection when a business has no confirmed
+  // lat/lng — shows UnconfirmedLocationSheet right away, then fills in an
+  // approximate route (geocoded from the business's area text) if one resolves.
+  const handleUnconfirmedLocation = (mechanic) => {
+    setUnconfirmedLocationTarget(mechanic);
+    const areaText = mechanic?.locationDetail || mechanic?.area;
+    geocodeAreaText(areaText).then((coords) => {
+      if (coords) {
+        setFarDirectionTarget(null);
+        setRouteTarget(coords);
+      }
+    });
   };
 
   // Shared by the "Use my location" banner/button and the far-away
@@ -2144,6 +2221,7 @@ function App() {
             searchRef={searchRef}
             onOpenSearch={() => setIsSearchPanelOpen(true)}
             onDirection={handleShowDirection}
+            onUnconfirmedLocation={handleUnconfirmedLocation}
             recentInteractions={recentInteractions}
             onRecordInteraction={recordInteraction}
             onNotice={show}
@@ -2193,6 +2271,7 @@ function App() {
            savedMechanics={savedMechanics}
            onToggleSave={toggleSave}
            onDirection={handleShowDirection}
+           onUnconfirmedLocation={handleUnconfirmedLocation}
            onRecordInteraction={recordInteraction}
            onNotice={show}
            initialItemQuery={pendingItemQuery}
@@ -2277,6 +2356,14 @@ function App() {
           distanceKm={calculateDistance(userLocation.lat, userLocation.lng, farDirectionTarget.lat, farDirectionTarget.lng)}
           onClose={() => setFarDirectionTarget(null)}
           onFindNearby={() => { setFarDirectionTarget(null); handleCloseDetail(); setScanRequestId(Date.now()); }}
+        />
+      )}
+
+      {unconfirmedLocationTarget && (
+        <UnconfirmedLocationSheet
+          mechanic={unconfirmedLocationTarget}
+          onClose={() => setUnconfirmedLocationTarget(null)}
+          onShowAnyway={() => setUnconfirmedLocationTarget(null)}
         />
       )}
     </div>

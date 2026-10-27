@@ -1526,11 +1526,11 @@
     "categories": [
       "mechanic"
     ],
-    "area": null,
+    "area": "Kumasi Ejisu",
     "locationDetail": null,
     "lat": null,
     "lng": null,
-    "phone": null,
+    "phone": "0202029032",
     "rating": "New",
     "ratingCount": 0,
     "ratingSum": 0,
@@ -1539,10 +1539,37 @@
     "specialties": [
       "Car Modification",
       "Performance Upgrades",
-      "Custom Builds"
+      "Custom Builds",
+      "Toyota Specialist",
+      "Budget Builds",
+      "Exterior Styling",
+      "Exhaust Systems",
+      "Interior Upgrades",
+      "Lighting Mods",
+      "Body Kits",
+      "Vehicle Respray"
     ],
     "products": [],
-    "services": [],
+    "services": [
+      {
+        "name": "2012 Toyota Camry — Street Beast Build",
+        "description": "Full mod breakdown on a 10,000 GHC budget",
+        "price": "GH₵ 10,000",
+        "videoUrl": "/mock-media/leads/car-mods-gh/services/1.MP4"
+      },
+      {
+        "name": "2002 Toyota Corolla — Fresh Look Transformation",
+        "description": "Complete budget refresh for just 2,000 GHC",
+        "price": "GH₵ 2,000",
+        "videoUrl": "/mock-media/leads/car-mods-gh/services/2.MP4"
+      },
+      {
+        "name": "2016 Toyota Corolla S — Full Transformation",
+        "description": "Budget-friendly makeover for only 2,000 GHC",
+        "price": "GH₵ 2,000",
+        "videoUrl": "/mock-media/leads/car-mods-gh/services/3.MP4"
+      }
+    ],
     "media": [],
     "accountEmail": "car-mods-gh@gears-ghana.com",
     "accountPassword": "Gears@2026"
@@ -2000,5 +2027,54 @@
       { "url": "/mock-media/leads/luxdazz-auto-care-detailing/media/3.mp4", "type": "video", "category": "Workshop", "label": "Workshop video" }
     ],
     "accountEmail": null
+  },
+  {
+    "internal": {
+      "leadNumber": 38,
+      "socialHandle": "TikTok — auto.munich.spray",
+      "status": "Discovery",
+      "source": "imported_tiktok",
+      "googlePlaceId": null,
+      "duplicateGooglePlaceId": null,
+      "matchConfidence": "high",
+      "notes": "TikTok profile identifies the business as Auto Munich Spraying Shop. A video explicitly states North Kaneshie, Orgle Road, and provides phone number 0244255132. Promotional flyer lists services: Car Spraying, Oven Baked (finish), Color Change. Vehicle make/model and further services require confirmation."
+    },
+    "name": "Auto Munich Spraying Shop",
+    "logoUrl": "/mock-media/leads/auto-munich-spraying-shop/logo/logo.png",
+    "claimed": true,
+    "verified": false,
+    "specialty": "Car Detailing",
+    "categories": [
+      "detailer",
+      "bodywork"
+    ],
+    "area": "North Kaneshie, Accra",
+    "locationDetail": "Orgle Road, North Kaneshie, Accra, Ghana",
+    "lat": null,
+    "lng": null,
+    "phone": "0244255132",
+    "rating": "New",
+    "ratingCount": 0,
+    "ratingSum": 0,
+    "about": "Premium car spraying shop in North Kaneshie, Accra — quality finish at an affordable price, offering vehicle respraying, oven-baked finishing, and full color changes.",
+    "hours": null,
+    "specialties": [
+      "Automotive Spray Painting",
+      "Vehicle Repainting",
+      "Oven Baked Finish",
+      "Color Change"
+    ],
+    "products": [],
+    "services": [
+      { "name": "Car Spraying", "description": "Quality finish, affordable price" },
+      { "name": "Oven Baked", "description": "Oven-baked paint finish, temperature controlled booth" },
+      { "name": "Color Change" }
+    ],
+    "media": [
+      { "url": "/mock-media/leads/auto-munich-spraying-shop/media/flyer.png", "type": "image", "category": "Flyer", "label": "Shop flyer" },
+      { "url": "/mock-media/leads/auto-munich-spraying-shop/media/1.mp4", "type": "video", "category": "Workshop", "label": "Workshop video" }
+    ],
+    "accountEmail": "auto-munich-spraying-shop@gears-ghana.com",
+    "accountPassword": "Gears@2026"
   }
 ]
